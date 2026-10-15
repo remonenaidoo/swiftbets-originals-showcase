@@ -1,7 +1,7 @@
 # swiftbets-originals
 
 SwiftBets Originals: games we design, build and own, played for the SwiftBets wallet. The studio is integrated
-the way any outside provider is (D204): it reaches the wallet only through the casino's signed seamless-wallet
+the way any outside provider is (D207): it reaches the wallet only through the casino's signed seamless-wallet
 API, as provider `swift-originals`. Restrictions, limits, idempotency and reconciliation therefore apply exactly as
 for any provider.
 
