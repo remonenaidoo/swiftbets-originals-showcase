@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Security.Cryptography;
 using SwiftBets.BuildingBlocks.Core;
 using SwiftBets.BuildingBlocks.Observability;
@@ -15,6 +16,7 @@ if (HealthProbe.TryRun(args) is { } probeExitCode)
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSwiftBetsObservability("swiftbets-originals");
 builder.Services.AddSwiftBetsWeb();
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddValidatedOptions<OriginalsOptions>(builder.Configuration, OriginalsOptions.SectionName);
 builder.Services.AddOriginalsInfrastructure(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);

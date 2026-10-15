@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SwiftBets.Originals.Application.Ports;
 using SwiftBets.Originals.Domain.Slot;
 
@@ -10,7 +11,7 @@ namespace SwiftBets.Originals.Application;
 internal static class Play
 {
     public static readonly long[] Stakes = [100, 200, 500, 1000, 2000, 5000];
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     /// <summary>Line-bet units to minor units: the stake is always a multiple of the line count.</summary>
     public static long Money(long units, long stake, int lines) => units * (stake / lines);
