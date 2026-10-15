@@ -30,30 +30,33 @@ public static class GildedSavanna
         [Symbol.Ten] = [2, 8, 40],
     };
 
-    /// <summary>Symbol counts per base reel (each reel 32 stops).</summary>
+    /// <summary>Symbol counts per base reel (each reel 36 stops).</summary>
     internal static readonly Dictionary<Symbol, int>[] BaseCounts =
     [
-        Counts(wild: 0, lion: 2, elephant: 2, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 5, ten: 4, scatter: 1),
-        Counts(wild: 2, lion: 2, elephant: 2, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 4, ten: 3, scatter: 1),
-        Counts(wild: 2, lion: 2, elephant: 2, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 4, ten: 3, scatter: 1),
-        Counts(wild: 2, lion: 2, elephant: 2, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 4, ten: 3, scatter: 1),
-        Counts(wild: 0, lion: 2, elephant: 2, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 5, ten: 4, scatter: 1),
+        Counts(wild: 0, lion: 3, elephant: 3, rhino: 4, buffalo: 4, ace: 4, king: 4, queen: 6, jack: 4, ten: 3, scatter: 1),
+        Counts(wild: 4, lion: 3, elephant: 3, rhino: 3, buffalo: 4, ace: 4, king: 4, queen: 4, jack: 3, ten: 3, scatter: 1),
+        Counts(wild: 4, lion: 3, elephant: 3, rhino: 3, buffalo: 4, ace: 4, king: 4, queen: 4, jack: 3, ten: 3, scatter: 1),
+        Counts(wild: 4, lion: 3, elephant: 3, rhino: 3, buffalo: 4, ace: 4, king: 4, queen: 4, jack: 3, ten: 3, scatter: 1),
+        Counts(wild: 0, lion: 3, elephant: 3, rhino: 4, buffalo: 4, ace: 4, king: 4, queen: 6, jack: 4, ten: 3, scatter: 1),
     ];
 
-    /// <summary>Symbol counts per free-spin reel (each reel 32 stops).</summary>
+    /// <summary>Symbol counts per free-spin reel (each reel 36 stops).</summary>
     internal static readonly Dictionary<Symbol, int>[] FreeCounts =
     [
-        Counts(wild: 0, lion: 3, elephant: 3, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 4, ten: 3, scatter: 1),
-        Counts(wild: 3, lion: 3, elephant: 3, rhino: 3, buffalo: 3, ace: 3, king: 3, queen: 4, jack: 3, ten: 3, scatter: 1),
-        Counts(wild: 3, lion: 3, elephant: 3, rhino: 3, buffalo: 3, ace: 3, king: 3, queen: 4, jack: 3, ten: 3, scatter: 1),
-        Counts(wild: 3, lion: 3, elephant: 3, rhino: 3, buffalo: 3, ace: 3, king: 3, queen: 4, jack: 3, ten: 3, scatter: 1),
-        Counts(wild: 0, lion: 3, elephant: 3, rhino: 3, buffalo: 3, ace: 4, king: 4, queen: 4, jack: 4, ten: 3, scatter: 1),
+        Counts(wild: 0, lion: 5, elephant: 5, rhino: 5, buffalo: 4, ace: 4, king: 2, queen: 3, jack: 4, ten: 3, scatter: 1),
+        Counts(wild: 7, lion: 5, elephant: 5, rhino: 4, buffalo: 3, ace: 2, king: 2, queen: 3, jack: 2, ten: 2, scatter: 1),
+        Counts(wild: 7, lion: 5, elephant: 5, rhino: 4, buffalo: 3, ace: 2, king: 2, queen: 3, jack: 2, ten: 2, scatter: 1),
+        Counts(wild: 7, lion: 5, elephant: 5, rhino: 4, buffalo: 3, ace: 2, king: 2, queen: 3, jack: 2, ten: 2, scatter: 1),
+        Counts(wild: 0, lion: 5, elephant: 5, rhino: 5, buffalo: 4, ace: 4, king: 2, queen: 3, jack: 4, ten: 3, scatter: 1),
     ];
 
-    public static GameDefinition Definition { get; } = new(
+    public static GameDefinition Definition { get; } = Build(BaseCounts, FreeCounts);
+
+    /// <summary>The game with other reel counts; the maths tool uses it to try strips while tuning.</summary>
+    public static GameDefinition Build(IReadOnlyList<IReadOnlyDictionary<Symbol, int>> baseCounts, IReadOnlyList<IReadOnlyDictionary<Symbol, int>> freeCounts) => new(
         GameId,
-        [.. BaseCounts.Select(Strip.Build)],
-        [.. FreeCounts.Select(Strip.Build)],
+        [.. baseCounts.Select(Strip.Build)],
+        [.. freeCounts.Select(Strip.Build)],
         Paylines,
         Pays,
         ScatterPays: [2, 10, 50],

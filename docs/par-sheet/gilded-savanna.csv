@@ -1,0 +1,44 @@
+section,key,value
+rtp,base,0.677109579411802
+rtp,feature,0.2828781734382496
+rtp,total,0.9599877528500517
+contribution,Ace:3,0.021338210638622162;0.0027919270701014516
+contribution,Ace:4,0.021676912394790766;0.00330895060160172
+contribution,Ace:5,0.01354807024674423;0.002068094126001075
+contribution,Buffalo:3,0.042676421277244324;0.006638326824200981
+contribution,Buffalo:4,0.04335382478958153;0.009078053776685104
+contribution,Buffalo:5,0.020322105370116344;0.0042553377078211425
+contribution,Elephant:3,0.05076160265203475;0.022059670677344802
+contribution,Elephant:4,0.04211900220050297;0.03561717661446297
+contribution,Elephant:5,0.015316000800182899;0.022978823622234173
+contribution,Jack:3,0.01015232053040695;0.0016751562420608708
+contribution,Jack:4,0.007260918897864486;0.00165447530080086
+contribution,Jack:5,0.004538074311165303;0.0010340470630005375
+contribution,King:3,0.021338210638622162;0.0013959635350507258
+contribution,King:4,0.016257684296093075;0.0013184100053256855
+contribution,King:5,0.010161052685058172;0.00038776764862520163
+contribution,Lion:3,0.06345200331504344;0.027574588346681007
+contribution,Lion:4,0.05615866960067063;0.04748956881928394
+contribution,Lion:5,0.02552666800030483;0.03829803937039028
+contribution,Queen:3,0.025605852766346592;0.0019914980472602946
+contribution,Queen:4,0.01828989483310471;0.0021063921653714656
+contribution,Queen:5,0.01828989483310471;0.0009574509842597571
+contribution,Rhino:3,0.05076160265203475;0.014481446136928824
+contribution,Rhino:4,0.036304594489322425;0.018289530121084186
+contribution,Rhino:5,0.018152297244661213;0.011799696852312375
+contribution,Scatter:3,0.009725437242798354;0.0010426641218588754
+contribution,Scatter:4,0.002210326646090535;0.00023696911860428987
+contribution,Scatter:5,0.00020093878600823046;2.1542647145844533E-05
+contribution,Ten:3,0.005076160265203475;0.0008375781210304354
+contribution,Ten:4,0.00449269356805365;0.0010237065923705323
+contribution,Ten:5,0.0020421334400243865;0.0004653211783502419
+base_strip,reel1,Queen Rhino Buffalo Ace King Jack Lion Elephant Ten Queen Scatter Rhino Buffalo Ace King Jack Queen Lion Elephant Ten Queen Rhino Buffalo Ace King Jack Queen Lion Elephant Ten Rhino Buffalo Ace King Jack Queen
+base_strip,reel2,Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Scatter Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild
+base_strip,reel3,Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Scatter Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild
+base_strip,reel4,Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Scatter Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild Lion Elephant Rhino Jack Ten Buffalo Ace King Queen Wild
+base_strip,reel5,Queen Rhino Buffalo Ace King Jack Lion Elephant Ten Queen Scatter Rhino Buffalo Ace King Jack Queen Lion Elephant Ten Queen Rhino Buffalo Ace King Jack Queen Lion Elephant Ten Rhino Buffalo Ace King Jack Queen
+free_strip,reel1,Lion Elephant Rhino Buffalo Ace Jack Queen Ten King Lion Elephant Rhino Buffalo Ace Jack Scatter Queen Lion Elephant Rhino Ten Buffalo Ace Jack Lion Elephant Rhino King Queen Ten Buffalo Ace Jack Lion Elephant Rhino
+free_strip,reel2,Wild Lion Elephant Rhino Buffalo Queen Ace Wild King Jack Ten Lion Elephant Wild Rhino Scatter Buffalo Lion Wild Elephant Queen Rhino Wild Lion Elephant Ace King Jack Wild Ten Buffalo Queen Rhino Lion Elephant Wild
+free_strip,reel3,Wild Lion Elephant Rhino Buffalo Queen Ace Wild King Jack Ten Lion Elephant Wild Rhino Scatter Buffalo Lion Wild Elephant Queen Rhino Wild Lion Elephant Ace King Jack Wild Ten Buffalo Queen Rhino Lion Elephant Wild
+free_strip,reel4,Wild Lion Elephant Rhino Buffalo Queen Ace Wild King Jack Ten Lion Elephant Wild Rhino Scatter Buffalo Lion Wild Elephant Queen Rhino Wild Lion Elephant Ace King Jack Wild Ten Buffalo Queen Rhino Lion Elephant Wild
+free_strip,reel5,Lion Elephant Rhino Buffalo Ace Jack Queen Ten King Lion Elephant Rhino Buffalo Ace Jack Scatter Queen Lion Elephant Rhino Ten Buffalo Ace Jack Lion Elephant Rhino King Queen Ten Buffalo Ace Jack Lion Elephant Rhino
