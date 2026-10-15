@@ -6,3 +6,5 @@ tests/
 .github/
 **/*.md
 !.packages/*.nupkg
+web/node_modules/
+web/dist/
