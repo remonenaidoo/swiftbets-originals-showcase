@@ -39,6 +39,6 @@ public sealed record SpinView(
 
 public sealed record RoundSummary(Guid RoundId, long Stake, long Paid, string Status, DateTimeOffset At);
 
-public sealed record GameInfo(string GameId, string Name, decimal Rtp, int MaxWinStakes, long[] Stakes, int Lines, IReadOnlyDictionary<string, int[]> Pays, int[] ScatterPays, int FreeSpins, int FreeSpinMultiplier, IReadOnlyList<int[]> Paylines);
+public sealed record GameInfo(string GameId, string Name, decimal Rtp, int MaxWinStakes, long[] Stakes, int Lines, IReadOnlyDictionary<string, int[]> Pays, int[] ScatterPays, int FreeSpins, int FreeSpinMultiplier, IReadOnlyList<int[]> Paylines, IReadOnlyList<IReadOnlyList<Symbol>> BaseReels, IReadOnlyList<IReadOnlyList<Symbol>> FreeReels);
 
 public sealed record StateView(long? Balance, SpinView? OpenFeature, IReadOnlyList<RoundSummary> Recent, GameInfo Info);

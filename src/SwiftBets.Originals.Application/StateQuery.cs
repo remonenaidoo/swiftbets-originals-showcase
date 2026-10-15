@@ -44,5 +44,7 @@ public sealed class StateQuery(IRoundStore store, IWallet wallet)
         game.ScatterPays,
         game.FreeSpinsAwarded,
         game.FreeSpinMultiplier,
-        game.Lines);
+        game.Lines,
+        game.BaseReels,
+        game.FreeReels);
 }

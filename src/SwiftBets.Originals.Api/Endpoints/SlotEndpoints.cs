@@ -10,6 +10,10 @@ namespace SwiftBets.Originals.Api.Endpoints;
 /// </summary>
 public static class SlotEndpoints
 {
+    public const string PagePolicy =
+        "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; " +
+        "connect-src 'self'; worker-src 'self' blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
+
     public sealed record SpinBody(string? Session, long Stake, string? Key);
 
     public sealed record NextBody(string? Session, Guid RoundId);
@@ -23,7 +27,11 @@ public static class SlotEndpoints
                 return Results.BadRequest("session is required");
             }
 
+            // The game page is HTML framed by the site, so it replaces the JSON API's baseline headers with its own:
+            // only its own scripts and styles, only this origin for data, framed only by the same origin.
             context.Response.Headers.CacheControl = "no-store";
+            context.Response.Headers.ContentSecurityPolicy = PagePolicy;
+            context.Response.Headers.XFrameOptions = "SAMEORIGIN";
             return Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html; charset=utf-8");
         }).AllowAnonymous();
 
