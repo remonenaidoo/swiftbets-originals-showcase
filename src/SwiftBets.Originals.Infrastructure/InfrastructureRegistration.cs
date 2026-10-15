@@ -15,7 +15,8 @@ public static class InfrastructureRegistration
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
         services.AddSingleton<IRoundStore, RoundStore>();
         services.AddHttpClient<IWallet, WalletClient>(http => http.Timeout = TimeSpan.FromSeconds(5));
-        services.AddHostedService<WinRetryJob>();
+        services.AddSingleton<SwiftBets.Originals.Application.RoundRecovery>();
+        services.AddHostedService<RecoveryJob>();
         return services;
     }
 }

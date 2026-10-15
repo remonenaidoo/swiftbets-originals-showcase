@@ -112,6 +112,57 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return result;
     }
 
+    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, Func<RoundRecord, int, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        await using var tx = await c.BeginTransactionAsync(cancellationToken);
+        var row = await c.QuerySingleOrDefaultAsync<RoundRow>(new CommandDefinition(
+            $"SELECT {RoundColumns} FROM originals.rounds WHERE round_id = @roundId FOR UPDATE", new { roundId }, tx, cancellationToken: cancellationToken));
+        if (row is null || row.player_ref != playerRef || row.status != RoundStatus.Feature || row.free_spins_left <= 0)
+        {
+            return null;
+        }
+
+        var round = row.ToRecord();
+        var seq = await c.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT count(*)::int FROM originals.spins WHERE round_id = @roundId", new { roundId }, tx, cancellationToken: cancellationToken));
+        var (spin, left, paidUnits) = play(round, seq);
+        await InsertSpinAsync(c, tx, spin, cancellationToken);
+        var status = left > 0 ? RoundStatus.Feature : RoundStatus.WinPending;
+        await c.ExecuteAsync(new CommandDefinition(
+            "UPDATE originals.rounds SET free_spins_left = @left, paid_units = @paidUnits, status = @status WHERE round_id = @roundId",
+            new { roundId, left, paidUnits, status }, tx, cancellationToken: cancellationToken));
+        await tx.CommitAsync(cancellationToken);
+        return (round with { FreeSpinsLeft = left, PaidUnits = paidUnits, Status = status }, spin);
+    }
+
+    public async Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        await c.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE originals.rounds SET status = 'settled', settled_at = now()
+            WHERE round_id = @roundId AND status = 'win_pending'
+              AND NOT EXISTS (SELECT 1 FROM originals.spins WHERE round_id = @roundId AND win > 0 AND NOT win_paid)
+            """, new { roundId }, cancellationToken: cancellationToken));
+    }
+
+    public async Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        await c.ExecuteAsync(new CommandDefinition(
+            "UPDATE originals.rounds SET rollback_pending = @pending WHERE round_id = @roundId", new { roundId, pending }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<IReadOnlyList<RoundRecord>> NeedingRollbackAsync(DateTimeOffset pendingBefore, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        var rows = await c.QueryAsync<RoundRow>(new CommandDefinition(
+            $"SELECT {RoundColumns} FROM originals.rounds WHERE (status = 'pending' AND created_at < @pendingBefore) OR rollback_pending ORDER BY created_at LIMIT 100",
+            new { pendingBefore }, cancellationToken: cancellationToken));
+        return [.. rows.Select(r => r.ToRecord())];
+    }
+
     private static Task<int> InsertSpinAsync(NpgsqlConnection c, NpgsqlTransaction? tx, SpinRecord spin, CancellationToken cancellationToken) =>
         c.ExecuteAsync(new CommandDefinition(
             """

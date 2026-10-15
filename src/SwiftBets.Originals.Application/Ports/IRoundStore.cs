@@ -47,6 +47,22 @@ public interface IRoundStore
 
     Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, int count, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Plays one free spin atomically: locks the round, checks it still has spins, lets <paramref name="play"/> draw
+    /// the spin at the next seq, stores it and the round's new spins-left and paid units, and commits. Null when the
+    /// round is not this player's or has no free spin left. Two concurrent calls therefore each consume a spin.
+    /// </summary>
+    Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, Func<RoundRecord, int, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
+
+    /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> when nothing is owed any more (one atomic statement).</summary>
+    Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken);
+
+    /// <summary>Records whether a voided round's rollback still needs the casino's confirmation.</summary>
+    Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken);
+
+    /// <summary>Rounds whose stake may have been taken and must be rolled back: stuck <c>pending</c> (a crash), or voided with an unconfirmed rollback.</summary>
+    Task<IReadOnlyList<RoundRecord>> NeedingRollbackAsync(DateTimeOffset pendingBefore, CancellationToken cancellationToken);
+
     /// <summary>Spins whose win is owed and not yet confirmed by the casino, oldest first.</summary>
     Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken);
 }

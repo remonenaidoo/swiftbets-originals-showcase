@@ -46,17 +46,25 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, RoundEngine e
         await store.InsertAsync(round, spin, cancellationToken);
 
         var bet = await wallet.BetAsync(request.SessionToken, Play.BetTx(roundId), roundId.ToString(), request.Stake, cancellationToken);
-        if (bet.Status == WalletStatus.Unreachable)
+        if (IsRefusal(bet.Status))
         {
-            await wallet.RollbackAsync(request.SessionToken, Play.RollbackTx(roundId), roundId.ToString(), Play.BetTx(roundId), cancellationToken);
-            await store.UpdateAsync(roundId, RoundStatus.Voided, 0, 0, cancellationToken);
-            return SpinError.WalletUnavailable;
+            await store.UpdateAsync(roundId, RoundStatus.Refused, 0, 0, cancellationToken);
+            return Play.Refusal(bet.Status);
         }
 
         if (bet.Status != WalletStatus.Ok)
         {
-            await store.UpdateAsync(roundId, RoundStatus.Refused, 0, 0, cancellationToken);
-            return Play.Refusal(bet.Status);
+            // No answer, or an answer that does not say the stake was refused: the stake may have been taken, so
+            // roll it back. Until the casino confirms, the round stays marked for RoundRecovery to retry.
+            await store.SetRollbackPendingAsync(roundId, true, cancellationToken);
+            await store.UpdateAsync(roundId, RoundStatus.Voided, 0, 0, cancellationToken);
+            var rollback = await wallet.RollbackAsync(request.SessionToken, Play.RollbackTx(roundId), roundId.ToString(), Play.BetTx(roundId), cancellationToken);
+            if (rollback.Status == WalletStatus.Ok)
+            {
+                await store.SetRollbackPendingAsync(roundId, false, cancellationToken);
+            }
+
+            return SpinError.WalletUnavailable;
         }
 
         balance = bet.Balance;
@@ -78,4 +86,8 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, RoundEngine e
         round = round with { Status = status, FreeSpinsLeft = freeSpins, PaidUnits = paidUnits };
         return Play.View(round, spin with { WinPaid = winPaid }, game, balance);
     }
+
+    /// <summary>Replies that say the casino did not take the stake.</summary>
+    private static bool IsRefusal(string status) =>
+        status is WalletStatus.InsufficientFunds or WalletStatus.LimitExceeded or WalletStatus.AccountRestricted or WalletStatus.SessionInvalid;
 }

@@ -22,7 +22,7 @@
     <RepositoryUrl>https://github.com/remonenaidoo/swiftbets-originals</RepositoryUrl>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
-    <NoWarn>$(NoWarn);CA1707;CA2201;CA1861</NoWarn>
+    <NoWarn>$(NoWarn);CA1707;CA2201;CA1861;CA1001</NoWarn>
   </PropertyGroup>
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />

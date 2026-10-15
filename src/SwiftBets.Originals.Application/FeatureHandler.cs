@@ -6,6 +6,8 @@ namespace SwiftBets.Originals.Application;
 /// <summary>
 /// One free spin of an open feature: no stake; its win (×2, under the round's cap) is paid as it lands. 3+ Scatters
 /// add spins; the feature ends when the spins run out or the cap is reached (remaining spins are forfeited).
+/// The spin is drawn and the round updated inside one locked transaction, so concurrent requests each consume a
+/// spin and the cap is always checked against the true total; the win is paid after the commit.
 /// </summary>
 public sealed class FeatureHandler(IRoundStore store, IWallet wallet, RoundEngine engine)
 {
@@ -18,52 +20,46 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, RoundEngin
             return error;
         }
 
-        var round = await store.GetAsync(roundId, cancellationToken);
-        if (round is null || round.PlayerRef != playerRef)
+        SpinOutcome? outcome = null;
+        var capped = false;
+        var claim = await store.ClaimFreeSpinAsync(roundId, playerRef!, (round, seq) =>
         {
-            return SpinError.RoundNotFound;
+            outcome = engine.PlaySpin(free: true);
+            var (paidUnits, reached) = Cap.Apply(round.PaidUnits, outcome.TotalUnits, game.CapUnits);
+            capped = reached;
+            var win = Play.Money(paidUnits, round.Stake, game.LineCount);
+            var left = reached ? 0 : round.FreeSpinsLeft - 1 + (outcome.TriggersFeature ? game.FreeSpinsAwarded : 0);
+            var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
+            return (spin, left, round.PaidUnits + paidUnits);
+        }, cancellationToken);
+
+        if (claim is not { } claimed)
+        {
+            var round = await store.GetAsync(roundId, cancellationToken);
+            return round is null || round.PlayerRef != playerRef ? SpinError.RoundNotFound : SpinError.NoFeature;
         }
 
-        if (round.Status != RoundStatus.Feature || round.FreeSpinsLeft <= 0)
-        {
-            return SpinError.NoFeature;
-        }
-
-        var seq = (await store.SpinsAsync(roundId, cancellationToken)).Count;
-        var outcome = engine.PlaySpin(free: true);
-        var (paidUnits, capped) = Cap.Apply(round.PaidUnits, outcome.TotalUnits, game.CapUnits);
-        var win = Play.Money(paidUnits, round.Stake, game.LineCount);
-        var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
-        try
-        {
-            await store.InsertSpinAsync(spin, cancellationToken);
-        }
-        catch (Exception e) when (e is not OperationCanceledException)
-        {
-            // Another request played this spin first (a double tap): the caller re-reads state.
-            return SpinError.FeatureInProgress;
-        }
-
+        var (updated, played) = claimed;
         var winPaid = true;
-        if (win > 0)
+        if (played.Win > 0)
         {
-            var paid = await wallet.WinAsync(round.SessionToken, Play.WinTx(roundId, seq), roundId.ToString(), win, cancellationToken);
+            var paid = await wallet.WinAsync(updated.SessionToken, played.WinTx!, roundId.ToString(), played.Win, cancellationToken);
             winPaid = paid.Status == WalletStatus.Ok;
             if (winPaid)
             {
                 balance = paid.Balance;
-                await store.MarkWinPaidAsync(roundId, seq, cancellationToken);
+                await store.MarkWinPaidAsync(roundId, played.Seq, cancellationToken);
             }
         }
 
-        var left = capped ? 0 : round.FreeSpinsLeft - 1 + (outcome.TriggersFeature ? game.FreeSpinsAwarded : 0);
-        var owed = (await store.SpinsAsync(roundId, cancellationToken)).Any(s => s.Win > 0 && !s.WinPaid);
-        var status = left > 0 ? RoundStatus.Feature : owed ? RoundStatus.WinPending : RoundStatus.Settled;
-        var total = round.PaidUnits + paidUnits;
-        await store.UpdateAsync(roundId, status, left, total, cancellationToken);
-        return Play.View(round with { Status = status, FreeSpinsLeft = left, PaidUnits = total }, spin with { WinPaid = winPaid }, game, balance) with
+        if (updated.FreeSpinsLeft == 0)
         {
-            FeatureTriggered = outcome.TriggersFeature,
+            await store.SettleIfPaidAsync(roundId, cancellationToken);
+        }
+
+        return Play.View(updated, played with { WinPaid = winPaid }, game, balance) with
+        {
+            FeatureTriggered = outcome!.TriggersFeature && !capped,
             CapReached = capped,
         };
     }

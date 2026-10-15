@@ -79,3 +79,55 @@ public sealed class SpinHandlerTests
         result.Error!.Http.ShouldBe(401);
     }
 }
+
+public sealed class FeatureAndRecoveryTests
+{
+    private readonly FakeWallet wallet = new();
+    private readonly FakeStore store = new();
+    private readonly RoundEngine engine = new(GildedSavanna.Definition, n => 0);
+
+    private async Task<RoundRecord> OpenFeature(int left)
+    {
+        var round = new RoundRecord(Guid.NewGuid(), "player-1", "s", GildedSavanna.GameId, 100, "k0", RoundStatus.Feature, left, 0, DateTimeOffset.UtcNow);
+        await store.InsertAsync(round, new SpinRecord(round.RoundId, 0, [0, 0, 0, 0, 0], "{}", 0, null, null, true), CancellationToken.None);
+        return round;
+    }
+
+    [Fact]
+    public async Task Two_concurrent_free_spins_each_consume_a_spin()
+    {
+        var round = await OpenFeature(5);
+        wallet.WinDelay = TimeSpan.FromMilliseconds(200);
+        var handler = new FeatureHandler(store, wallet, engine);
+
+        await Task.WhenAll(handler.NextAsync("s", round.RoundId, CancellationToken.None), handler.NextAsync("s", round.RoundId, CancellationToken.None));
+
+        store.Rounds[round.RoundId].FreeSpinsLeft.ShouldBe(3);
+        store.Spins.Count(s => s.RoundId == round.RoundId).ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task An_ambiguous_bet_reply_is_rolled_back()
+    {
+        wallet.Replies["bet"] = "wallet_unavailable";
+
+        await new SpinHandler(store, wallet, engine, TimeProvider.System).SpinAsync(new SpinRequest("s", 100, "k1"), CancellationToken.None);
+
+        var r = store.Rounds.Values.Single();
+        r.Status.ShouldBe(RoundStatus.Voided);
+        wallet.Calls.ShouldContain(c => c.Action == "rollback");
+    }
+
+    [Fact]
+    public async Task Recovery_rolls_back_a_round_left_pending_by_a_crash()
+    {
+        var stuck = new RoundRecord(Guid.NewGuid(), "player-1", "s", GildedSavanna.GameId, 100, "k9", RoundStatus.Pending, 0, 0, DateTimeOffset.UtcNow.AddMinutes(-10));
+        await store.InsertAsync(stuck, new SpinRecord(stuck.RoundId, 0, [0, 0, 0, 0, 0], "{}", 0, $"{stuck.RoundId}:bet", null, false), CancellationToken.None);
+
+        await new RoundRecovery(store, wallet, TimeProvider.System).RunOnceAsync(CancellationToken.None);
+
+        store.Rounds[stuck.RoundId].Status.ShouldBe(RoundStatus.Voided);
+        store.RollbackPending.ShouldNotContain(stuck.RoundId);
+        wallet.Calls.ShouldContain(c => c.Action == "rollback" && c.Reference == $"{stuck.RoundId}:bet");
+    }
+}

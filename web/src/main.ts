@@ -1,5 +1,5 @@
 import 'pixi.js/unsafe-eval'; // PixiJS without eval, so the page runs under a strict CSP.
-import { api, describe, rand, type GameInfo, type SpinView, type Sym } from './api';
+import { api, ApiError, describe, rand, type GameInfo, type SpinView, type Sym } from './api';
 import { sound } from './audio';
 import { Scene } from './scene';
 import { close, open, renderHistory, renderRules } from './sheets';
@@ -128,11 +128,23 @@ async function spinOnce(): Promise<boolean> {
   setWin(0);
   spinReels();
   let view: SpinView;
+  const key = crypto.randomUUID();
   try {
-    view = await api.spin(stake(), crypto.randomUUID());
+    try {
+      view = await api.spin(stake(), key);
+    } catch (e) {
+      // A dropped connection may have lost the reply, not the spin: ask again with the same key (the server returns the same round).
+      if (!(e instanceof ApiError) || e.code !== 'network') throw e;
+      await sleep(1200);
+      view = await api.spin(stake(), key);
+    }
   } catch (e) {
     await abortSpin(info.baseReels);
-    toast(describe(e));
+    if (e instanceof ApiError && e.code === 'feature_in_progress') {
+      await resumeFeature();
+    } else {
+      toast(describe(e));
+    }
     busy = false;
     refreshControls();
     return false;
@@ -151,6 +163,7 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
   const banner = $('feature');
   let left = view.freeSpinsLeft;
   let won = 0;
+  let interrupted = false;
   sound.feature();
   scene.coins(50);
   await overlay(`${left} FREE SPINS`, '', `Every win ×${info.freeSpinMultiplier}`, 'START', auto ? 2500 : undefined);
@@ -171,6 +184,7 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
     } catch (e) {
       await abortSpin(info.freeReels);
       toast(`${describe(e)} Your free spins are saved; reopen the game to continue.`);
+      interrupted = true;
       break;
     }
     await landReels(next.stops, info.freeReels);
@@ -188,6 +202,10 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
   banner.style.display = 'none';
   window.removeEventListener('resize', position);
   scene.setFeatureMood(false);
+  if (interrupted) {
+    scene.reels.setStrips(info.baseReels, info.baseReels.map((s) => Math.floor(Math.random() * s.length)));
+    return;
+  }
   const total = alreadyWon + won;
   scene.coins(80);
   sound.big();
@@ -258,6 +276,27 @@ function setupControls() {
   }, 1000);
 }
 
+/** Plays the player's unfinished free spins, at the stake of the spin that triggered them. */
+async function playOpenFeature(state: { openFeature: SpinView | null; recent: { roundId: string; stake: number }[] }) {
+  const open = state.openFeature;
+  if (!open) return;
+  const st = state.recent.find((r) => r.roundId === open.roundId)?.stake ?? stake();
+  await playFeature(open, st, open.roundPaid);
+}
+
+/** The server says free spins are unfinished (e.g. a reply was lost): fetch them and play them. */
+async function resumeFeature() {
+  try {
+    const state = await api.state();
+    if (state.openFeature) {
+      toast('You have free spins to finish first.');
+      await playOpenFeature(state);
+    }
+  } catch (e) {
+    toast(describe(e));
+  }
+}
+
 async function boot() {
   const bar = document.querySelector<HTMLElement>('#loader .bar i')!;
   if (!api.hasSession()) {
@@ -279,8 +318,7 @@ async function boot() {
     busy = true;
     refreshControls();
     toast('Welcome back. Your free spins are waiting.');
-    const st = state.recent.find((r) => r.roundId === state.openFeature!.roundId)?.stake ?? stake();
-    await playFeature(state.openFeature, st, state.openFeature.roundPaid);
+    await playOpenFeature(state);
     busy = false;
     refreshControls();
   }
