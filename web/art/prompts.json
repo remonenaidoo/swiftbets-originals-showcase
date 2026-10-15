@@ -1,0 +1,87 @@
+{
+  "style": "Premium modern casino slot game art, polished painterly 3D render, rich polished gold with turquoise and deep teal accents, warm African sunset palette of amber, orange and magenta, soft rim lighting, crisp edges, high detail, vibrant, original design, no watermark, no brand logos",
+  "items": {
+    "concept-sheet": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Game art concept sheet for an original South African savanna-themed video slot called Gilded Savanna, laid out on a neutral dark presentation board: a row of four premium symbols (a majestic lion head, an elephant head, a black rhino head and a cape buffalo head, each inside an ornate round gold medallion set with turquoise gems), a row of five low symbols (the card ranks A, K, Q, J and 10 as chunky carved gold letters with small savanna leaf ornaments, each a different jewel colour: ruby, emerald, sapphire, amethyst, amber), a glowing golden king protea flower as the wild symbol, a lone baobab tree at sunset inside a glowing circular emblem as the scatter symbol, an ornate gold and teal reel frame, and a sunset savanna background with acacia trees"
+    },
+    "lion": {
+      "prompt": "A single slot machine symbol: a majestic male lion head with a flowing golden mane, facing forward, inside an ornate round polished gold medallion frame set with small turquoise gems, centered, isolated on a plain flat solid black background, no text"
+    },
+    "elephant": {
+      "prompt": "A single slot machine symbol: an African elephant head with large ears and ivory tusks, facing forward, inside an ornate round polished gold medallion frame set with small turquoise gems, centered, isolated on a plain flat solid black background, no text"
+    },
+    "rhino": {
+      "prompt": "A single slot machine symbol: a black rhinoceros head with two horns, three-quarter view, inside an ornate round polished gold medallion frame set with small turquoise gems, centered, isolated on a plain flat solid black background, no text"
+    },
+    "buffalo": {
+      "prompt": "A single slot machine symbol: a cape buffalo head with heavy curved horns, facing forward, inside an ornate round polished gold medallion frame set with small turquoise gems, centered, isolated on a plain flat solid black background, no text"
+    },
+    "ace": {
+      "prompt": "A single slot machine symbol: the capital letter A as a chunky carved polished gold letter inlaid with deep ruby red gemstone, with a small golden acacia leaf ornament, centered, isolated on a plain flat solid black background, only the single letter A"
+    },
+    "king": {
+      "prompt": "A single slot machine symbol: the capital letter K as a chunky carved polished gold letter inlaid with deep emerald green gemstone, with a small golden acacia leaf ornament, centered, isolated on a plain flat solid black background, only the single letter K"
+    },
+    "queen": {
+      "prompt": "A single slot machine symbol: the capital letter Q as a chunky carved polished gold letter inlaid with deep sapphire blue gemstone, with a small golden acacia leaf ornament, centered, isolated on a plain flat solid black background, only the single letter Q"
+    },
+    "jack": {
+      "prompt": "A single slot machine symbol: the capital letter J as a chunky carved polished gold letter inlaid with deep purple amethyst gemstone, with a small golden acacia leaf ornament, centered, isolated on a plain flat solid black background, only the single letter J"
+    },
+    "ten": {
+      "prompt": "A single slot machine symbol: the number 10 as chunky carved polished gold numerals inlaid with warm amber orange gemstone, with a small golden acacia leaf ornament, centered, isolated on a plain flat solid black background, only the number 10"
+    },
+    "wild": {
+      "prompt": "A single slot machine wild symbol: a glowing king protea flower (Protea cynaroides), the South African national flower, a large goblet-shaped bloom of spiky pointed pink and cream bracts around a fuzzy silvery-white dome centre, gilded petal edges, radiant golden light rays and sparkles behind it, centered, isolated on a plain flat solid black background, no text"
+    },
+    "scatter": {
+      "prompt": "A single slot machine scatter symbol: a lone majestic baobab tree silhouetted against a blazing orange and magenta sunset, inside a glowing circular gold emblem with a turquoise gem ring, centered, isolated on a plain flat solid black background, no text"
+    },
+    "bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "Background painting for a mobile slot game: a vast South African savanna at golden sunset, silhouetted acacia and baobab trees, warm haze, distant mountains, soft bokeh light particles, darker and calmer in the middle so game reels can sit on top, no animals in the centre, no text"
+    },
+    "bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Background painting for a desktop slot game: a vast South African savanna at golden sunset, silhouetted acacia and baobab trees on the left and right edges, warm haze, distant mountains, soft bokeh light particles, darker and calmer in the centre so game reels can sit on top, no animals in the centre, no text"
+    },
+    "logo": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Game logo wordmark. The word GILDED on the first line and the word SAVANNA on the second line, spelled exactly G-I-L-D-E-D and S-A-V-A-N-N-A, bold ornate polished gold 3D lettering with turquoise gem accents, a subtle sunset glow behind, centered, isolated on a plain flat solid black background, no other text"
+    },
+    "cover": {
+      "prompt": "Square casino lobby game thumbnail: a majestic male lion with a golden mane in front of a blazing savanna sunset with a baobab tree, golden king protea flowers in the foreground, rich cinematic lighting, vibrant, leave the bottom quarter darker for a title, no text"
+    },
+    "logo0": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Game logo wordmark. The word GILDED on the first line and the word SAVANNA on the second line, spelled exactly G-I-L-D-E-D and S-A-V-A-N-N-A, bold ornate polished gold 3D lettering with turquoise gem accents, a subtle sunset glow behind, centered, isolated on a plain flat solid black background, no other text",
+      "seed": 11
+    },
+    "logo1": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Game logo wordmark. The word GILDED on the first line and the word SAVANNA on the second line, spelled exactly G-I-L-D-E-D and S-A-V-A-N-N-A, bold ornate polished gold 3D lettering with turquoise gem accents, a subtle sunset glow behind, centered, isolated on a plain flat solid black background, no other text",
+      "seed": 23
+    },
+    "logo2": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Game logo wordmark. The word GILDED on the first line and the word SAVANNA on the second line, spelled exactly G-I-L-D-E-D and S-A-V-A-N-N-A, bold ornate polished gold 3D lettering with turquoise gem accents, a subtle sunset glow behind, centered, isolated on a plain flat solid black background, no other text",
+      "seed": 47
+    },
+    "wild0": {
+      "prompt": "A single slot machine wild symbol: a glowing king protea flower (Protea cynaroides), the South African national flower, a large goblet-shaped bloom of spiky pointed pink and cream bracts around a fuzzy silvery-white dome centre, gilded petal edges, radiant golden light rays and sparkles behind it, centered, isolated on a plain flat solid black background, no text",
+      "seed": 5
+    },
+    "wild1": {
+      "prompt": "A single slot machine wild symbol: a glowing king protea flower (Protea cynaroides), the South African national flower, a large goblet-shaped bloom of spiky pointed pink and cream bracts around a fuzzy silvery-white dome centre, gilded petal edges, radiant golden light rays and sparkles behind it, centered, isolated on a plain flat solid black background, no text",
+      "seed": 19
+    }
+  }
+}
