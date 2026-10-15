@@ -12,4 +12,7 @@
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../docs/par-sheet/gilded-savanna.md" CopyToOutputDirectory="PreserveNewest" Link="gilded-savanna.md" />
+  </ItemGroup>
 </Project>

@@ -29,6 +29,9 @@ switch (command)
         ParSheet.Write(game, Rtp.Compute(game), ParSheet.ReadSimulation(args), "docs/par-sheet/gilded-savanna.md", "docs/par-sheet/gilded-savanna.csv");
         Console.WriteLine($"wrote docs/par-sheet/gilded-savanna.md and .csv [{clock.Elapsed.TotalSeconds:F1}s]");
         return 0;
+    case "simulate":
+        var spins = Array.IndexOf(args, "--spins") is var i and >= 0 ? long.Parse(args[i + 1], CultureInfo.InvariantCulture) : 1_000_000_000;
+        return Simulate.Run(game, spins, "docs/par-sheet/simulation.json");
     default:
         Console.Error.WriteLine("usage: rtp | par [--with-simulation file] | simulate --spins N");
         return 2;
