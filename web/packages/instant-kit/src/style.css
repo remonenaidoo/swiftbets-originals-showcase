@@ -10,7 +10,7 @@ button:disabled { opacity: .4; cursor: default; }
 
 /* Phones: the stage fills what the panel leaves. Wide screens: the panel is a column on the right. */
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
-#stage { position: relative; flex: 1; min-height: 0; }
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #panel { flex: none; min-width: 0; overflow: hidden; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); display: grid; gap: 8px;
   background: linear-gradient(180deg, rgba(8, 12, 22, .2), var(--panel) 18%); border-top: 1px solid var(--line); }
