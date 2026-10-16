@@ -141,6 +141,23 @@ def mines_art():
 
 crash, mines = crash_art, mines_art
 
+def slot_cover(game, hero, size=340):
+    """A slot's cover: its backdrop, its hero symbol, its logo across the bottom."""
+    def make():
+        b = Image.open(f'{A}/{game}/bg-portrait.jpg').convert('RGBA')
+        b = b.resize((S, int(b.height * S / b.width)), Image.LANCZOS)
+        top = max(0, (b.height - S) // 2)
+        im = b.crop((0, top, S, top + S))
+        im.alpha_composite(Image.new('RGBA', im.size, (0, 0, 0, 70)))
+        h = Image.open(f'{A}/{game}/symbols/{hero}.webp'); h.thumbnail((size, size), Image.LANCZOS)
+        im.alpha_composite(h, ((S - h.width) // 2, 70))
+        band = Image.new('RGBA', im.size); ImageDraw.Draw(band).rectangle((0, 380, S, S), fill=(0, 0, 0, 150))
+        im.alpha_composite(band.filter(ImageFilter.GaussianBlur(30)))
+        logo = Image.open(f'{A}/{game}/logo.webp'); logo.thumbnail((540, 200), Image.LANCZOS)
+        im.alpha_composite(logo, ((S - logo.width) // 2, S - logo.height - 22))
+        return im.convert('RGB')
+    return make
+
 def hero(game, sprite, title_text, colour, size=330, at=(0.5, 0.42), bg='bg-portrait.jpg', darken=0, pegs=False, layers=False):
     """A cover from a game's backdrop and its key sprite, title at the bottom."""
     def make():
@@ -202,7 +219,10 @@ for name, make in [('crash', crash), ('mines', mines),
                    ('limbo', hero('limbo', 'comet.webp', 'LIMBO', (255, 194, 77), 400, (0.5, 0.4), darken=150, layers=True)),
                    ('peg-drop', hero('peg-drop', 'ball.webp', 'PEG DROP', (255, 179, 71), 120, (0.53, 0.2), darken=60, pegs=True)),
                    ('towers', hero('towers', 'snake.webp', 'TOWERS', (255, 194, 77), 300)),
-                   ('keno', keno_art)]:
+                   ('keno', keno_art),
+                   ('cape-point-ways', slot_cover('cape-point-ways', 'shark')),
+                   ('highveld-hold', slot_cover('highveld-hold', 'coin', 300)),
+                   ('kalahari-gems', slot_cover('kalahari-gems', 'sunstone', 300))]:
     os.makedirs(f'{OUT}/{name}', exist_ok=True)
     make().save(f'{OUT}/{name}/cover.jpg', quality=88)
     print('wrote', name)
