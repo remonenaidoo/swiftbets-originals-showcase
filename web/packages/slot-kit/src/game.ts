@@ -119,7 +119,7 @@ async function bigWin(win: number, st: number) {
 }
 
 /** Shows what the server decided: winning lines, scatters, the win count-up and any celebration. */
-async function present(view: SpinView, strips: Sym[][], st: number, balanceBefore: number | null) {
+async function present(view: SpinView, strips: Sym[][], st: number, balanceBefore: number | null, inFeature = false) {
   const win = windowOf(strips, view.stops, view.locked);
   const scatterCells: [number, number][] = [];
   win.forEach((col, reel) => col.forEach((s, row) => { if (isScatter(s)) scatterCells.push([reel, row]); }));
@@ -129,7 +129,8 @@ async function present(view: SpinView, strips: Sym[][], st: number, balanceBefor
     if (view.win > 0 && view.win < st * 10) scene.coins(Math.min(40, 6 + Math.round((view.win / st) * 6)));
     const shown = scene.showWins(info, view.lines, scatterPays ? scatterCells : [], sp().pulse);
     await Promise.all([shown, setWin(view.win, true, balanceBefore)]);
-    await bigWin(view.win, st);
+    // With locks nearly every free spin is big; a locking feature celebrates once, with its total.
+    if (!(inFeature && info.lockSplits)) await bigWin(view.win, st);
   } else {
     setWin(0);
     setBalance(view.balance);
@@ -253,7 +254,7 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
     await landReels(next.stops, info.freeReels);
     scene.setLocks(next.locked);
     refreshControls();
-    await present(next, info.freeReels, st, beforeWin(next));
+    await present(next, info.freeReels, st, beforeWin(next), true);
     setBalance(next.balance);
     won += next.win;
     $('fs-won').textContent = rand(won);
@@ -267,6 +268,7 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
   banner.style.display = 'none';
   window.removeEventListener('resize', position);
   scene.setFeatureMood(false);
+  scene.clearWins();
   scene.setLocks([]);
   if (interrupted) {
     scene.reels.setStrips(info.baseReels, info.baseReels.map((s) => Math.floor(Math.random() * s.length)));
