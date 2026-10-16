@@ -19,7 +19,7 @@ public sealed record MinesInfo(string GameId, string Name, decimal Rtp, int MaxW
 
 public sealed record CrashInfo(string GameId, string Name, decimal Rtp, int MaxWinStakes, long[] Stakes, long MinAutoBp, double Rate, int BettingSeconds);
 
-public sealed record CrashState(long? Balance, CrashPublic? Round, CrashBetView? Bet, IReadOnlyList<long> History, IReadOnlyList<RoundSummary> Recent, CrashInfo Info);
+public sealed record CrashState(long? Balance, CrashPublic? Round, IReadOnlyList<CrashBetView> Bets, IReadOnlyList<BetPublic> Board, IReadOnlyList<long> History, IReadOnlyList<RoundSummary> Recent, CrashInfo Info);
 
 public sealed record MinesState(long? Balance, MinesView? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, MinesInfo Info);
 
@@ -40,7 +40,8 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         return new CrashState(
             balance,
             crash.Public(),
-            await crash.OpenBetAsync(playerRef!, balance, cancellationToken),
+            await crash.PlayerBetsAsync(playerRef!, balance, cancellationToken),
+            crash.Board(),
             await crash.HistoryAsync(cancellationToken),
             [.. recent.Where(r => r.Status != RoundStatus.Open).Select(r => new RoundSummary(r.RoundId, r.Stake, r.PaidUnits, r.Status, r.CreatedAt))],
             CrashInfo);

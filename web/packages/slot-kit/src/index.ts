@@ -5,3 +5,7 @@ export { startSlot } from './game';
 export { imageArt, placeholderArt, assetUrl, type TileSpec } from './art';
 export type { SlotConfig } from './config';
 export type { GameInfo } from './api';
+// Shared with the instant games.
+export { sound } from './audio';
+export { Tweens, ease } from './tweens';
+export { rand } from './api';

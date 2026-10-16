@@ -15,7 +15,8 @@ public sealed record CrashBetView(Guid RoundId, Guid Table, long Stake, long? Au
 /// </summary>
 public sealed record CrashPublic(Guid Id, long Seq, string SeedHash, string Phase, DateTimeOffset BettingUntil, DateTimeOffset ServerNow, double Rate, long? PointBp, string? Seed);
 
-public sealed record CashoutPublic(Guid Table, string Player, long Bp);
+/// <summary>A bet in the shared round as every viewer sees it: a tag (not the bet's id), the masked player, the stake, and its cash-out once made.</summary>
+public sealed record BetPublic(Guid Table, string Tag, string Player, long Stake, long? CashedBp, long? Win);
 
 /// <summary>
 /// The shared Crash round: betting (7 s), flying until the crash point, crashed, then a pause and the next round.
@@ -27,17 +28,31 @@ public sealed record CashoutPublic(Guid Table, string Player, long Bp);
 public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wallet, ICrashBroadcast broadcast, TimeProvider time, Func<string> newSeed) : IDisposable
 {
     public static readonly TimeSpan SettleGrace = TimeSpan.FromSeconds(1);
+
+    /// <summary>A player may hold two bets in one round (two bet panels), each with its own stake and auto cash-out.</summary>
+    public const int MaxBetsPerPlayer = 2;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly SemaphoreSlim gate = new(1, 1);
     private volatile CrashRound? current;
     private bool settled;
     private DateTimeOffset lastSync;
+    private readonly Dictionary<Guid, BetPublic> board = [];
+    private readonly Lock boardLock = new();
 
     public CrashRound? Current => current;
 
     public void Dispose() => gate.Dispose();
 
     public CrashPublic? Public() => current is { } r ? ToPublic(r, time.GetUtcNow()) : null;
+
+    /// <summary>The current round's bets for every viewer, newest first.</summary>
+    public IReadOnlyList<BetPublic> Board()
+    {
+        lock (boardLock)
+        {
+            return [.. board.Values.Reverse()];
+        }
+    }
 
     public async Task OpenBettingAsync(CancellationToken cancellationToken)
     {
@@ -47,6 +62,11 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         await crashes.InsertAsync(round, cancellationToken);
         current = round;
         settled = false;
+        lock (boardLock)
+        {
+            board.Clear();
+        }
+
         await broadcast.PublishAsync("round", ToPublic(round, time.GetUtcNow()), cancellationToken);
     }
 
@@ -94,7 +114,7 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
                 return SpinError.BettingClosed;
             }
 
-            if (await store.FindOpenAsync(playerRef!, Crash.GameId, cancellationToken) is not null)
+            if ((await crashes.PlayerBetsAsync(table.Id, playerRef!, cancellationToken)).Count >= MaxBetsPerPlayer)
             {
                 return SpinError.RoundInProgress;
             }
@@ -110,6 +130,13 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
             }
 
             await store.UpdateAsync(roundId, RoundStatus.Open, 0, 0, cancellationToken);
+            var shown = new BetPublic(table.Id, Tag(roundId), Mask(playerRef!), request.Stake, null, null);
+            lock (boardLock)
+            {
+                board[roundId] = shown;
+            }
+
+            await broadcast.PublishAsync("bet", shown, cancellationToken);
             return new CrashBetView(roundId, table.Id, request.Stake, request.AutoBp, "open", null, 0, balance);
         }
         finally
@@ -256,9 +283,22 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
     public async Task<IReadOnlyList<long>> HistoryAsync(CancellationToken cancellationToken) =>
         [.. (await crashes.HistoryAsync(20, cancellationToken)).Select(r => r.PointBp)];
 
-    public async Task<CrashBetView?> OpenBetAsync(string playerRef, long? balance, CancellationToken cancellationToken) =>
-        await store.FindOpenAsync(playerRef, Crash.GameId, cancellationToken) is { } round && await crashes.BetAsync(round.RoundId, cancellationToken) is { } bet
-            ? await ViewAsync(bet, balance, cancellationToken) : null;
+    /// <summary>This player's bets in the current round, to resume both bet panels after a reload.</summary>
+    public async Task<IReadOnlyList<CrashBetView>> PlayerBetsAsync(string playerRef, long? balance, CancellationToken cancellationToken)
+    {
+        if (current is not { } table)
+        {
+            return [];
+        }
+
+        var views = new List<CrashBetView>();
+        foreach (var bet in await crashes.PlayerBetsAsync(table.Id, playerRef, cancellationToken))
+        {
+            views.Add(await ViewAsync(bet, balance, cancellationToken));
+        }
+
+        return views;
+    }
 
     /// <summary>Pays a bet at <paramref name="bp"/> in one locked step; not paid when it was no longer open. The balance is null when the casino did not answer.</summary>
     private async Task<(bool Paid, long? Balance)> PayAtAsync(CrashBetRecord bet, long bp, CancellationToken cancellationToken)
@@ -272,7 +312,16 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         }
 
         var balance = await Stake.PayAsync(store, wallet, round, spin, null, cancellationToken);
-        await broadcast.PublishAsync("cashout", new CashoutPublic(bet.Table, Mask(r.PlayerRef), bp), cancellationToken);
+        var shown = new BetPublic(bet.Table, Tag(r.RoundId), Mask(r.PlayerRef), r.Stake, bp, win);
+        lock (boardLock)
+        {
+            if (current?.Id == bet.Table)
+            {
+                board[r.RoundId] = shown;
+            }
+        }
+
+        await broadcast.PublishAsync("cashout", shown, cancellationToken);
         return (true, balance);
     }
 
@@ -292,6 +341,9 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
     }
 
     private static string Mask(string playerRef) => $"Player {playerRef[^4..].ToUpperInvariant()}";
+
+    /// <summary>A bet's public tag: enough to match its cash-out in the list, nothing to act on it with.</summary>
+    private static string Tag(Guid roundId) => Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(roundId.ToByteArray()))[..10];
 
     private static CrashPublic ToPublic(CrashRound r, DateTimeOffset now)
     {

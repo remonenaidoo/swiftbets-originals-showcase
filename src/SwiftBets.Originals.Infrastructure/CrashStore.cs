@@ -73,6 +73,24 @@ public sealed class CrashStore(NpgsqlDataSource db, IRoundStore rounds) : ICrash
         return row.table_round is { } table && await rounds.GetAsync(roundId, cancellationToken) is { } round ? new CrashBetRecord(round, table, row.auto_bp) : null;
     }
 
+    public async Task<IReadOnlyList<CrashBetRecord>> PlayerBetsAsync(Guid table, string playerRef, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        var rows = await c.QueryAsync<(Guid round_id, long? auto_bp)>(new CommandDefinition(
+            "SELECT round_id, auto_bp FROM originals.rounds WHERE table_round = @table AND player_ref = @playerRef AND status <> 'refused' ORDER BY created_at",
+            new { table, playerRef }, cancellationToken: cancellationToken));
+        var bets = new List<CrashBetRecord>();
+        foreach (var (id, auto) in rows)
+        {
+            if (await rounds.GetAsync(id, cancellationToken) is { } round)
+            {
+                bets.Add(new CrashBetRecord(round, table, auto));
+            }
+        }
+
+        return bets;
+    }
+
     private async Task<IReadOnlyList<CrashRound>> QueryAsync(string sql, object? args, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);

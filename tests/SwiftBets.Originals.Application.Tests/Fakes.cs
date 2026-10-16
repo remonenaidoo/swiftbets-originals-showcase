@@ -209,6 +209,10 @@ public sealed class FakeCrashStore(FakeStore? rounds = null) : ICrashStore
     public Task<IReadOnlyList<CrashBetRecord>> OpenBetsAsync(Guid table, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && Store.Rounds[b.Key].Status == RoundStatus.Open).Select(b => new CrashBetRecord(Store.Rounds[b.Key], b.Value.Table, b.Value.Auto))]);
 
+    public Task<IReadOnlyList<CrashBetRecord>> PlayerBetsAsync(Guid table, string playerRef, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && Store.Rounds[b.Key].PlayerRef == playerRef && Store.Rounds[b.Key].Status != RoundStatus.Refused)
+            .Select(b => new CrashBetRecord(Store.Rounds[b.Key], b.Value.Table, b.Value.Auto))]);
+
     public Task<CrashBetRecord?> BetAsync(Guid roundId, CancellationToken cancellationToken) =>
         Task.FromResult(Bets.TryGetValue(roundId, out var b) ? new CrashBetRecord(Store.Rounds[roundId], b.Table, b.Auto) : null);
 }

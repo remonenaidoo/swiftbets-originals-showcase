@@ -1,0 +1,9 @@
+{
+  "name": "@originals/instant-kit",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The shared SwiftBets Originals instant-game client: the shell (balance, stake, action button, history, rules, fairness), the API and round verification.",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "pixi.js": "^8.22.0" }
+}

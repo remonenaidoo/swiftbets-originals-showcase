@@ -12,7 +12,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.19",
     "@originals/slot-kit": "*",
+    "@originals/instant-kit": "*",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

@@ -37,6 +37,9 @@ public interface ICrashStore
     Task<IReadOnlyList<CrashBetRecord>> OpenBetsAsync(Guid table, CancellationToken cancellationToken);
 
     Task<CrashBetRecord?> BetAsync(Guid roundId, CancellationToken cancellationToken);
+
+    /// <summary>This player's bets in a shared round, in any state but refused (a bet still taking its stake counts).</summary>
+    Task<IReadOnlyList<CrashBetRecord>> PlayerBetsAsync(Guid table, string playerRef, CancellationToken cancellationToken);
 }
 
 /// <summary>Pushes the shared round to every viewer (SignalR). Never carries anything that identifies a player.</summary>

@@ -14,6 +14,8 @@ export default defineConfig({
     port: 7198,
     proxy: {
       '^/originals/games/[^/]+/(state|spin|feature/next)': { target: 'https://127.0.0.1', changeOrigin: false, secure: false, headers: { host: 'swiftbets.remonenaidoo.com' } },
+      '^/originals/instant/': { target: 'https://127.0.0.1', changeOrigin: false, secure: false, headers: { host: 'swiftbets.remonenaidoo.com' } },
+      '^/originals/hubs/': { target: 'https://127.0.0.1', changeOrigin: false, secure: false, ws: true, headers: { host: 'swiftbets.remonenaidoo.com' } },
     },
   },
 });

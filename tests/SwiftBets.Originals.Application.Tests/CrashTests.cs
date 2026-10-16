@@ -73,4 +73,20 @@ public sealed class CrashTests : IDisposable
         wallet.Calls.ShouldContain(c => c.Action == "rollback" && c.Reference == $"{bet}:bet");
         wallet.Balance.ShouldBe(100_000);
     }
+
+    [Fact]
+    public async Task A_player_holds_two_bets_in_a_round_but_not_three()
+    {
+        var room = Room();
+        await room.OpenBettingAsync(ct);
+
+        var first = await room.BetAsync(new CrashBet("s", 1000, null, "k1"), ct);
+        var second = await room.BetAsync(new CrashBet("s", 500, 20_000, "k2"), ct);
+        var third = await room.BetAsync(new CrashBet("s", 100, null, "k3"), ct);
+
+        first.Error.ShouldBeNull();
+        second.Error.ShouldBeNull();
+        third.Error.ShouldBe(SpinError.RoundInProgress);
+        wallet.Balance.ShouldBe(100_000 - 1500);
+    }
 }
