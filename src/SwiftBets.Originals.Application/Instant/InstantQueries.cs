@@ -6,7 +6,7 @@ namespace SwiftBets.Originals.Application.Instant;
 /// <summary>The instant games this studio offers, by id (each also has a page at /play?game=).</summary>
 public static class InstantGames
 {
-    public static readonly string[] Ids = [Mines.GameId, Crash.GameId];
+    public static readonly string[] Ids = [Mines.GameId, Crash.GameId, Towers.GameId, .. OneShotGames.All.Keys];
 }
 
 /// <summary>The fairness panel: the active seed's hash, the client seed and the next nonce, and the last revealed pair.</summary>
@@ -21,11 +21,56 @@ public sealed record CrashInfo(string GameId, string Name, decimal Rtp, int MaxW
 
 public sealed record CrashState(long? Balance, CrashPublic? Round, IReadOnlyList<CrashBetView> Bets, IReadOnlyList<BetPublic> Board, IReadOnlyList<long> History, IReadOnlyList<RoundSummary> Recent, CrashInfo Info);
 
+/// <summary>What a one-shot game or Towers loads with: balance, the open Towers round if any, history, seeds and the game's rules data.</summary>
+public sealed record InstantState(long? Balance, TowersView? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, object Info);
+
 public sealed record MinesState(long? Balance, MinesView? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, MinesInfo Info);
 
 /// <summary>What the Mines page loads with, and the player's seeds: shown, and rotated (which reveals the old server seed).</summary>
-public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore seeds, MinesHandler mines, CrashRoom crash)
+public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore seeds, MinesHandler mines, CrashRoom crash, TowersHandler towers)
 {
+    public static object TowersInfo { get; } = new
+    {
+        gameId = Towers.GameId, name = "Towers", rtp = 96.00m, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = Mines.Stakes, rows = Towers.Rows,
+        levels = Towers.Levels.ToDictionary(l => l.Key, l => new
+        {
+            tiles = l.Value.Tiles, traps = l.Value.Traps,
+            table = Enumerable.Range(1, Towers.Rows).TakeWhile(k => k == 1 || !Towers.Finished(l.Key, k - 1)).Select(k => Towers.MultiplierBp(l.Key, k)).ToArray(),
+        }),
+    };
+
+    /// <summary>The page data of Dice, Limbo, Peg Drop, Keno or Towers.</summary>
+    public async Task<Result<InstantState>> StateAsync(string gameId, string sessionToken, CancellationToken cancellationToken)
+    {
+        object info;
+        if (gameId == Towers.GameId)
+        {
+            info = TowersInfo;
+        }
+        else if (OneShotGames.All.TryGetValue(gameId, out var game))
+        {
+            info = new { gameId = game.Id, name = game.Name, rtp = 96.00m, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = game.Stakes, rules = game.Info };
+        }
+        else
+        {
+            return SpinError.GameNotFound;
+        }
+
+        var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var recent = await store.RecentAsync(playerRef!, gameId, 50, cancellationToken);
+        return new InstantState(
+            balance,
+            gameId == Towers.GameId ? await towers.OpenAsync(playerRef!, balance, cancellationToken) : null,
+            [.. recent.Where(r => r.Status != RoundStatus.Open).Select(r => new RoundSummary(r.RoundId, r.Stake, r.PaidUnits, r.Status, r.CreatedAt))],
+            SeedsView.Of(await seeds.GetAsync(playerRef!, cancellationToken)),
+            info);
+    }
+
     public static CrashInfo CrashInfo { get; } = new(Crash.GameId, "Crash", 96.00m, (int)(Mult.CapBp / Mult.One), Crash.Stakes, Crash.MinAutoBp, Crash.Rate, (int)Crash.Betting.TotalSeconds);
 
     public async Task<Result<CrashState>> CrashAsync(string sessionToken, CancellationToken cancellationToken)

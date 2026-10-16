@@ -11,6 +11,12 @@ if (args.FirstOrDefault() == "mines")
     return InstantSheets.Mines("docs/par-sheet/mines.md", Arg("--layouts") is { } l ? long.Parse(l, CultureInfo.InvariantCulture) : 10_000_000);
 }
 
+if (args.FirstOrDefault() == "instant")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return InstantSheets.Five("docs/par-sheet");
+}
+
 if (args.FirstOrDefault() == "crash")
 {
     Directory.CreateDirectory("docs/par-sheet");
