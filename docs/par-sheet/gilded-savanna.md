@@ -86,7 +86,7 @@ Base-spin win distribution (stakes):
 
 ## Pay table
 
-Line pays in line bets (stake / 20), left to right on adjacent reels from reel 1; Wild (reels 2–4) substitutes for all but Scatter and does not pay alone; highest win per line; line and scatter wins add.
+Line pays in line bets (stake / 20), for one symbol running over at least three adjacent reels from reel 1; Wild (reels 2, 3, 4) substitutes for all but Scatter and does not pay alone; highest win per line; line and scatter wins add.
 
 | symbol | 3 | 4 | 5 |
 |---|---|---|---|

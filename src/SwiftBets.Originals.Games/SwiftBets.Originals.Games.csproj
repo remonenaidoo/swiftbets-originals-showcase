@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../SwiftBets.Originals.Domain/SwiftBets.Originals.Domain.csproj" />
+  </ItemGroup>
+</Project>

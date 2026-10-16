@@ -23,15 +23,15 @@ public sealed record ReelStats(
 /// </summary>
 public static class Enumerate
 {
-    public static ReelStats Run(GameDefinition game, IReadOnlyList<IReadOnlyList<Symbol>> reels, int multiplier)
+    public static ReelStats Run(GameDefinition game, IReadOnlyList<IReadOnlyList<byte>> reels, int multiplier)
     {
         var lengths = reels.Select(r => r.Count).ToArray();
         var parts = new Accumulator[lengths[0]];
         Parallel.For(0, lengths[0], first =>
         {
-            var acc = new Accumulator();
+            var acc = new Accumulator(game.Symbols.Count);
             var stops = new int[5];
-            var window = new Symbol[5, GameDefinition.Rows];
+            var window = new byte[5, GameDefinition.Rows];
             stops[0] = first;
             Fill(window, reels, 0, first);
             for (stops[1] = 0; stops[1] < lengths[1]; stops[1]++)
@@ -55,10 +55,10 @@ public static class Enumerate
             parts[first] = acc;
         });
 
-        var total = new Accumulator();
+        var total = new Accumulator(game.Symbols.Count);
         foreach (var part in parts)
         {
-            total.Merge(part);
+            total.Merge(game, part);
         }
 
         BigInteger cycle = 1;
@@ -72,12 +72,12 @@ public static class Enumerate
             total.Units,
             total.Hits,
             total.Triggers,
-            total.Triggers * game.FreeSpinsAwarded,
+            game.Feature.Retrigger ? total.Triggers * game.FreeSpinsAwarded : 0,
             total.BySymbol.ToDictionary(p => p.Key, p => (BigInteger)p.Value),
             total.ByWin.ToDictionary(p => p.Key, p => (BigInteger)p.Value));
     }
 
-    private static void Fill(Symbol[,] window, IReadOnlyList<IReadOnlyList<Symbol>> reels, int reel, int stop)
+    private static void Fill(byte[,] window, IReadOnlyList<IReadOnlyList<byte>> reels, int reel, int stop)
     {
         var strip = reels[reel];
         for (var row = 0; row < GameDefinition.Rows; row++)
@@ -86,44 +86,41 @@ public static class Enumerate
         }
     }
 
-    private sealed class Accumulator
+    private sealed class Accumulator(int symbols)
     {
+        private const int MaxCount = 15;
+
         public long Units;
         public long Hits;
         public long Triggers;
         public readonly Dictionary<string, long> BySymbol = [];
         public readonly Dictionary<long, long> ByWin = [];
-        private readonly long[,] symbolCount = new long[11, 6];
+        private readonly long[,] symbolCount = new long[symbols, MaxCount + 1];
         private readonly long[] scatterCount = new long[16];
 
-        public void Add(GameDefinition game, Symbol[,] window, int multiplier)
+        public void Add(GameDefinition game, byte[,] window, int multiplier)
         {
             long spin = 0;
             foreach (var rows in game.Lines)
             {
-                var units = Evaluator.LineUnits(game, window, rows, out var symbol, out var count);
+                var units = Evaluator.LineUnits(game, window, rows, out var symbol, out var count, out _);
                 if (units > 0)
                 {
                     spin += units;
-                    symbolCount[(int)symbol, count] += units * multiplier;
+                    symbolCount[symbol, Math.Min(count, MaxCount)] += units * multiplier;
                 }
             }
 
-            var scatters = 0;
-            foreach (var symbol in window)
-            {
-                if (symbol == Symbol.Scatter)
-                {
-                    scatters++;
-                }
-            }
-
+            var scatters = Evaluator.Scatters(game, window);
             if (scatters >= 3)
             {
                 long scatterUnits = (long)game.ScatterPays[Math.Min(scatters, 5) - 3] * game.LineCount;
                 spin += scatterUnits;
                 scatterCount[scatters] += scatterUnits * multiplier;
-                Triggers++;
+                if (game.FreeSpinsAwarded > 0)
+                {
+                    Triggers++;
+                }
             }
 
             spin *= multiplier;
@@ -136,7 +133,7 @@ public static class Enumerate
             ByWin[spin] = ByWin.GetValueOrDefault(spin) + 1;
         }
 
-        public void Merge(Accumulator other)
+        public void Merge(GameDefinition game, Accumulator other)
         {
             Units += other.Units;
             Hits += other.Hits;
@@ -146,13 +143,13 @@ public static class Enumerate
                 ByWin[win] = ByWin.GetValueOrDefault(win) + count;
             }
 
-            for (var s = 0; s < 11; s++)
+            for (var s = 0; s < symbols; s++)
             {
-                for (var c = 3; c <= 5; c++)
+                for (var c = 3; c <= MaxCount; c++)
                 {
                     if (other.symbolCount[s, c] > 0)
                     {
-                        var key = $"{(Symbol)s}:{c}";
+                        var key = $"{game.Name((byte)s)}:{c:D2}";
                         BySymbol[key] = BySymbol.GetValueOrDefault(key) + other.symbolCount[s, c];
                     }
                 }
@@ -162,7 +159,7 @@ public static class Enumerate
             {
                 if (other.scatterCount[n] > 0)
                 {
-                    var key = $"Scatter:{n}";
+                    var key = $"Scatter:{n:D2}";
                     BySymbol[key] = BySymbol.GetValueOrDefault(key) + other.scatterCount[n];
                 }
             }
