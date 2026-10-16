@@ -6,7 +6,11 @@ namespace SwiftBets.Originals.Domain.Instant;
 public sealed record WayWin(string Symbol, int Reels, long Ways, long Units, int[][] Cells);
 
 /// <summary>One spin of a round, as the client plays it back.</summary>
-public sealed record WaysSpin(bool Free, int[] Stops, IReadOnlyList<WayWin> Wins, int Scatters, long ScatterUnits, long Units);
+public sealed record WaysSpin(bool Free, int[] Stops, IReadOnlyList<WayWin> Wins, int Scatters, long ScatterUnits, long Units)
+{
+    /// <summary>What this spin actually paid: its units, or what was left under the round's cap (the playback shows this).</summary>
+    public long Paid { get; init; } = Units;
+}
 
 public static partial class WaysTables
 {
@@ -115,15 +119,16 @@ public sealed class WaysSlot : OneShotGame
     public static (IReadOnlyList<WaysSpin> Spins, long Units, bool Capped) PlayRound(IReadOnlyList<double> floats)
     {
         var first = Evaluate(Window(WaysTables.Base, Stops(WaysTables.Base, floats, 0)), Stops(WaysTables.Base, floats, 0), false);
-        var spins = new List<WaysSpin> { first };
         var paid = Math.Min(first.Units, CapUnits);
+        var spins = new List<WaysSpin> { first with { Paid = paid } };
         var free = first.Scatters >= 3 ? WaysTables.FreeSpins[Math.Min(first.Scatters, 5) - 3] : 0;
         for (var i = 0; i < free && paid < CapUnits; i++)
         {
             var stops = Stops(WaysTables.Free, floats, 5 + (i * 5));
             var spin = Evaluate(Window(WaysTables.Free, stops), stops, true);
-            spins.Add(spin);
-            paid = Math.Min(CapUnits, paid + spin.Units);
+            var more = Math.Min(spin.Units, CapUnits - paid);
+            spins.Add(spin with { Paid = more });
+            paid += more;
         }
 
         return (spins, paid, paid >= CapUnits);

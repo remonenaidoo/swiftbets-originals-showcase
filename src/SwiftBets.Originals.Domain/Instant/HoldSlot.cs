@@ -146,8 +146,10 @@ public sealed class HoldSlot : OneShotGame
             feature = ((long)board.Values.Sum() + (grand ? HoldTables.Grand : 0)) * Units;
         }
 
-        var total = units + feature;
-        return (stops, lines, coins, respins, feature, grand, Math.Min(total, CapUnits), total >= CapUnits);
+        // Lines are paid first; the hold pays what is left under the cap (and the playback shows that).
+        var lineUnits = Math.Min(units, CapUnits);
+        var featurePaid = Math.Min(feature, CapUnits - lineUnits);
+        return (stops, lines, coins, respins, featurePaid, grand, lineUnits + featurePaid, units + feature >= CapUnits);
     }
 
     public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)

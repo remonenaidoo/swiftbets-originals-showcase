@@ -5,7 +5,7 @@ import { bootInstant, call, describe, key } from '@originals/instant-kit';
 interface GemCell { symbol: string; multiplier: number }
 interface GemWin { symbol: string; count: number; units: number; cells: [number, number][] }
 interface GemStep { wins: GemWin[]; board: GemCell[][] }
-interface GemSpin { free: boolean; stops: number[]; board: GemCell[][]; steps: GemStep[]; suns: number; multiplier: number; units: number }
+interface GemSpin { free: boolean; stops: number[]; board: GemCell[][]; steps: GemStep[]; suns: number; multiplier: number; units: number; paid: number }
 interface GemsView { roundId: string; multiplierBp: number; win: number; detail: { spins: GemSpin[]; units: number; capped: boolean; freeSpins: number }; balance: number | null }
 interface GemsInfo { rules: { units: number; pays: Record<string, number[]>; sunStakes: number[]; meteors: { value: number; weight: number }[] } }
 
@@ -160,7 +160,7 @@ const boot = async () => {
       sound.big();
       await tweens.wait(900);
     }
-    const paid = Math.floor(spin.units * st / units);
+    const paid = Math.floor(spin.paid * st / units);
     if (paid > 0) {
       amount.text = rand(paid);
       amount.visible = true;
@@ -194,7 +194,7 @@ const boot = async () => {
           banner.text = `FREE SPIN ${i + 1} of ${free.length}  ·  won ${rand(running.won)}`;
           await playSpin(spin, st, running);
         }
-        banner.text = `FREE SPINS won ${rand(running.won - Math.floor(first.units * st / units))}`;
+        banner.text = `FREE SPINS won ${rand(running.won - Math.floor(first.paid * st / units))}`;
       }
       shell.setWin(v.win);
       shell.setBalance(v.balance);

@@ -12,7 +12,11 @@ public sealed record GemWin(string Symbol, int Count, long Units, int[][] Cells)
 public sealed record GemStep(IReadOnlyList<GemWin> Wins, GemCell[][] Board);
 
 /// <summary>One spin: the board it landed, its tumble steps, the Suns at the end, the meteors' total and its pay.</summary>
-public sealed record GemSpin(bool Free, int[] Stops, GemCell[][] Board, IReadOnlyList<GemStep> Steps, int Suns, int Multiplier, long Units);
+public sealed record GemSpin(bool Free, int[] Stops, GemCell[][] Board, IReadOnlyList<GemStep> Steps, int Suns, int Multiplier, long Units)
+{
+    /// <summary>What this spin actually paid: its units, or what was left under the round's cap (the playback shows this).</summary>
+    public long Paid { get; init; } = Units;
+}
 
 /// <summary>Everything the cascade's maths depends on, so the maths tool can try other values without a rebuild.</summary>
 public sealed record CascadeConfig(
@@ -82,15 +86,16 @@ public sealed class CascadeSlot : OneShotGame
         var at = 0;
         var spins = new List<GemSpin>();
         var first = Spin(cfg, false, floats, ref at);
-        spins.Add(first);
         var paid = Math.Min(first.Units, CapUnits);
+        spins.Add(first with { Paid = paid });
         var left = first.Suns >= 4 ? 10 : 0;
         var played = 0;
         while (left > 0 && paid < CapUnits && played < MaxFreeSpins)
         {
             var s = Spin(cfg, true, floats, ref at);
-            spins.Add(s);
-            paid = Math.Min(CapUnits, paid + s.Units);
+            var more = Math.Min(s.Units, CapUnits - paid);
+            spins.Add(s with { Paid = more });
+            paid += more;
             played++;
             left += (s.Suns >= 3 ? 5 : 0) - 1;
         }

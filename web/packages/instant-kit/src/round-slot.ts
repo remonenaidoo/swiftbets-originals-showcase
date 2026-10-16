@@ -23,7 +23,7 @@ export interface RoundSlotConfig {
 
 type Cell = [number, number];
 interface WaysWin { symbol: string; reels: number; ways: number; units: number; cells: Cell[] }
-interface WaysSpin { free: boolean; stops: number[]; wins: WaysWin[]; scatters: number; scatterUnits: number; units: number }
+interface WaysSpin { free: boolean; stops: number[]; wins: WaysWin[]; scatters: number; scatterUnits: number; units: number; paid: number }
 interface HoldLine { line: number; symbol: string; count: number; units: number; cells: Cell[] }
 interface Coin { cell: Cell; stakes: number }
 interface Respin { added: Coin[]; left: number }
@@ -192,7 +192,7 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
         await sleep(sp().minSpin);
         await land(spin.stops, freeStrips);
         await presentWays(spin, st);
-        won += money(spin.units, st);
+        won += money(spin.paid, st);
       }
       bannerText(`FREE SPINS won <b>${rand(won)}</b>`);
       await overlay('FREE SPINS WON', rand(won), '', 'COLLECT', auto ? 2500 : undefined);
@@ -208,10 +208,10 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
       const strips = spin.free ? freeStrips : baseStrips;
       if (strips[r][(spin.stops[r] + row) % strips[r].length] === 'Pearl') cells.push([r, row]);
     }
-    if (spin.units > 0) {
-      sound.win(spin.units / unitsPerStake);
-      scene.showAmount(rand(money(spin.units, st)));
-      await Promise.all([scene.showCells(cells, sp().pulse), addWin(money(spin.units, st))]);
+    if (spin.paid > 0) {
+      sound.win(spin.paid / unitsPerStake);
+      scene.showAmount(rand(money(spin.paid, st)));
+      await Promise.all([scene.showCells(cells, sp().pulse), addWin(money(spin.paid, st))]);
     }
   };
 
@@ -221,7 +221,8 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
     const label = (c: Coin) => ({ reel: c.cell[0], row: c.cell[1], text: JACKPOTS[c.stakes] ?? rand(c.stakes * st).replace(',00', '').replace('.00', ''), colour: JACKPOTS[c.stakes] ? 0xff8af0 : 0xffe08a });
     const coins: Coin[] = [...d.coins];
     scene.setLabels(coins.map(label));
-    const lineUnits = d.lines.reduce((a, l) => a + l.units, 0);
+    // The cap pays lines first; whatever the round paid beyond them is the hold's (d.featureUnits is already capped).
+    const lineUnits = Math.min(d.lines.reduce((a, l) => a + l.units, 0), d.units);
     if (lineUnits > 0) {
       sound.win(lineUnits / unitsPerStake);
       scene.showAmount(rand(money(lineUnits, st)));

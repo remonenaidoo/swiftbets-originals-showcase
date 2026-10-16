@@ -31,7 +31,27 @@ public sealed class WaysTests
         {
             var floats = Enumerable.Range(0, 85).Select(_ => rng.NextDouble()).ToArray();
             var (spins, units, capped) = WaysSlot.PlayRound(floats);
+            units.ShouldBe(spins.Sum(s => s.Paid));
             if (!capped) units.ShouldBe(spins.Sum(s => s.Units));
         }
+    }
+
+    [Fact]
+    public void A_capped_round_shows_only_what_it_pays()
+    {
+        // Base stops that land a Pearl on every reel; free stops with the most Shark weight (×2/×3 Wilds) on each reel.
+        static double Stop(string[] strip, Func<int, int> score) =>
+            (Enumerable.Range(0, strip.Length).MaxBy(score) + 0.5) / strip.Length;
+        int Pearls(string[] s, int stop) => Enumerable.Range(0, 3).Count(r => s[(stop + r) % s.Length] == "Pearl");
+        int Weight(string[] s, int stop) => Enumerable.Range(0, 3).Sum(r => s[(stop + r) % s.Length] == "Shark" ? 1 : WaysTables.WildMultiplier.GetValueOrDefault(s[(stop + r) % s.Length]));
+        var floats = new double[85];
+        for (var r = 0; r < 5; r++) floats[r] = Stop(WaysTables.Base[r], st => Pearls(WaysTables.Base[r], st));
+        for (var i = 0; i < 16; i++) for (var r = 0; r < 5; r++) floats[5 + (i * 5) + r] = Stop(WaysTables.Free[r], st => Weight(WaysTables.Free[r], st));
+
+        var (spins, units, capped) = WaysSlot.PlayRound(floats);
+
+        capped.ShouldBeTrue();
+        units.ShouldBe(WaysSlot.CapUnits);
+        spins.Sum(s => s.Paid).ShouldBe(units);
     }
 }
