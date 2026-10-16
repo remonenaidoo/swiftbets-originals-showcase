@@ -69,6 +69,35 @@ public sealed class FakeStore : IRoundStore, IDisposable
         }
     }
 
+    public Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken) =>
+        Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.GameId == gameId && r.Status == RoundStatus.Open));
+
+    public async Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!Rounds.TryGetValue(roundId, out var round) || round.PlayerRef != playerRef || round.GameId != gameId || round.Status != RoundStatus.Open)
+            {
+                return null;
+            }
+
+            if (step(round, [.. Spins.Where(s => s.RoundId == roundId).OrderBy(s => s.Seq)]) is not var (spin, status, paid))
+            {
+                return null;
+            }
+
+            Spins.Add(spin);
+            round = round with { Status = status, PaidUnits = paid };
+            Rounds[roundId] = round;
+            return (round, spin);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
     public Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken)
     {
         if (Rounds[roundId].Status == RoundStatus.WinPending && !Spins.Any(s => s.RoundId == roundId && s.Win > 0 && !s.WinPaid))
@@ -135,6 +164,27 @@ public sealed class FakeStore : IRoundStore, IDisposable
 
     public Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<(RoundRecord, SpinRecord)>>([.. Spins.Where(s => s.Win > 0 && !s.WinPaid).Select(s => (Rounds[s.RoundId], s))]);
+}
+
+/// <summary>Seeds in memory; nonces count up from 0.</summary>
+public sealed class FakeSeeds : ISeedStore
+{
+    public PlayerSeeds Seeds { get; set; } = new("server-seed", SwiftBets.Originals.Domain.Instant.Fair.Hash("server-seed"), "client", 0, null, null, null);
+
+    public Task<PlayerSeeds> GetAsync(string playerRef, CancellationToken cancellationToken) => Task.FromResult(Seeds);
+
+    public Task<PlayerSeeds> TakeNonceAsync(string playerRef, CancellationToken cancellationToken)
+    {
+        var taken = Seeds;
+        Seeds = Seeds with { Nonce = Seeds.Nonce + 1 };
+        return Task.FromResult(taken);
+    }
+
+    public Task<PlayerSeeds> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken)
+    {
+        Seeds = new("server-seed-2", SwiftBets.Originals.Domain.Instant.Fair.Hash("server-seed-2"), clientSeed, 0, Seeds.ServerSeed, Seeds.ClientSeed, Seeds.Nonce);
+        return Task.FromResult(Seeds);
+    }
 }
 
 /// <summary>The real catalogue plus a small locking game, drawn by a scripted sequence (0 when it runs out).</summary>
