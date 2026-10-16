@@ -36,7 +36,7 @@ public abstract class OneShotGame
 public static class OneShotGames
 {
     public static IReadOnlyDictionary<string, OneShotGame> All { get; } =
-        new OneShotGame[] { new Dice(), new Limbo(), new PegDrop(), new Keno(), new WaysSlot(), new HoldSlot() }.ToDictionary(g => g.Id);
+        new OneShotGame[] { new Dice(), new Limbo(), new PegDrop(), new Keno(), new WaysSlot(), new HoldSlot(), new CascadeSlot() }.ToDictionary(g => g.Id);
 }
 
 /// <summary>
