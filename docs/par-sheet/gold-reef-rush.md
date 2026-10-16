@@ -9,8 +9,10 @@ Definition hash: d307cf74ccf45de162124794911ad177e9a495a120dd0084b35c73790b3214d
 | | RTP | exact |
 |---|---|---|
 | Base game | 67.1202 % | 3382085/5038848 |
-| Free spins | 28.8814 % | simulated, ± 0.0114 % (99%) |
-| **Total (uncapped)** | **96.0017 %** | |
+| Free spins | 28.8811 % | simulated, ± 0.0114 % (99%) |
+| **Total (uncapped)** | **96.0013 %** | |
+| Cap effect | −0.0000 % | simulation |
+| **Total (as played)** | **96.0013 %** | |
 
 ## How the RTP is computed
 
@@ -19,7 +21,7 @@ Each reel stop is drawn uniformly and independently (OS CSPRNG, `RandomNumberGen
 - Base RTP = Σ wins / (cycle × lines).
 - P(trigger) = 307,638 / 60,466,176 = 1 in 196.55.
 - Split symbols that land in free spins lock in place for the rest of the feature, so one free spin depends on the ones before it and the feature cannot be enumerated. Its value is measured instead: 100,000,000 whole features played through the production engine and RNG, without the cap.
-- Feature value V = 56.7664 ± 0.0224 stakes (99% confidence; σ 87.07 stakes per feature), 8.00 spins per feature.
+- Feature value V = 56.7657 ± 0.0224 stakes (99% confidence; σ 87.13 stakes per feature), 8.00 spins per feature.
 - Feature RTP = P(trigger) × V. Total = base + feature.
 - The 5,000× cap applies to a base spin plus its feature; its small effect is measured by the simulation.
 
@@ -29,6 +31,8 @@ Each reel stop is drawn uniformly and independently (OS CSPRNG, `RandomNumberGen
 - Feature frequency: 1 in 196.55 base spins; average 8.00 spins worth 56.77× stake.
 - Standard deviation of a base spin (exact): 1.6963 stakes.
 - Largest single base-spin win: 467.33× stake (1 of 60,466,176 combinations).
+- Standard deviation per round incl. feature (simulation): 7.6639 stakes.
+- Rounds reaching the 5,000× cap: 0 of 1,000,000,000; largest round seen 4534.87× stake.
 
 Base-spin win distribution (stakes):
 
