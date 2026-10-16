@@ -72,6 +72,12 @@ public interface IRoundStore
     /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> when nothing is owed any more (one atomic statement).</summary>
     Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Voids the round only if it is still <paramref name="fromStatus"/>, marking its rollback as owed, in one
+    /// statement; false when it has moved on (cashed out, settled). A round is never voided after it was paid.
+    /// </summary>
+    Task<bool> VoidIfAsync(Guid roundId, string fromStatus, CancellationToken cancellationToken);
+
     /// <summary>Records whether a voided round's rollback still needs the casino's confirmation.</summary>
     Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken);
 

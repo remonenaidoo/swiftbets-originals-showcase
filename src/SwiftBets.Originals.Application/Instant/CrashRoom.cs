@@ -75,8 +75,11 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         await gate.WaitAsync(cancellationToken);
         try
         {
-            var round = current! with { Phase = CrashPhase.Flying };
-            await crashes.SetPhaseAsync(round.Id, CrashPhase.Flying, null, cancellationToken);
+            // A late take-off (the last bet's stake took a while) starts the flight clock at take-off, so no flight
+            // time is lost; the crash point was fixed before betting, so moving its start is fair.
+            var now = time.GetUtcNow();
+            var round = current! with { Phase = CrashPhase.Flying, BettingUntil = now > current!.BettingUntil ? now : current!.BettingUntil };
+            await crashes.SetPhaseAsync(round.Id, CrashPhase.Flying, null, round.BettingUntil, cancellationToken);
             current = round;
         }
         finally
@@ -147,14 +150,10 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
 
     public async Task<Result<CrashBetView>> CashoutAsync(string sessionToken, Guid roundId, CancellationToken cancellationToken)
     {
+        // Judged at receipt and decided before any wallet call: the session that placed the bet is the credential,
+        // so a slow balance answer can never push an on-time cash-out past the crash.
         var received = time.GetUtcNow();
-        var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
-        if (error is not null)
-        {
-            return error;
-        }
-
-        if (await crashes.BetAsync(roundId, cancellationToken) is not { } bet || bet.Round.PlayerRef != playerRef)
+        if (await crashes.BetAsync(roundId, cancellationToken) is not { } bet || bet.Round.SessionToken != sessionToken)
         {
             return SpinError.RoundNotFound;
         }
@@ -182,13 +181,13 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
             bp = auto;
         }
 
-        var (paid, paidBalance) = await PayAtAsync(bet, bp, cancellationToken);
+        var (paid, paidBalance) = await PayAtAsync(bet, bp, wait: true, cancellationToken);
         if (!paid)
         {
             return SpinError.RoundOver;
         }
 
-        return new CrashBetView(roundId, table.Id, bet.Round.Stake, bet.AutoBp, "cashed", bp, Mult.Pay(bet.Round.Stake, bp), paidBalance ?? balance);
+        return new CrashBetView(roundId, table.Id, bet.Round.Stake, bet.AutoBp, "cashed", bp, Mult.Pay(bet.Round.Stake, bp), paidBalance);
     }
 
     /// <summary>
@@ -206,18 +205,10 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         var elapsed = (now - table.BettingUntil).TotalMilliseconds;
         var crashAt = Crash.ElapsedFor(table.PointBp);
         var reached = Math.Min(Crash.MultiplierBpAt(elapsed), table.PointBp);
-        foreach (var bet in await crashes.OpenBetsAsync(table.Id, cancellationToken))
-        {
-            if (bet.AutoBp is { } auto && auto <= reached)
-            {
-                await PayAtAsync(bet, auto, cancellationToken);
-            }
-        }
-
         if (elapsed >= crashAt && table.Phase == CrashPhase.Flying)
         {
             table = table with { Phase = CrashPhase.Crashed, CrashedAt = table.BettingUntil.AddMilliseconds(crashAt) };
-            await crashes.SetPhaseAsync(table.Id, CrashPhase.Crashed, table.CrashedAt, cancellationToken);
+            await crashes.SetPhaseAsync(table.Id, CrashPhase.Crashed, table.CrashedAt, null, cancellationToken);
             current = table;
             await broadcast.PublishAsync("crashed", ToPublic(table, now), cancellationToken);
         }
@@ -227,28 +218,46 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
             await broadcast.PublishAsync("tick", ToPublic(table, now), cancellationToken);
         }
 
+        // Auto cash-outs the curve has passed: each decided under its row lock, its wallet call made off the loop,
+        // so paying many bets never delays the crash or the next tick (RoundRecovery pays any that fail).
+        foreach (var bet in await crashes.OpenBetsAsync(table.Id, cancellationToken))
+        {
+            if (bet.AutoBp is { } auto && auto <= reached)
+            {
+                await PayAtAsync(bet, auto, wait: false, cancellationToken);
+            }
+        }
+
         if (table.Phase == CrashPhase.Crashed && elapsed >= crashAt + SettleGrace.TotalMilliseconds)
         {
-            foreach (var bet in await crashes.OpenBetsAsync(table.Id, cancellationToken))
-            {
-                await store.StepAsync(bet.Round.RoundId, bet.Round.PlayerRef, Crash.GameId, (_, spins) =>
-                    (new SpinRecord(bet.Round.RoundId, spins.Count, [], "{}", 0, null, null, false), RoundStatus.Settled, 0L), cancellationToken);
-            }
-
+            await SettleAsync(table, cancellationToken);
             settled = true;
         }
     }
 
-    /// <summary>Refunds the open bets of rounds a stopped service left unfinished, and marks those rounds void.</summary>
+    /// <summary>
+    /// After a stop: a round stopped before its crash refunds its open bets (each voided only while still open, so
+    /// a bet that cashed out meanwhile keeps its win and is never refunded) and is marked void; a round stopped
+    /// after its crash settles the bets it had not settled yet.
+    /// </summary>
     public async Task RecoverAsync(CancellationToken cancellationToken)
     {
         foreach (var table in await crashes.UnfinishedAsync(cancellationToken))
         {
+            if (table.Phase == CrashPhase.Crashed)
+            {
+                await SettleAsync(table, cancellationToken);
+                continue;
+            }
+
             foreach (var bet in await crashes.OpenBetsAsync(table.Id, cancellationToken))
             {
                 var r = bet.Round;
-                await store.SetRollbackPendingAsync(r.RoundId, true, cancellationToken);
-                await store.UpdateAsync(r.RoundId, RoundStatus.Voided, 0, 0, cancellationToken);
+                if (!await store.VoidIfAsync(r.RoundId, RoundStatus.Open, cancellationToken))
+                {
+                    continue;
+                }
+
                 var reply = await wallet.RollbackAsync(r.SessionToken, Crash.GameId, Play.RollbackTx(r.RoundId), r.RoundId.ToString(), Play.BetTx(r.RoundId), cancellationToken);
                 if (reply.Status == WalletStatus.Ok)
                 {
@@ -256,14 +265,44 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
                 }
             }
 
-            await crashes.SetPhaseAsync(table.Id, CrashPhase.Void, null, cancellationToken);
+            await crashes.SetPhaseAsync(table.Id, CrashPhase.Void, null, null, cancellationToken);
+        }
+    }
+
+    /// <summary>Settles a crashed round's open bets: an auto target at or below the point is paid, the rest lose.</summary>
+    private async Task SettleAsync(CrashRound table, CancellationToken cancellationToken)
+    {
+        foreach (var bet in await crashes.OpenBetsAsync(table.Id, cancellationToken))
+        {
+            if (bet.AutoBp is { } auto && auto <= table.PointBp)
+            {
+                await PayAtAsync(bet, auto, wait: false, cancellationToken);
+                continue;
+            }
+
+            await store.StepAsync(bet.Round.RoundId, bet.Round.PlayerRef, Crash.GameId, (_, spins) =>
+                (new SpinRecord(bet.Round.RoundId, spins.Count, [], "{}", 0, null, null, false), RoundStatus.Settled, 0L), cancellationToken);
         }
     }
 
     /// <summary>The loop: recover, then rounds forever. Only one instance runs it (the caller holds the lock).</summary>
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        await RecoverAsync(cancellationToken);
+        // No round is live while recovering: cash-outs get round_over instead of racing the refunds.
+        current = null;
+        try
+        {
+            await RecoverAsync(cancellationToken);
+            await LoopAsync(cancellationToken);
+        }
+        finally
+        {
+            current = null;
+        }
+    }
+
+    private async Task LoopAsync(CancellationToken cancellationToken)
+    {
         while (!cancellationToken.IsCancellationRequested)
         {
             await OpenBettingAsync(cancellationToken);
@@ -300,8 +339,12 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         return views;
     }
 
-    /// <summary>Pays a bet at <paramref name="bp"/> in one locked step; not paid when it was no longer open. The balance is null when the casino did not answer.</summary>
-    private async Task<(bool Paid, long? Balance)> PayAtAsync(CrashBetRecord bet, long bp, CancellationToken cancellationToken)
+    /// <summary>
+    /// Pays a bet at <paramref name="bp"/> in one locked step; not paid when it was no longer open. With
+    /// <paramref name="wait"/> the wallet call is awaited (a player's own cash-out, which shows the balance);
+    /// otherwise it runs off the caller. The balance is null when the casino did not answer.
+    /// </summary>
+    private async Task<(bool Paid, long? Balance)> PayAtAsync(CrashBetRecord bet, long bp, bool wait, CancellationToken cancellationToken)
     {
         var r = bet.Round;
         var win = Mult.Pay(r.Stake, bp);
@@ -311,7 +354,26 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
             return (false, null);
         }
 
-        var balance = await Stake.PayAsync(store, wallet, round, spin, null, cancellationToken);
+        long? balance = null;
+        if (wait)
+        {
+            balance = await Stake.PayAsync(store, wallet, round, spin, null, cancellationToken);
+        }
+        else
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Stake.PayAsync(store, wallet, round, spin, null, CancellationToken.None);
+                }
+                catch (Exception)
+                {
+                    // Owed: RoundRecovery pays it under the same transaction id.
+                }
+            }, CancellationToken.None);
+        }
+
         var shown = new BetPublic(bet.Table, Tag(r.RoundId), Mask(r.PlayerRef), r.Stake, bp, win);
         lock (boardLock)
         {

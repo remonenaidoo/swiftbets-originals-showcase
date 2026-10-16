@@ -46,7 +46,7 @@ export const query = (path: string) => `${path}${path.includes('?') ? '&' : '?'}
 
 export interface RoundSummary { roundId: string; stake: number; paid: number; status: string; at: string }
 
-export interface Seeds { serverSeedHash: string; clientSeed: string; nonce: number; previousServerSeed: string | null; previousClientSeed: string | null; previousNonce: number | null }
+export interface Seeds { serverSeedHash: string; clientSeed: string; nonce: number; previousServerSeed: string | null; previousClientSeed: string | null; previousNonce: number | null; nextServerSeedHash: string }
 
 /** A one-off idempotency key per action, so a retried request is applied once. */
 export const key = () => crypto.randomUUID();

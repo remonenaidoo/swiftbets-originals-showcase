@@ -34,8 +34,9 @@ public static class Mines
     /// </summary>
     public static bool Finished(int mines, int safePicks) => safePicks >= Tiles - mines || Raw(mines, safePicks + 1) > Mult.CapBp;
 
+    /// <summary>The fair multiplier after k safe picks; 0 past the last safe tile (there is no such pick).</summary>
     private static Int128 Raw(int mines, int safePicks) =>
-        safePicks == 0 ? Mult.One : (Int128)9600 * Choose(Tiles, safePicks) / Choose(Tiles - mines, safePicks);
+        safePicks == 0 ? Mult.One : safePicks > Tiles - mines ? 0 : (Int128)9600 * Choose(Tiles, safePicks) / Choose(Tiles - mines, safePicks);
 
     private static Int128 Choose(int n, int k)
     {

@@ -25,16 +25,21 @@ public sealed class CrashStore(NpgsqlDataSource db, IRoundStore rounds) : ICrash
             """, round, cancellationToken: cancellationToken));
     }
 
-    public async Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, CancellationToken cancellationToken)
+    public async Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, DateTimeOffset? bettingUntil, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await c.ExecuteAsync(new CommandDefinition(
-            "UPDATE originals.crash_rounds SET phase = @phase, crashed_at = coalesce(@crashedAt, crashed_at) WHERE id = @id",
-            new { id, phase, crashedAt }, cancellationToken: cancellationToken));
+            "UPDATE originals.crash_rounds SET phase = @phase, crashed_at = coalesce(@crashedAt, crashed_at), betting_until = coalesce(@bettingUntil, betting_until) WHERE id = @id",
+            new { id, phase, crashedAt, bettingUntil }, cancellationToken: cancellationToken));
     }
 
     public async Task<IReadOnlyList<CrashRound>> UnfinishedAsync(CancellationToken cancellationToken) =>
-        await QueryAsync($"SELECT {Columns} FROM originals.crash_rounds WHERE phase IN ('betting', 'flying') ORDER BY seq", null, cancellationToken);
+        await QueryAsync(
+            $"""
+            SELECT {Columns} FROM originals.crash_rounds c WHERE phase IN ('betting', 'flying')
+               OR (phase = 'crashed' AND EXISTS (SELECT 1 FROM originals.rounds r WHERE r.table_round = c.id AND r.status = 'open'))
+            ORDER BY seq
+            """, null, cancellationToken);
 
     public async Task<IReadOnlyList<CrashRound>> HistoryAsync(int count, CancellationToken cancellationToken) =>
         await QueryAsync($"SELECT {Columns} FROM originals.crash_rounds WHERE phase = 'crashed' ORDER BY seq DESC LIMIT @count", new { count }, cancellationToken);
