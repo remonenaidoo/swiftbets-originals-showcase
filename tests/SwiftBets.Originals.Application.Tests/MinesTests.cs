@@ -60,4 +60,16 @@ public sealed class MinesTests : IDisposable
         again.Error.ShouldBe(SpinError.TileTaken);
         view.MultiplierBp.ShouldBe(Mines.MultiplierBp(3, 2));
     }
+
+    [Fact]
+    public async Task A_replayed_start_never_reveals_the_mines_of_a_round_not_played_out()
+    {
+        wallet.Replies["bet"] = WalletStatus.Unreachable;
+        await Handler().StartAsync(new MinesStart("s", 1000, 3, "k1"), TestContext.Current.CancellationToken);
+        wallet.Replies["bet"] = WalletStatus.Ok;
+
+        var replay = await Handler().StartAsync(new MinesStart("s", 1000, 3, "k1"), TestContext.Current.CancellationToken);
+
+        replay.Value?.MineTiles.ShouldBeNull();
+    }
 }

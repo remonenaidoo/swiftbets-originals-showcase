@@ -23,21 +23,23 @@ public sealed class SeedStore(NpgsqlDataSource db) : ISeedStore
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await EnsureAsync(c, playerRef, cancellationToken);
         var row = await c.QuerySingleAsync<Row>(new CommandDefinition(
-            $"UPDATE originals.player_seeds SET nonce = nonce + 1 WHERE player_ref = @playerRef RETURNING {Columns}", new { playerRef }, cancellationToken: cancellationToken));
+            $"UPDATE originals.player_seeds SET nonce = nonce + 1, last_taken_at = now() WHERE player_ref = @playerRef RETURNING {Columns}", new { playerRef }, cancellationToken: cancellationToken));
         return row.ToRecord() with { Nonce = row.nonce - 1 };
     }
 
-    public async Task<PlayerSeeds> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken)
+    public async Task<PlayerSeeds?> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await EnsureAsync(c, playerRef, cancellationToken);
         var seed = Fair.NewSeed();
-        return (await c.QuerySingleAsync<Row>(new CommandDefinition(
+        return (await c.QuerySingleOrDefaultAsync<Row>(new CommandDefinition(
             $"""
             UPDATE originals.player_seeds SET previous_server_seed = server_seed, previous_client_seed = client_seed, previous_nonce = nonce,
                 server_seed = @seed, server_seed_hash = @hash, client_seed = @clientSeed, nonce = 0, rotated_at = now()
-            WHERE player_ref = @playerRef RETURNING {Columns}
-            """, new { playerRef, seed, hash = Fair.Hash(seed), clientSeed }, cancellationToken: cancellationToken))).ToRecord();
+            WHERE player_ref = @playerRef AND last_taken_at < now() - interval '30 seconds'
+              AND NOT EXISTS (SELECT 1 FROM originals.rounds WHERE player_ref = @playerRef AND status IN ('pending', 'open') AND game_id = ANY(@instant))
+            RETURNING {Columns}
+            """, new { playerRef, seed, hash = Fair.Hash(seed), clientSeed, instant = SwiftBets.Originals.Application.Instant.InstantGames.Ids }, cancellationToken: cancellationToken)))?.ToRecord();
     }
 
     private static Task<int> EnsureAsync(NpgsqlConnection c, string playerRef, CancellationToken cancellationToken)

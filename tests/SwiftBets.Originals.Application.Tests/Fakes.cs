@@ -23,7 +23,14 @@ public sealed class FakeWallet : IWallet
         return await Reply("win", transactionId, amount, null);
     }
 
-    public Task<WalletReply> RollbackAsync(string sessionToken, string gameId, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken) => Reply("rollback", transactionId, 0, betTransactionId);
+    public Task<WalletReply> RollbackAsync(string sessionToken, string gameId, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken)
+    {
+        // A confirmed rollback returns the stake of the bet it names, once.
+        var refund = Replies["rollback"] == WalletStatus.Ok && !Calls.Any(c => c.Action == "rollback" && c.Reference == betTransactionId && Replies["rollback"] == WalletStatus.Ok)
+            ? Calls.Where(c => c.Action == "bet" && c.TransactionId == betTransactionId && Replies["bet"] == WalletStatus.Ok).Sum(c => c.Amount) : 0;
+        Balance += refund;
+        return Reply("rollback", transactionId, 0, betTransactionId);
+    }
 
     private Task<WalletReply> Reply(string action, string tx, long amount, string? reference)
     {
@@ -70,7 +77,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
     }
 
     public Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken) =>
-        Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.GameId == gameId && r.Status == RoundStatus.Open));
+        Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.GameId == gameId && r.Status is RoundStatus.Open or RoundStatus.Pending));
 
     public async Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken)
     {
@@ -166,6 +173,57 @@ public sealed class FakeStore : IRoundStore, IDisposable
         Task.FromResult<IReadOnlyList<(RoundRecord, SpinRecord)>>([.. Spins.Where(s => s.Win > 0 && !s.WinPaid).Select(s => (Rounds[s.RoundId], s))]);
 }
 
+/// <summary>Shared Crash rounds and their bets in memory, over a FakeStore for the bets' own rounds.</summary>
+public sealed class FakeCrashStore(FakeStore? rounds = null) : ICrashStore
+{
+    public FakeStore Store { get; set; } = rounds ?? new FakeStore();
+    public Dictionary<Guid, CrashRound> Tables { get; } = [];
+    public Dictionary<Guid, (Guid Table, long? Auto)> Bets { get; } = [];
+
+    public Task<long> LastSeqAsync(CancellationToken cancellationToken) => Task.FromResult(Tables.Count == 0 ? 0L : Tables.Values.Max(t => t.Seq));
+
+    public Task InsertAsync(CrashRound round, CancellationToken cancellationToken)
+    {
+        Tables[round.Id] = round;
+        return Task.CompletedTask;
+    }
+
+    public Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, CancellationToken cancellationToken)
+    {
+        Tables[id] = Tables[id] with { Phase = phase, CrashedAt = crashedAt };
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<CrashRound>> UnfinishedAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<CrashRound>>([.. Tables.Values.Where(t => t.Phase is CrashPhase.Betting or CrashPhase.Flying)]);
+
+    public Task<IReadOnlyList<CrashRound>> HistoryAsync(int count, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<CrashRound>>([.. Tables.Values.Where(t => t.Phase == CrashPhase.Crashed).OrderByDescending(t => t.Seq).Take(count)]);
+
+    public async Task InsertBetAsync(RoundRecord round, SpinRecord spin, Guid table, long? autoBp, CancellationToken cancellationToken)
+    {
+        await Store.InsertAsync(round, spin, cancellationToken);
+        Bets[round.RoundId] = (table, autoBp);
+    }
+
+    public Task<IReadOnlyList<CrashBetRecord>> OpenBetsAsync(Guid table, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && Store.Rounds[b.Key].Status == RoundStatus.Open).Select(b => new CrashBetRecord(Store.Rounds[b.Key], b.Value.Table, b.Value.Auto))]);
+
+    public Task<CrashBetRecord?> BetAsync(Guid roundId, CancellationToken cancellationToken) =>
+        Task.FromResult(Bets.TryGetValue(roundId, out var b) ? new CrashBetRecord(Store.Rounds[roundId], b.Table, b.Auto) : null);
+}
+
+public sealed class FakeBroadcast : ICrashBroadcast
+{
+    public List<(string Kind, object Payload)> Sent { get; } = [];
+
+    public Task PublishAsync(string kind, object payload, CancellationToken cancellationToken)
+    {
+        Sent.Add((kind, payload));
+        return Task.CompletedTask;
+    }
+}
+
 /// <summary>Seeds in memory; nonces count up from 0.</summary>
 public sealed class FakeSeeds : ISeedStore
 {
@@ -180,10 +238,10 @@ public sealed class FakeSeeds : ISeedStore
         return Task.FromResult(taken);
     }
 
-    public Task<PlayerSeeds> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken)
+    public Task<PlayerSeeds?> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken)
     {
         Seeds = new("server-seed-2", SwiftBets.Originals.Domain.Instant.Fair.Hash("server-seed-2"), clientSeed, 0, Seeds.ServerSeed, Seeds.ClientSeed, Seeds.Nonce);
-        return Task.FromResult(Seeds);
+        return Task.FromResult<PlayerSeeds?>(Seeds);
     }
 }
 

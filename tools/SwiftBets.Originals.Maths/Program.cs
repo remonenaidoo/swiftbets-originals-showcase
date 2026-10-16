@@ -11,6 +11,12 @@ if (args.FirstOrDefault() == "mines")
     return InstantSheets.Mines("docs/par-sheet/mines.md", Arg("--layouts") is { } l ? long.Parse(l, CultureInfo.InvariantCulture) : 10_000_000);
 }
 
+if (args.FirstOrDefault() == "crash")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return InstantSheets.Crash("docs/par-sheet/crash.md", Arg("--rounds") is { } r ? long.Parse(r, CultureInfo.InvariantCulture) : 1_000_000_000);
+}
+
 var slot = OriginalsGames.Catalog.Find(Arg("--game") ?? GildedSavanna.GameId);
 if (slot is null)
 {

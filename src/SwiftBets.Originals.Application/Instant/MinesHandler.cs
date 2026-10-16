@@ -48,7 +48,13 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
 
         if (await store.FindByKeyAsync(playerRef!, request.IdempotencyKey, cancellationToken) is { } repeat)
         {
-            return repeat.GameId == Mines.GameId ? View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance) : SpinError.KeyInUse;
+            if (repeat.GameId != Mines.GameId)
+            {
+                return SpinError.KeyInUse;
+            }
+
+            // The first request may still be taking the stake: answer only once it has, never with a half-made round.
+            return repeat.Status == RoundStatus.Pending ? SpinError.RoundInProgress : View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance);
         }
 
         if (await store.FindOpenAsync(playerRef!, Mines.GameId, cancellationToken) is not null)
@@ -160,7 +166,8 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
         var win = spins.Sum(s => s.Win);
         var status = round.Status == RoundStatus.Open ? "open" : busted ? "busted" : round.Status is RoundStatus.Settled or RoundStatus.WinPending ? "cashed" : round.Status;
         return new MinesView(round.RoundId, round.Stake, start.Mines, picks, Mines.MultiplierBp(start.Mines, safe), Mines.MultiplierBp(start.Mines, safe + 1), win, status,
-            status == "open" ? null : start.Layout, start.Nonce, start.ClientSeed, start.ServerSeedHash, balance);
+            // The mines are shown only for a round played out; a refused or voided round's draw is never shown (or used).
+            round.Status is RoundStatus.Settled or RoundStatus.WinPending ? start.Layout : null, start.Nonce, start.ClientSeed, start.ServerSeedHash, balance);
     }
 
     /// <summary>The first spin's stored outcome: the round's draw. Never sent while the round is open.</summary>

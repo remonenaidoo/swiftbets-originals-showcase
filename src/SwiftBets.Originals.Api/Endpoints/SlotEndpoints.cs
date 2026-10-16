@@ -38,7 +38,8 @@ public static class SlotEndpoints
             // The game page is HTML framed by the site, so it replaces the JSON API's baseline headers with its own:
             // only its own scripts and styles, only this origin for data, framed only by the same origin.
             context.Response.Headers.CacheControl = "no-store";
-            context.Response.Headers.ContentSecurityPolicy = PagePolicy;
+            // Crash's live round is a websocket to this host; older Safari does not count wss: as 'self'.
+            context.Response.Headers.ContentSecurityPolicy = PagePolicy.Replace("connect-src 'self'", $"connect-src 'self' wss://{context.Request.Host}", StringComparison.Ordinal);
             context.Response.Headers.XFrameOptions = "SAMEORIGIN";
             return Results.File(Path.Combine(env.WebRootPath, "games", game!, "index.html"), "text/html; charset=utf-8");
         }).AllowAnonymous();

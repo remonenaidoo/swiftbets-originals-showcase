@@ -58,7 +58,7 @@ public interface IRoundStore
     /// </summary>
     Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
 
-    /// <summary>The player's open instant round of this game, if any.</summary>
+    /// <summary>The player's unfinished instant round of this game (open, or still taking its stake), if any.</summary>
     Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken);
 
     /// <summary>

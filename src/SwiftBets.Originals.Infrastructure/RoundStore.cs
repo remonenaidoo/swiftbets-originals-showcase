@@ -140,7 +140,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         var row = await c.QueryFirstOrDefaultAsync<RoundRow>(new CommandDefinition(
-            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND game_id = @gameId AND status = 'open' ORDER BY created_at LIMIT 1",
+            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND game_id = @gameId AND status IN ('open', 'pending') ORDER BY created_at LIMIT 1",
             new { playerRef, gameId }, cancellationToken: cancellationToken));
         return row?.ToRecord();
     }

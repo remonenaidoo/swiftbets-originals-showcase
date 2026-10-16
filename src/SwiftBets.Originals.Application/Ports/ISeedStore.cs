@@ -14,6 +14,10 @@ public interface ISeedStore
     /// <summary>Atomically takes the next nonce: the returned seeds carry the nonce this round uses.</summary>
     Task<PlayerSeeds> TakeNonceAsync(string playerRef, CancellationToken cancellationToken);
 
-    /// <summary>Reveals the active server seed (as previous) and starts a new one with <paramref name="clientSeed"/> and nonce 0.</summary>
-    Task<PlayerSeeds> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken);
+    /// <summary>
+    /// Reveals the active server seed (as previous) and starts a new one with <paramref name="clientSeed"/> and nonce
+    /// 0. Null (refused) when a nonce was taken in the last 30 seconds or an instant round is unfinished: a round being
+    /// started under the active seed must never have that seed revealed.
+    /// </summary>
+    Task<PlayerSeeds?> RotateAsync(string playerRef, string clientSeed, CancellationToken cancellationToken);
 }

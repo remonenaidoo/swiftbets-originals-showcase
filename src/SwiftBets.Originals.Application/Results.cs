@@ -14,6 +14,8 @@ public sealed record SpinError(int Http, string Code)
     public static readonly SpinError KeyInUse = new(409, "key_in_use");
     public static readonly SpinError NoFeature = new(409, "no_feature");
     public static readonly SpinError InvalidSeed = new(400, "invalid_seed");
+    public static readonly SpinError BettingClosed = new(409, "betting_closed");
+    public static readonly SpinError NotFlying = new(409, "not_flying");
     public static readonly SpinError RoundInProgress = new(409, "round_in_progress");
     public static readonly SpinError RoundOver = new(409, "round_over");
     public static readonly SpinError TileTaken = new(409, "tile_taken");
