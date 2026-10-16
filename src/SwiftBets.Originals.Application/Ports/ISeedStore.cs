@@ -2,9 +2,10 @@ namespace SwiftBets.Originals.Application.Ports;
 
 /// <summary>
 /// A player's provably-fair seeds. <paramref name="ServerSeed"/> never leaves the server while active; the previous
-/// pair is revealed after a rotation, covering nonces below <paramref name="PreviousNonce"/>.
+/// pair is revealed after a rotation, covering nonces below <paramref name="PreviousNonce"/>. The next server seed is
+/// fixed in advance and only its hash is shown, so it cannot be chosen to suit the client seed the player sets.
 /// </summary>
-public sealed record PlayerSeeds(string ServerSeed, string ServerSeedHash, string ClientSeed, long Nonce, string? PreviousServerSeed, string? PreviousClientSeed, long? PreviousNonce);
+public sealed record PlayerSeeds(string ServerSeed, string ServerSeedHash, string ClientSeed, long Nonce, string? PreviousServerSeed, string? PreviousClientSeed, long? PreviousNonce, string NextServerSeedHash = "");
 
 public interface ISeedStore
 {

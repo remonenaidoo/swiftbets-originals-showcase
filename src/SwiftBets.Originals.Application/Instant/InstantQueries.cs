@@ -10,9 +10,9 @@ public static class InstantGames
 }
 
 /// <summary>The fairness panel: the active seed's hash, the client seed and the next nonce, and the last revealed pair.</summary>
-public sealed record SeedsView(string ServerSeedHash, string ClientSeed, long Nonce, string? PreviousServerSeed, string? PreviousClientSeed, long? PreviousNonce)
+public sealed record SeedsView(string ServerSeedHash, string ClientSeed, long Nonce, string? PreviousServerSeed, string? PreviousClientSeed, long? PreviousNonce, string NextServerSeedHash)
 {
-    public static SeedsView Of(PlayerSeeds s) => new(s.ServerSeedHash, s.ClientSeed, s.Nonce, s.PreviousServerSeed, s.PreviousClientSeed, s.PreviousNonce);
+    public static SeedsView Of(PlayerSeeds s) => new(s.ServerSeedHash, s.ClientSeed, s.Nonce, s.PreviousServerSeed, s.PreviousClientSeed, s.PreviousNonce, s.NextServerSeedHash);
 }
 
 public sealed record MinesInfo(string GameId, string Name, decimal Rtp, int MaxWinStakes, long[] Stakes, int Tiles, IReadOnlyList<long[]> Table);

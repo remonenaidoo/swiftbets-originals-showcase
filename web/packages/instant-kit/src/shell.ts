@@ -161,7 +161,8 @@ export function seedsHtml(seeds: Seeds) {
     <div class="kv"><small>Client seed</small><code>${seeds.clientSeed}</code></div>
     <div class="kv"><small>Next nonce</small><code>${seeds.nonce}</code></div>
     <h3>Change seeds</h3>
-    <p class="note">Reveals the current server seed and starts a new one. Not possible during a round or for 30 seconds after one starts.</p>
+    <p class="note">Reveals the current server seed. The next one is already fixed: its hash is below, so it cannot be chosen to suit the client seed you set. Not possible during a round or for 30 seconds after one starts.</p>
+    <div class="kv"><small>Next server seed hash</small><code>${seeds.nextServerSeedHash}</code></div>
     <div class="seedrow"><input id="client-seed" maxlength="64" value="${seeds.clientSeed}" aria-label="New client seed"><button class="primary-sm" id="rotate">Change</button></div>
     ${seeds.previousServerSeed ? `
     <h3>Previous seeds (revealed)</h3>

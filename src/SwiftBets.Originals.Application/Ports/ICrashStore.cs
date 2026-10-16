@@ -22,9 +22,10 @@ public interface ICrashStore
 
     Task InsertAsync(CrashRound round, CancellationToken cancellationToken);
 
-    Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, CancellationToken cancellationToken);
+    /// <summary>Sets the phase; <paramref name="bettingUntil"/> moves the flight's start when take-off was late.</summary>
+    Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, DateTimeOffset? bettingUntil, CancellationToken cancellationToken);
 
-    /// <summary>Rounds left betting or flying: only after a stop mid-round, since one loop runs them.</summary>
+    /// <summary>Rounds a stop left unfinished: betting, flying, or crashed with bets not yet settled.</summary>
     Task<IReadOnlyList<CrashRound>> UnfinishedAsync(CancellationToken cancellationToken);
 
     /// <summary>The last crashed rounds, newest first.</summary>

@@ -72,4 +72,17 @@ public sealed class MinesTests : IDisposable
 
         replay.Value?.MineTiles.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task A_full_clear_pays_and_shows_the_board()
+    {
+        var layout = Mines.Layout(Fair.Floats("server-seed", "client", 0, Mines.Tiles), 24);
+        var safe = Enumerable.Range(0, Mines.Tiles).Except(layout).Single();
+        var start = (await Handler().StartAsync(new MinesStart("s", 1000, 24, "k1"), TestContext.Current.CancellationToken)).Value!;
+
+        var clear = await Handler().PickAsync("s", start.RoundId, safe, TestContext.Current.CancellationToken);
+
+        clear.Value!.Status.ShouldBe("cashed");
+        clear.Value.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(24, 1)));
+    }
 }

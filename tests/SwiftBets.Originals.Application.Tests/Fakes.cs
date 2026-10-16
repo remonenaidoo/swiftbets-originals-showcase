@@ -115,6 +115,18 @@ public sealed class FakeStore : IRoundStore, IDisposable
         return Task.CompletedTask;
     }
 
+    public Task<bool> VoidIfAsync(Guid roundId, string fromStatus, CancellationToken cancellationToken)
+    {
+        if (Rounds[roundId].Status != fromStatus)
+        {
+            return Task.FromResult(false);
+        }
+
+        Rounds[roundId] = Rounds[roundId] with { Status = RoundStatus.Voided };
+        RollbackPending.Add(roundId);
+        return Task.FromResult(true);
+    }
+
     public Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken)
     {
         if (pending) RollbackPending.Add(roundId); else RollbackPending.Remove(roundId);
@@ -180,6 +192,9 @@ public sealed class FakeCrashStore(FakeStore? rounds = null) : ICrashStore
     public Dictionary<Guid, CrashRound> Tables { get; } = [];
     public Dictionary<Guid, (Guid Table, long? Auto)> Bets { get; } = [];
 
+    /// <summary>Returns every bet of a table as open, as a read taken just before a cash-out committed would.</summary>
+    public bool StaleOpenBets { get; set; }
+
     public Task<long> LastSeqAsync(CancellationToken cancellationToken) => Task.FromResult(Tables.Count == 0 ? 0L : Tables.Values.Max(t => t.Seq));
 
     public Task InsertAsync(CrashRound round, CancellationToken cancellationToken)
@@ -188,14 +203,15 @@ public sealed class FakeCrashStore(FakeStore? rounds = null) : ICrashStore
         return Task.CompletedTask;
     }
 
-    public Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, CancellationToken cancellationToken)
+    public Task SetPhaseAsync(Guid id, string phase, DateTimeOffset? crashedAt, DateTimeOffset? bettingUntil, CancellationToken cancellationToken)
     {
-        Tables[id] = Tables[id] with { Phase = phase, CrashedAt = crashedAt };
+        Tables[id] = Tables[id] with { Phase = phase, CrashedAt = crashedAt, BettingUntil = bettingUntil ?? Tables[id].BettingUntil };
         return Task.CompletedTask;
     }
 
     public Task<IReadOnlyList<CrashRound>> UnfinishedAsync(CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<CrashRound>>([.. Tables.Values.Where(t => t.Phase is CrashPhase.Betting or CrashPhase.Flying)]);
+        Task.FromResult<IReadOnlyList<CrashRound>>([.. Tables.Values.Where(t => t.Phase is CrashPhase.Betting or CrashPhase.Flying
+            || (t.Phase == CrashPhase.Crashed && Bets.Any(b => b.Value.Table == t.Id && Store.Rounds[b.Key].Status == RoundStatus.Open)))]);
 
     public Task<IReadOnlyList<CrashRound>> HistoryAsync(int count, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<CrashRound>>([.. Tables.Values.Where(t => t.Phase == CrashPhase.Crashed).OrderByDescending(t => t.Seq).Take(count)]);
@@ -207,7 +223,7 @@ public sealed class FakeCrashStore(FakeStore? rounds = null) : ICrashStore
     }
 
     public Task<IReadOnlyList<CrashBetRecord>> OpenBetsAsync(Guid table, CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && Store.Rounds[b.Key].Status == RoundStatus.Open).Select(b => new CrashBetRecord(Store.Rounds[b.Key], b.Value.Table, b.Value.Auto))]);
+        Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && (StaleOpenBets || Store.Rounds[b.Key].Status == RoundStatus.Open)).Select(b => new CrashBetRecord(Store.Rounds[b.Key], b.Value.Table, b.Value.Auto))]);
 
     public Task<IReadOnlyList<CrashBetRecord>> PlayerBetsAsync(Guid table, string playerRef, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<CrashBetRecord>>([.. Bets.Where(b => b.Value.Table == table && Store.Rounds[b.Key].PlayerRef == playerRef && Store.Rounds[b.Key].Status != RoundStatus.Refused)

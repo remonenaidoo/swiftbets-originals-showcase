@@ -186,6 +186,14 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
             """, new { roundId }, cancellationToken: cancellationToken));
     }
 
+    public async Task<bool> VoidIfAsync(Guid roundId, string fromStatus, CancellationToken cancellationToken)
+    {
+        await using var c = await db.OpenConnectionAsync(cancellationToken);
+        return await c.ExecuteAsync(new CommandDefinition(
+            "UPDATE originals.rounds SET status = 'voided', rollback_pending = true, settled_at = now() WHERE round_id = @roundId AND status = @fromStatus",
+            new { roundId, fromStatus }, cancellationToken: cancellationToken)) == 1;
+    }
+
     public async Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);

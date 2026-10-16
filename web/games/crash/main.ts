@@ -86,7 +86,8 @@ class Panel {
 
   /** A new round's countdown: a queued (or auto) bet goes in now; a finished bet clears. */
   newRound() {
-    if (this.bet && this.bet.status !== 'open') this.bet = null;
+    // A finished bet clears; so does one from an earlier round (an interrupted one), which can no longer be cashed.
+    if (this.bet && (this.bet.status !== 'open' || this.bet.table !== round?.id)) this.bet = null;
     if (!this.bet && (this.queued || this.autoBet)) { this.queued = false; void this.place(); }
     this.render();
   }
@@ -175,7 +176,10 @@ class Panel {
       go.innerHTML = 'CANCEL<small>waiting for next round</small>';
     } else if (this.bet?.status === 'cashed') {
       go.className = 'go placed';
-      go.innerHTML = `WON ${rand(this.bet.win)}<small>at ${times(this.bet.cashedAtBp!)}</small>`;
+      go.innerHTML = `WON ${rand(this.bet.win)}<small>${this.bet.cashedAtBp ? `at ${times(this.bet.cashedAtBp)}` : 'cashed out'}</small>`;
+    } else if (this.bet?.status === 'refunded') {
+      go.className = 'go placed';
+      go.innerHTML = `REFUNDED<small>${rand(this.bet.stake)} · round interrupted</small>`;
     } else {
       go.className = 'go';
       go.innerHTML = `BET<small>${rand(this.stake)}</small>`;
@@ -519,7 +523,10 @@ const boot = async () => {
         if (p.bet?.status !== 'open') continue;
         const r = s.recent.find((x) => x.roundId === p.bet!.roundId);
         if (r) {
-          p.bet = { ...p.bet, status: r.paid > 0 ? 'cashed' : 'lost', win: r.paid, cashedAtBp: p.bet.autoBp };
+          // The server's verdict: refunded (the round was interrupted), won, or lost. The multiplier of a win learned
+          // here is the auto target when there was one; a manual one is not in the summary, so only the amount shows.
+          const status = r.status === 'voided' || r.status === 'refused' ? 'refunded' : r.paid > 0 ? 'cashed' : 'lost';
+          p.bet = { ...p.bet, status, win: r.paid, cashedAtBp: status === 'cashed' ? p.bet.cashedAtBp ?? p.bet.autoBp : null };
           if (r.paid > 0) shell.setWin(r.paid);
         }
       }

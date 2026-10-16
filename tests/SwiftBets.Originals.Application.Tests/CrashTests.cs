@@ -89,4 +89,75 @@ public sealed class CrashTests : IDisposable
         third.Error.ShouldBe(SpinError.RoundInProgress);
         wallet.Balance.ShouldBe(100_000 - 1500);
     }
+
+    [Fact]
+    public async Task A_bet_cashed_out_while_recovery_runs_is_not_refunded()
+    {
+        var (room, bet) = await Flying();
+        time.Advance(TimeSpan.FromMilliseconds(Crash.ElapsedFor(12_000)));
+        await room.CashoutAsync("s", bet, ct);
+        crashes.StaleOpenBets = true; // recovery read the bet as open just before the cash-out landed
+
+        await Room().RecoverAsync(ct);
+
+        store.Rounds[bet].Status.ShouldBe(RoundStatus.Settled);
+        wallet.Calls.ShouldNotContain(c => c.Action == "rollback");
+    }
+
+    [Fact]
+    public async Task A_round_stopped_after_its_crash_settles_its_bets_on_restart()
+    {
+        var (room, bet) = await Flying();
+        time.Advance(TimeSpan.FromMilliseconds(Crash.ElapsedFor(room.Current!.PointBp)));
+        await room.TickAsync(ct); // crashed, not yet settled
+
+        await Room().RecoverAsync(ct);
+
+        store.Rounds[bet].Status.ShouldBe(RoundStatus.Settled);
+        wallet.Balance.ShouldBe(100_000 - 1000);
+    }
+
+    [Fact]
+    public async Task A_late_take_off_starts_the_flight_clock_at_take_off()
+    {
+        var room = Room();
+        await room.OpenBettingAsync(ct);
+        var bet = (await room.BetAsync(new CrashBet("s", 1000, null, "k1"), ct)).Value!;
+        time.Advance(Crash.Betting + TimeSpan.FromSeconds(3)); // the flight starts 3 s late
+        await room.FlyAsync(ct);
+        time.Advance(TimeSpan.FromMilliseconds(Crash.ElapsedFor(15_000)));
+
+        var cash = (await room.CashoutAsync("s", bet.RoundId, ct)).Value!;
+
+        cash.CashedAtBp.ShouldBe(15_000);
+    }
+
+    [Fact]
+    public async Task A_cashout_does_not_wait_on_the_wallet_balance()
+    {
+        var (room, bet) = await Flying();
+        time.Advance(TimeSpan.FromMilliseconds(Crash.ElapsedFor(12_000)));
+        wallet.Replies["balance"] = WalletStatus.Unreachable;
+
+        var cash = await room.CashoutAsync("s", bet, ct);
+
+        cash.Value!.CashedAtBp.ShouldBe(12_000);
+    }
+
+    [Fact]
+    public async Task Paying_an_auto_cash_out_does_not_hold_up_the_crash()
+    {
+        var room = Room();
+        await room.OpenBettingAsync(ct);
+        await room.BetAsync(new CrashBet("s", 1000, 10_100, "k1"), ct);
+        time.Advance(Crash.Betting);
+        await room.FlyAsync(ct);
+        time.Advance(TimeSpan.FromMilliseconds(Crash.ElapsedFor(room.Current!.PointBp)));
+        wallet.WinDelay = TimeSpan.FromSeconds(30);
+
+        var tick = room.TickAsync(ct);
+
+        (await Task.WhenAny(tick, Task.Delay(2000, ct))).ShouldBe(tick);
+        room.Current!.Phase.ShouldBe(CrashPhase.Crashed);
+    }
 }
