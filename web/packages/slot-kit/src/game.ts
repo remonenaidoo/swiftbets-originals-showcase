@@ -128,6 +128,7 @@ async function present(view: SpinView, strips: Sym[][], st: number, balanceBefor
     sound.win(view.win / st);
     if (view.win > 0 && view.win < st * 10) scene.coins(Math.min(40, 6 + Math.round((view.win / st) * 6)));
     const shown = scene.showWins(info, view.lines, scatterPays ? scatterCells : [], sp().pulse);
+    if (view.win > 0) scene.showAmount(rand(view.win));
     await Promise.all([shown, setWin(view.win, true, balanceBefore)]);
     // With locks nearly every free spin is big; a locking feature celebrates once, with its total.
     if (!(inFeature && info.lockSplits)) await bigWin(view.win, st);
@@ -147,7 +148,9 @@ async function landReels(stops: number[], strips: Sym[][]) {
   await scene.reels.stop(stops, strips, sp(), (reel, tease) => {
     sound.stop(reel);
     const col = windowOf(strips, stops)[reel];
+    col.forEach((sym, row) => { if (isScatter(sym)) scene.scatterLanded(reel, row); });
     if (col.some(isScatter)) sound.scatter(reel);
+    scene.tease(tease ? reel + 1 : null);
     if (tease) sound.tease();
   });
 }

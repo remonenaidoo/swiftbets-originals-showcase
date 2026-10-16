@@ -26,9 +26,15 @@ export class Scene {
   private tint = new Graphics();
   private board = new Container();
   private coin!: Texture;
+  private spark!: Texture;
+  private teaseGlow = new Graphics();
+  private amount = new Text({ text: '', style: { fontFamily: 'system-ui, sans-serif', fontWeight: '900', fontSize: 64, fill: 0xffe08a, stroke: { color: 0x3a1a00, width: 8 }, dropShadow: { color: 0x000000, alpha: 0.7, distance: 4, blur: 10 } } });
   cellW = 100;
   cellH = 100;
   private gap = 6;
+  private logoScale = 1;
+  private teaseId = 0;
+  private boardH = 0;
 
   constructor(private readonly config: SlotConfig) {}
 
@@ -49,10 +55,18 @@ export class Scene {
     }
     this.logo.anchor.set(0.5, 0);
     this.coin = this.app.renderer.generateTexture(new Graphics().circle(0, 0, 10).fill(0xf6c453).circle(0, 0, 6).fill(0xffe9a8));
+    const spark = new Graphics();
+    for (let r = 8; r > 0; r--) spark.circle(0, 0, r).fill({ color: 0xffffff, alpha: 0.08 + (8 - r) * 0.11 });
+    this.spark = this.app.renderer.generateTexture(spark);
     this.tweens = new Tweens(this.app.ticker);
     const emphasised = new Set(info.symbols.filter((s) => s.kind !== 'Regular').map((s) => s.name));
     this.reels = new ReelSet(this.textures, emphasised, this.tweens, this.app.ticker);
-    this.board.addChild(this.glow, this.frame, this.reels, this.locks, this.lines);
+    this.board.addChild(this.glow, this.frame, this.teaseGlow, this.reels, this.locks, this.lines, this.amount);
+    this.amount.anchor.set(0.5);
+    this.amount.visible = false;
+    // The logo breathes gently while the game is open.
+    let t = 0;
+    this.app.ticker.add((tk) => { t += tk.deltaMS; const k = 1 + Math.sin(t / 900) * 0.018; this.logo.scale.set(this.logoScale * k); });
     this.app.stage.addChild(this.bgDrawn, this.bg, this.tint, this.logo, this.board, this.fx);
     this.tint.alpha = 0;
     window.addEventListener('resize', () => this.layout());
@@ -79,7 +93,7 @@ export class Scene {
     this.tint.clear().rect(0, 0, w, h).fill(this.config.colours.featureTint);
 
     const hud = portrait ? 190 : 110;
-    const logoH = portrait ? Math.min(h * 0.13, 120) : Math.min(h * 0.14, 110);
+    const logoH = portrait ? Math.min(h * 0.17, 160) : Math.min(h * 0.15, 130);
     const availW = w * (portrait ? 0.96 : 0.7);
     const availH = h - hud - logoH - (portrait ? 40 : 28);
     // 5 cells + gaps + the frame's padding on both sides ≈ 5.5 cells wide, 3.3 tall.
@@ -106,7 +120,11 @@ export class Scene {
 
     this.logo.scale.set(1);
     const logoScale = Math.min(logoH / this.logo.height, (w * 0.8) / this.logo.width);
+    this.logoScale = logoScale;
     this.logo.scale.set(logoScale);
+    this.amount.position.set(boardW / 2, boardH / 2);
+    this.amount.style.fontSize = Math.round(cell * 0.62);
+    this.boardH = boardH;
     this.drawLocks();
     this.logo.position.set(w / 2, portrait ? 18 : 10);
     return { portrait, boardBottom: top + boardH + pad, boardTop: top - pad };
@@ -120,6 +138,8 @@ export class Scene {
     for (const l of added) {
       const tile = this.locks.children.find((c) => c.label === `${l.reel}:${l.row}`);
       if (tile) void this.tweens.to(1.35, 1, 380, (v) => tile.scale.set(v), ease.outBack);
+      this.flash(l.reel, l.row);
+      this.sparks(l.reel, l.row, 18, [0xffe08a, 0xffc94a, 0xffffff]);
     }
   }
 
@@ -147,6 +167,8 @@ export class Scene {
 
   clearWins() {
     this.lines.clear();
+    this.amount.visible = false;
+    this.teaseGlow.clear();
     for (const tile of this.locks.children) tile.alpha = 1;
     for (const r of this.reels.reels) for (let row = 0; row < 3; row++) {
       const c = r.cell(row);
@@ -178,6 +200,7 @@ export class Scene {
       for (let row = 0; row < 3; row++) r.cell(row).alpha = winning.has(`${reel}:${row}`) ? 1 : 0.38;
     });
     for (const tile of this.locks.children) tile.alpha = winning.has(tile.label) ? 1 : 0.45;
+    for (const k of winning) { const [reel, row] = k.split(':').map(Number); this.sparks(reel, row, 7, [0xffe08a, 0xffffff]); }
     // A locked cell shows its lock tile, so that is what pulses.
     const sprites = [...winning].map((k) => this.locks.children.find((c) => c.label === k) ?? this.reels.reels[+k.split(':')[0]].cell(+k.split(':')[1]));
     const base = sprites.map((s) => s.scale.x);
@@ -186,6 +209,68 @@ export class Scene {
       sprites.forEach((s, i) => s.scale.set(base[i] * k));
     }, ease.linear);
     sprites.forEach((s, i) => s.scale.set(base[i]));
+  }
+
+  /** The win amount over the middle of the reels, popping in; hidden again by clearWins. */
+  showAmount(text: string) {
+    this.amount.text = text;
+    this.amount.visible = true;
+    void this.tweens.to(0.4, 1, 420, (v) => this.amount.scale.set(v), ease.outBack);
+  }
+
+  /** Lights a reel that is still spinning while it could land the third Scatter; null clears it. */
+  tease(reel: number | null) {
+    this.teaseId++;
+    this.teaseGlow.clear();
+    this.teaseGlow.alpha = 1;
+    if (reel === null || reel > 4) return;
+    const x = reel * (this.cellW + this.gap), pad = this.cellW * 0.06;
+    this.teaseGlow.roundRect(x - pad, -pad, this.cellW + pad * 2, this.boardH + pad * 2, pad * 2).fill({ color: 0xffb020, alpha: 0.22 })
+      .roundRect(x - pad, -pad, this.cellW + pad * 2, this.boardH + pad * 2, pad * 2).stroke({ width: Math.max(3, pad), color: 0xffd36b, alpha: 0.95 });
+    const id = ++this.teaseId;
+    void this.tweens.to(0, 1, 2400, (v) => { if (id === this.teaseId) this.teaseGlow.alpha = 0.6 + Math.sin(v * Math.PI * 8) * 0.4; }, ease.linear);
+  }
+
+  /** A Scatter has landed: it bounces and throws sparks. */
+  scatterLanded(reel: number, row: number) {
+    this.sparks(reel, row, 26, [0xffb020, 0xff6a1a, 0xffe08a, 0xffffff]);
+    const cell = this.reels.reels[reel].cell(row), base = cell.scale.x;
+    void this.tweens.to(0, 1, 360, (v) => cell.scale.set(base * (1 + Math.sin(v * Math.PI) * 0.22)), ease.linear).then(() => cell.scale.set(base));
+  }
+
+  /** An expanding gold ring from a cell. */
+  private flash(reel: number, row: number) {
+    const { x, y } = this.centre(reel, row);
+    const ring = new Graphics().circle(0, 0, Math.min(this.cellW, this.cellH) * 0.5).stroke({ width: 6, color: 0xffe08a });
+    ring.position.set(x, y);
+    this.board.addChild(ring);
+    void this.tweens.to(0, 1, 520, (v) => { ring.scale.set(0.6 + v * 0.9); ring.alpha = 1 - v; }, ease.outCubic).then(() => ring.destroy());
+  }
+
+  /** Sparks flying out of a cell, falling and fading. */
+  sparks(reel: number, row: number, count: number, colours: number[]) {
+    const c = this.centre(reel, row);
+    for (let i = 0; i < count; i++) {
+      const s = new Sprite(this.spark);
+      s.anchor.set(0.5);
+      s.blendMode = 'add';
+      s.tint = colours[i % colours.length];
+      s.position.set(c.x, c.y);
+      const size = (0.35 + Math.random() * 0.6) * (this.cellW / 90);
+      s.scale.set(size);
+      this.board.addChild(s);
+      const a = Math.random() * Math.PI * 2, v = (2 + Math.random() * 5) * (this.cellW / 90);
+      let vx = Math.cos(a) * v, vy = Math.sin(a) * v - 2, life = 0;
+      const ttl = 30 + Math.random() * 25;
+      const step = (tk: Ticker) => {
+        const d = tk.deltaTime;
+        life += d; vy += 0.18 * d; vx *= 0.98;
+        s.x += vx * d; s.y += vy * d;
+        s.alpha = Math.max(0, 1 - life / ttl);
+        if (life >= ttl) { this.app.ticker.remove(step); s.destroy(); }
+      };
+      this.app.ticker.add(step);
+    }
   }
 
   /** A burst of gold coins from the reels: more coins for bigger wins. */
