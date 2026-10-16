@@ -5,7 +5,6 @@ import type { SlotConfig } from './config';
 import { ReelSet } from './reels';
 import { Tweens, ease } from './tweens';
 
-const LINE_COLOURS = [0xffd36b, 0x46e0c8, 0xff7a59, 0xc58bff, 0x7cd3ff, 0xffe9a8, 0x9dff8a, 0xff9ad5, 0xffb347, 0x6bf0ff];
 
 /** Everything drawn on the canvas: background, logo, the reel frame, the reels, locked cells, win lines and particles. */
 export class Scene {
@@ -159,21 +158,22 @@ export class Scene {
     return { x: reel * (this.cellW + this.gap) + this.cellW / 2, y: row * this.cellH + this.cellH / 2 };
   }
 
-  /** Draws the winning lines, dims everything else and pulses the winning symbols. */
+  /** Frames the winning symbols, dims everything else and pulses them. Paylines are not drawn; the rules show them. */
   async showWins(info: GameInfo, wins: LineWin[], scatterCells: [number, number][], pulseMs: number) {
     this.clearWins();
     const winning = new Set<string>(scatterCells.map(([r, row]) => `${r}:${row}`));
-    wins.forEach((w, i) => {
+    for (const w of wins) {
       const rows = info.paylines[w.line];
-      const colour = LINE_COLOURS[i % LINE_COLOURS.length];
-      const pts = rows.map((row, reel) => this.centre(reel, row));
-      this.lines.moveTo(pts[0].x - this.cellW * 0.5, pts[0].y);
-      pts.forEach((p) => this.lines.lineTo(p.x, p.y));
-      this.lines.lineTo(pts[4].x + this.cellW * 0.5, pts[4].y);
-      this.lines.stroke({ width: Math.max(3, this.cellW * 0.05), color: colour, alpha: 0.9, cap: 'round', join: 'round' });
       for (let reel = 0; reel < w.reels; reel++) winning.add(`${reel}:${rows[reel]}`);
-    });
+    }
     if (!winning.size) return;
+    const inset = this.cellW * 0.04;
+    for (const k of winning) {
+      const [reel, row] = k.split(':').map(Number);
+      const c = this.centre(reel, row);
+      this.lines.roundRect(c.x - this.cellW / 2 + inset, c.y - this.cellH / 2 + inset, this.cellW - inset * 2, this.cellH - inset * 2, this.cellW * 0.12)
+        .stroke({ width: Math.max(2, this.cellW * 0.035), color: this.config.colours.accent, alpha: 0.95 });
+    }
     this.reels.reels.forEach((r, reel) => {
       for (let row = 0; row < 3; row++) r.cell(row).alpha = winning.has(`${reel}:${row}`) ? 1 : 0.38;
     });
