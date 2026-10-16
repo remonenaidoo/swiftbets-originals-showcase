@@ -93,10 +93,12 @@ button:disabled { opacity: .45; cursor: default; }
 .facts small { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
 .pays { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .pay { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,.04); border-radius: 12px; padding: 8px; }
+.pay .pics { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .pay img { width: 52px; height: 52px; object-fit: contain; }
-.pay table { font-size: 12px; border-collapse: collapse; }
-.pay td { padding: 1px 4px; font-variant-numeric: tabular-nums; }
-.pay td:first-child { color: var(--muted); }
+.pay .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 2px 8px; flex: 1; font-size: 12px; font-variant-numeric: tabular-nums; }
+.pay .grid small { color: var(--muted); margin-right: 4px; }
+.pay.wide { grid-column: 1 / -1; }
+.note { color: var(--muted); font-size: 12px; }
 .lines { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
 .line { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(255,255,255,.04); border-radius: 8px; padding: 5px; position: relative; }
 .line i { aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,.08); }

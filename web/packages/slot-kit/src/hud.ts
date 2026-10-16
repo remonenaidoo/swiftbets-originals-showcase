@@ -1,23 +1,15 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b1d22" />
-    <title>Gilded Savanna · SwiftBets Originals</title>
-    <link rel="stylesheet" href="/src/style.css" />
-  </head>
-  <body>
-    <div id="game"></div>
+/** The HUD, overlays and sheets every slot shares; the canvas mounts in #game. */
+export const HUD = (title: string) => `
+<div id="game"></div>
 
     <div id="loader"><div class="box">
-      <div class="title">GILDED SAVANNA</div>
+      <div class="title">${title.toUpperCase()}</div>
       <div class="studio">SwiftBets Originals</div>
       <div class="bar"><i></i></div>
     </div></div>
 
     <div id="top"><span class="pill" id="clock" title="Session time">00:00</span><span class="pill" id="rtp">RTP 96.00%</span></div>
-    <div id="feature"><span>FREE SPINS</span><b id="fs-left">10</b><span>left</span><span class="x2">×2</span><span>won <b id="fs-won">R 0.00</b></span></div>
+    <div id="feature"><span>FREE SPINS</span><b id="fs-left">10</b><span>left</span><span class="x2" id="fs-mult">×2</span><span>won <b id="fs-won">R 0.00</b></span></div>
 
     <div id="hud">
       <div class="row">
@@ -64,7 +56,4 @@
       <p class="foot">Free spins play on automatically. Autoplay stops at the loss limit, on any error, or when you tap Stop. A loss limit is required.</p>
       <button class="primary" id="auto-start">START AUTOPLAY</button>
     </div></div>
-
-    <script type="module" src="/src/main.ts"></script>
-  </body>
-</html>
+`;

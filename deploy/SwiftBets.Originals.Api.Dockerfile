@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1.7
 FROM node:22-bookworm-slim AS web
 WORKDIR /web
-COPY web/package.json web/package-lock.json ./
-RUN npm ci
+# The workspace (games + packages/slot-kit) installs together, so the whole folder is needed before npm ci.
 COPY web/ ./
-RUN npm run build
+RUN npm ci && npm run build
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 ARG TARGETARCH

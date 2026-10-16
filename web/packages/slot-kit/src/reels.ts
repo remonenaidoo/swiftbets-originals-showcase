@@ -23,7 +23,7 @@ export class Reel extends Container {
   private cellW = 100;
   private cellH = 100;
 
-  constructor(private readonly textures: Record<Sym, Texture>, private readonly tweens: Tweens, ticker: Ticker) {
+  constructor(private readonly textures: Record<Sym, Texture>, private readonly emphasised: Set<Sym>, private readonly tweens: Tweens, ticker: Ticker) {
     super();
     const inner = new Container();
     for (let k = 0; k < 4; k++) {
@@ -120,7 +120,7 @@ export class Reel extends Container {
       const sym = this.strip[(((i0 + k) % n) + n) % n];
       s.texture = this.textures[sym];
       const scale = size / Math.max(s.texture.width, s.texture.height);
-      s.scale.set(scale * (sym === 'Wild' || sym === 'Scatter' ? 1.06 : 1));
+      s.scale.set(scale * (this.emphasised.has(sym) ? 1.06 : 1));
       s.position.set(this.cellW / 2, (k - frac) * this.cellH + this.cellH / 2);
       s.alpha = 1;
       s.tint = 0xffffff;
@@ -132,10 +132,10 @@ export class Reel extends Container {
 export class ReelSet extends Container {
   readonly reels: Reel[] = [];
 
-  constructor(textures: Record<Sym, Texture>, tweens: Tweens, ticker: Ticker) {
+  constructor(textures: Record<Sym, Texture>, emphasised: Set<Sym>, tweens: Tweens, ticker: Ticker) {
     super();
     for (let i = 0; i < 5; i++) {
-      const r = new Reel(textures, tweens, ticker);
+      const r = new Reel(textures, emphasised, tweens, ticker);
       this.reels.push(r);
       this.addChild(r);
     }
@@ -154,6 +154,9 @@ export class ReelSet extends Container {
 
   private hurry: (() => void) | null = null;
   private slammed = false;
+
+  /** Which symbol is the Scatter, for anticipation; set by the game. */
+  scatter: (s: Sym) => boolean = () => false;
 
   get spinning() {
     return this.reels.some((r) => r.spinning);
@@ -184,6 +187,11 @@ export class ReelSet extends Container {
    * could complete three Scatters waits `tease` longer (anticipation). `onStop` fires as each reel lands.
    */
   async stop(stops: number[], strips: Sym[][], speed: Speed, onStop: (reel: number, tease: boolean) => void) {
+    const count = (reel: number) => {
+      let n = 0;
+      for (let row = 0; row < 3; row++) if (this.scatter(strips[reel][(stops[reel] + row) % strips[reel].length])) n++;
+      return n;
+    };
     const landed: Promise<void>[] = [];
     let scatters = 0;
     for (let i = 0; i < 5; i++) {
@@ -195,11 +203,5 @@ export class ReelSet extends Container {
     }
     this.hurry = null;
     await Promise.all(landed);
-
-    function count(reel: number) {
-      let n = 0;
-      for (let row = 0; row < 3; row++) if (strips[reel][(stops[reel] + row) % strips[reel].length] === 'Scatter') n++;
-      return n;
-    }
   }
 }
