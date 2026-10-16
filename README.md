@@ -11,7 +11,7 @@ and a config folder in `web/games/`. The engine, the round handling and the clie
 | Game | | PAR sheet |
 | --- | --- | --- |
 | **Gilded Savanna** | 5×3, 20 lines; Protea Wild on reels 2–4; Baobab Scatter, 3+ = 10 free spins ×2, retriggerable. RTP 96.00%, exact. | [gilded-savanna.md](docs/par-sheet/gilded-savanna.md) |
-| **Gold Reef Rush** | 5×3, 15 lines, 15-coin stakes; split symbols (Gold Bar to ×3, a line counts to 15); Miner Wild and Double Miner on reels 2–4; Dynamite Scatter, 3+ = 8 free spins where every split locks. RTP 96.00% (base exact, feature simulated). Placeholder art. | [gold-reef-rush.md](docs/par-sheet/gold-reef-rush.md) |
+| **Gold Reef Rush** | 5×3, 15 lines, 15-coin stakes; split symbols (Gold Bar to ×3, a line counts to 15); Miner Wild and Double Miner on reels 2–4; Dynamite Scatter, 3+ = 8 free spins where every split locks. RTP 96.00% (base exact, feature simulated). | [gold-reef-rush.md](docs/par-sheet/gold-reef-rush.md) |
 
 Both cap a round (a paid spin and its feature) at 5,000× stake.
 

@@ -19,3 +19,4 @@ node_modules/
 dist/
 web/art/raw/
 web/art/*/raw/
+__pycache__/

@@ -47,11 +47,11 @@ public static class GoldReefRush
     /// <summary>Symbol counts per base reel (each reel 36 stops). Reels 1 and 5 have no Wilds.</summary>
     public static readonly Dictionary<string, int>[] BaseCounts =
     [
-        Outer(gold: 2, gold2: 1, gold3: 1, diamond: 3, diamond2: 1, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
-        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 3, lantern2: 0, copper: 6, silver: 6, quartz: 7),
-        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 3, lantern2: 0, copper: 6, silver: 6, quartz: 7),
-        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 3, lantern2: 0, copper: 6, silver: 6, quartz: 7),
-        Outer(gold: 2, gold2: 1, gold3: 1, diamond: 3, diamond2: 1, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
+        Outer(gold: 2, gold2: 1, gold3: 1, diamond: 4, diamond2: 0, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
+        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 2, lantern2: 1, copper: 6, silver: 6, quartz: 7),
+        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 2, lantern2: 1, copper: 6, silver: 6, quartz: 7),
+        Middle(miner: 3, miner2: 1, gold: 1, gold2: 1, gold3: 1, diamond: 2, diamond2: 1, cart: 2, cart2: 1, lantern: 2, lantern2: 1, copper: 6, silver: 6, quartz: 7),
+        Outer(gold: 2, gold2: 1, gold3: 1, diamond: 4, diamond2: 0, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
     ];
 
     /// <summary>Symbol counts per free-spin reel (each reel 36 stops): more splits, so more locks.</summary>

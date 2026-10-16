@@ -8,6 +8,7 @@ public sealed class ParSheetTests
     /// <summary>Changing strips, lines or pays without regenerating the PAR sheet (maths tool: par) fails here.</summary>
     [Theory]
     [InlineData(GildedSavanna.GameId)]
+    [InlineData(GoldReefRush.GameId)]
     public void Sheet_matches_the_definition(string gameId)
     {
         var sheet = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, $"{gameId}.md"));

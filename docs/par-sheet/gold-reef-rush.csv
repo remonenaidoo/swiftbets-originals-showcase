@@ -1,0 +1,70 @@
+section,key,value
+rtp,base,0.6712020287176752
+rtp,feature,0.28881448915518904
+rtp,total,0.9600165178728642
+contribution,Cart:03,0.005179755372656607;0.00015179560883757558
+contribution,Cart:04,0.020234783823604125;0.001137594677725279
+contribution,Cart:05,0.02820254417941032;0.0030727463602497744
+contribution,Cart:06,0.015474436484953174;0.0026287975170338758
+contribution,Cart:07,0.006243490575623635;0.0011909719331104802
+contribution,Cart:08,0.0024172191739064166;0.0008801431214847933
+contribution,Cart:09,0.0007038645870378838;0.00041013032386369214
+contribution,Cart:10,0.00015876644820403394;0.00020678839858673554
+contribution,Copper:03,0.03009259259259259;0.0007694467068663313
+contribution,Copper:04,0.03073559670781893;0.001211844637092829
+contribution,Copper:05,0.018754286694101507;0.0008945617656831262
+contribution,Copper:06,0.005626286008230453;0.00043255932594998787
+contribution,Copper:07,0.0006096631611034903;9.615660534283205E-05
+contribution,Copper:08,2.381496723060509E-05;7.754564947002583E-06
+contribution,Diamond:03,0.013812680993750952;0.00017447771130755813
+contribution,Diamond:04,0.024688182695727277;0.0006215768465331758
+contribution,Diamond:05,0.01880588578976782;0.0008404009761314049
+contribution,Diamond:06,0.008335238530711782;0.0005482719747685421
+contribution,Diamond:07,0.0026249386103066943;0.0002598317768700518
+contribution,Diamond:08,0.0002540263171264543;1.0097089774742948E-05
+contribution,GoldBar:03,0.005525072397500381;0
+contribution,GoldBar:04,0.017930024217175565;0.00011244119173153747
+contribution,GoldBar:05,0.044264085759284665;0.0010261874279866752
+contribution,GoldBar:06,0.0491064624295077;0.002499877874789958
+contribution,GoldBar:07,0.048966218733594136;0.0031185198338952746
+contribution,GoldBar:08,0.031842595767921554;0.0021829908092994258
+contribution,GoldBar:09,0.0166837075987739;0.0012030345896947064
+contribution,GoldBar:10,0.008494004978915816;0.000707200167822996
+contribution,GoldBar:11,0.0038368558315974867;0.00033226156752087457
+contribution,GoldBar:12,0.0016868935121678605;0.0001651883887147946
+contribution,GoldBar:13,0.0006780650392047283;7.135276774151684E-05
+contribution,GoldBar:14,0.0002646107470067232;2.154045818611829E-05
+contribution,GoldBar:15,8.269085843960102E-05;3.3656965915809823E-06
+contribution,Lantern:03,0.006474694215820759;0.00015702994017680231
+contribution,Lantern:04,0.020914998825128282;0.001137982405972629
+contribution,Lantern:05,0.02550616066741181;0.0029278329278026633
+contribution,Lantern:06,0.01294045781893004;0.0025204759379304337
+contribution,Lantern:07,0.006039740300428457;0.001543037259376217
+contribution,Lantern:08,0.0021856847702755337;0.0009393322617443362
+contribution,Lantern:09,0.0006668190824569426;0.0003998447550798207
+contribution,Lantern:10,0.00012701315856322715;0.00018174761594537308
+contribution,Quartz:03,0.01786122542295382;0.00017568936208052727
+contribution,Quartz:04,0.02381496723060509;0.00041658909562293614
+contribution,Quartz:05,0.015777415790275872;0.00031809198487031865
+contribution,Quartz:06,0.0042866941015089165;0.00014055148966442185
+contribution,Quartz:07,0.0005001143118427069;4.4265641572473076E-05
+contribution,Quartz:08,1.786122542295382E-05;4.038835909897179E-06
+contribution,Scatter:03,0.004862718621399177;0.00019792315376451124
+contribution,Scatter:04,0.0011051633230452676;4.498253494647984E-05
+contribution,Scatter:05,0.00010046939300411523;4.089321358770893E-06
+contribution,Silver:03,0.022569444444444444;0.0005770850301497486
+contribution,Silver:04,0.023051697530864196;0.0009088834778196216
+contribution,Silver:05,0.015003429355281208;0.0007156494125465009
+contribution,Silver:06,0.0045010288065843625;0.00034604746075999026
+contribution,Silver:07,0.000533455265965554;8.413702967497802E-05
+contribution,Silver:08,2.143347050754458E-05;6.979108452302326E-06
+base_strip,reel1,Copper Silver Quartz Diamond Lantern GoldBar Cart Cart2 Lantern2 Copper Silver Quartz Diamond GoldBar2 Copper Silver Quartz GoldBar3 Lantern Dynamite Copper Silver Quartz Diamond GoldBar Cart Cart2 Copper Silver Quartz Lantern2 Lantern Diamond Copper Silver Quartz
+base_strip,reel2,Quartz Copper Silver Miner Diamond Cart Lantern Quartz Copper Silver GoldBar GoldBar2 Quartz GoldBar3 Copper Silver Diamond2 Cart2 Quartz Miner Lantern2 Copper Silver Quartz Miner2 Dynamite Diamond Copper Silver Quartz Cart Lantern Miner Copper Silver Quartz
+base_strip,reel3,Quartz Copper Silver Miner Diamond Cart Lantern Quartz Copper Silver GoldBar GoldBar2 Quartz GoldBar3 Copper Silver Diamond2 Cart2 Quartz Miner Lantern2 Copper Silver Quartz Miner2 Dynamite Diamond Copper Silver Quartz Cart Lantern Miner Copper Silver Quartz
+base_strip,reel4,Quartz Copper Silver Miner Diamond Cart Lantern Quartz Copper Silver GoldBar GoldBar2 Quartz GoldBar3 Copper Silver Diamond2 Cart2 Quartz Miner Lantern2 Copper Silver Quartz Miner2 Dynamite Diamond Copper Silver Quartz Cart Lantern Miner Copper Silver Quartz
+base_strip,reel5,Copper Silver Quartz Diamond Lantern GoldBar Cart Cart2 Lantern2 Copper Silver Quartz Diamond GoldBar2 Copper Silver Quartz GoldBar3 Lantern Dynamite Copper Silver Quartz Diamond GoldBar Cart Cart2 Copper Silver Quartz Lantern2 Lantern Diamond Copper Silver Quartz
+free_strip,reel1,Copper Silver Quartz Cart Cart2 Lantern Lantern2 GoldBar2 Copper Silver Quartz GoldBar3 Cart Cart2 Copper Silver Diamond Lantern Quartz Lantern2 Dynamite Copper Silver Cart Cart2 Quartz GoldBar2 Copper Silver Lantern Lantern2 Cart Cart2 Quartz Copper Silver
+free_strip,reel2,Copper Silver Diamond Diamond2 Lantern2 Quartz GoldBar2 Cart2 Lantern Miner Miner2 Copper Silver Diamond GoldBar3 Cart Dynamite Diamond2 Copper Silver Lantern2 Quartz Diamond GoldBar2 Copper Silver Cart2 Lantern Miner Miner2 Diamond2 Lantern2 Quartz Diamond Copper Silver
+free_strip,reel3,Copper Silver Diamond Diamond2 Lantern2 Quartz GoldBar2 Cart2 Lantern Miner Miner2 Copper Silver Diamond GoldBar3 Cart Dynamite Diamond2 Copper Silver Lantern2 Quartz Diamond GoldBar2 Copper Silver Cart2 Lantern Miner Miner2 Diamond2 Lantern2 Quartz Diamond Copper Silver
+free_strip,reel4,Copper Silver Diamond Diamond2 Lantern2 Quartz GoldBar2 Cart2 Lantern Miner Miner2 Copper Silver Diamond GoldBar3 Cart Dynamite Diamond2 Copper Silver Lantern2 Quartz Diamond GoldBar2 Copper Silver Cart2 Lantern Miner Miner2 Diamond2 Lantern2 Quartz Diamond Copper Silver
+free_strip,reel5,Copper Silver Quartz Cart Cart2 Lantern Lantern2 GoldBar2 Copper Silver Quartz GoldBar3 Cart Cart2 Copper Silver Diamond Lantern Quartz Lantern2 Dynamite Copper Silver Cart Cart2 Quartz GoldBar2 Copper Silver Lantern Lantern2 Cart Cart2 Quartz Copper Silver
