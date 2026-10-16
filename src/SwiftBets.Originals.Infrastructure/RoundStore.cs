@@ -19,12 +19,12 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return row?.ToRecord();
     }
 
-    public async Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, CancellationToken cancellationToken)
+    public async Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, string gameId, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         var row = await c.QueryFirstOrDefaultAsync<RoundRow>(new CommandDefinition(
-            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND status = 'feature' ORDER BY created_at LIMIT 1",
-            new { playerRef }, cancellationToken: cancellationToken));
+            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND game_id = @gameId AND status = 'feature' ORDER BY created_at LIMIT 1",
+            new { playerRef, gameId }, cancellationToken: cancellationToken));
         return row?.ToRecord();
     }
 
@@ -81,12 +81,12 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return [.. rows.Select(r => r.ToRecord())];
     }
 
-    public async Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, int count, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, string gameId, int count, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         var rows = await c.QueryAsync<RoundRow>(new CommandDefinition(
-            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND status NOT IN ('pending', 'refused') ORDER BY created_at DESC LIMIT @count",
-            new { playerRef, count }, cancellationToken: cancellationToken));
+            $"SELECT {RoundColumns} FROM originals.rounds WHERE player_ref = @playerRef AND game_id = @gameId AND status NOT IN ('pending', 'refused') ORDER BY created_at DESC LIMIT @count",
+            new { playerRef, gameId, count }, cancellationToken: cancellationToken));
         return [.. rows.Select(r => r.ToRecord())];
     }
 
@@ -112,21 +112,21 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return result;
     }
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, Func<RoundRecord, int, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
+    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await using var tx = await c.BeginTransactionAsync(cancellationToken);
         var row = await c.QuerySingleOrDefaultAsync<RoundRow>(new CommandDefinition(
             $"SELECT {RoundColumns} FROM originals.rounds WHERE round_id = @roundId FOR UPDATE", new { roundId }, tx, cancellationToken: cancellationToken));
-        if (row is null || row.player_ref != playerRef || row.status != RoundStatus.Feature || row.free_spins_left <= 0)
+        if (row is null || row.player_ref != playerRef || row.game_id != gameId || row.status != RoundStatus.Feature || row.free_spins_left <= 0)
         {
             return null;
         }
 
         var round = row.ToRecord();
-        var seq = await c.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT count(*)::int FROM originals.spins WHERE round_id = @roundId", new { roundId }, tx, cancellationToken: cancellationToken));
-        var (spin, left, paidUnits) = play(round, seq);
+        var last = await c.QuerySingleAsync<SpinRow>(new CommandDefinition(
+            $"SELECT {SpinColumns} FROM originals.spins WHERE round_id = @roundId ORDER BY seq DESC LIMIT 1", new { roundId }, tx, cancellationToken: cancellationToken));
+        var (spin, left, paidUnits) = play(round, last.ToRecord());
         await InsertSpinAsync(c, tx, spin, cancellationToken);
         var status = left > 0 ? RoundStatus.Feature : RoundStatus.WinPending;
         await c.ExecuteAsync(new CommandDefinition(

@@ -1,19 +1,17 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using SwiftBets.Originals.Application.Ports;
 using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>What the spin and feature handlers share: stakes, money conversion, the player reference, wallet codes.</summary>
+/// <summary>What the spin and feature handlers share: money conversion, stored outcomes, the player reference, wallet codes.</summary>
 internal static class Play
 {
-    public static readonly long[] Stakes = [100, 200, 500, 1000, 2000, 5000];
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Line-bet units to minor units: the stake is always a multiple of the line count.</summary>
+    /// <summary>Line-bet units to minor units: every offered stake is a multiple of the line count.</summary>
     public static long Money(long units, long stake, int lines) => units * (stake / lines);
 
     public static string BetTx(Guid round) => $"{round}:bet";
@@ -22,16 +20,24 @@ internal static class Play
 
     public static string RollbackTx(Guid round) => $"{round}:rollback";
 
-    public static string OutcomeJson(SpinOutcome outcome) =>
-        JsonSerializer.Serialize(new { lines = outcome.Lines, scatters = outcome.Scatters, scatterUnits = outcome.ScatterUnits, totalUnits = outcome.TotalUnits, trigger = outcome.TriggersFeature }, Json);
+    /// <summary>The stored outcome: symbols by name, so a spin replays whatever the symbol table's order becomes.</summary>
+    public static string OutcomeJson(GameDefinition game, SpinOutcome outcome) => JsonSerializer.Serialize(new Outcome(
+        [.. outcome.Lines.Select(l => new LineView(l.Line, game.Name(l.Symbol), l.Count, l.Reels, l.Units))],
+        outcome.Scatters,
+        outcome.ScatterUnits,
+        outcome.TotalUnits,
+        outcome.TriggersFeature,
+        outcome.Locked.Count == 0 ? null : [.. outcome.Locked.Select(c => new LockView(c.Reel, c.Row, game.Name(c.Symbol)))]), Json);
 
-    public static IReadOnlyList<LineWin> LinesOf(string outcomeJson) =>
-        JsonDocument.Parse(outcomeJson).RootElement.TryGetProperty("lines", out var lines)
-            ? lines.Deserialize<List<LineWin>>(Json) ?? []
-            : [];
+    /// <summary>Reads a stored outcome. Rounds stored before split symbols have no <c>reels</c>: their count is their reels.</summary>
+    public static Outcome Read(string outcomeJson)
+    {
+        var o = JsonSerializer.Deserialize<Outcome>(outcomeJson, Json)!;
+        return o with { Lines = [.. (o.Lines ?? []).Select(l => l.Reels == 0 ? l with { Reels = l.Count } : l)] };
+    }
 
-    public static int ScattersOf(string outcomeJson) =>
-        JsonDocument.Parse(outcomeJson).RootElement.TryGetProperty("scatters", out var s) ? s.GetInt32() : 0;
+    public static IReadOnlyList<LockedCell> LocksOf(GameDefinition game, string outcomeJson) =>
+        [.. (Read(outcomeJson).Locked ?? []).Select(l => new LockedCell(l.Reel, l.Row, game.Id(l.Symbol)))];
 
     /// <summary>Who is playing, from the casino. Without the casino's reference the round is bound to this session only.</summary>
     public static async Task<(string? PlayerRef, long? Balance, SpinError? Error)> IdentifyAsync(IWallet wallet, string sessionToken, CancellationToken cancellationToken)
@@ -54,16 +60,24 @@ internal static class Play
         _ => SpinError.WalletUnavailable,
     };
 
-    public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance) => new(
-        round.RoundId,
-        spin.Seq,
-        spin.Stops,
-        LinesOf(spin.OutcomeJson),
-        ScattersOf(spin.OutcomeJson),
-        spin.Win,
-        Money(round.PaidUnits, round.Stake, game.LineCount),
-        round.FreeSpinsLeft,
-        spin.Seq == 0 && ScattersOf(spin.OutcomeJson) >= 3,
-        round.PaidUnits >= game.CapUnits,
-        balance);
+    public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance)
+    {
+        var outcome = Read(spin.OutcomeJson);
+        return new SpinView(
+            round.RoundId,
+            spin.Seq,
+            spin.Stops,
+            outcome.Lines,
+            outcome.Scatters,
+            spin.Win,
+            Money(round.PaidUnits, round.Stake, game.LineCount),
+            round.FreeSpinsLeft,
+            spin.Seq == 0 && outcome.Trigger,
+            round.PaidUnits >= game.CapUnits,
+            balance,
+            outcome.Locked ?? []);
+    }
+
+    /// <summary>A stored spin outcome.</summary>
+    public sealed record Outcome(IReadOnlyList<LineView> Lines, int Scatters, long ScatterUnits, long TotalUnits, bool Trigger, IReadOnlyList<LockView>? Locked);
 }

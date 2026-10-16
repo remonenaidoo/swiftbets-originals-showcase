@@ -29,8 +29,8 @@ public interface IRoundStore
 {
     Task<RoundRecord?> FindByKeyAsync(string playerRef, string idempotencyKey, CancellationToken cancellationToken);
 
-    /// <summary>The player's round with free spins still to play, if any.</summary>
-    Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, CancellationToken cancellationToken);
+    /// <summary>The player's round of this game with free spins still to play, if any.</summary>
+    Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, string gameId, CancellationToken cancellationToken);
 
     Task<RoundRecord?> GetAsync(Guid roundId, CancellationToken cancellationToken);
 
@@ -45,14 +45,15 @@ public interface IRoundStore
 
     Task<IReadOnlyList<SpinRecord>> SpinsAsync(Guid roundId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, int count, CancellationToken cancellationToken);
+    Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, string gameId, int count, CancellationToken cancellationToken);
 
     /// <summary>
     /// Plays one free spin atomically: locks the round, checks it still has spins, lets <paramref name="play"/> draw
-    /// the spin at the next seq, stores it and the round's new spins-left and paid units, and commits. Null when the
-    /// round is not this player's or has no free spin left. Two concurrent calls therefore each consume a spin.
+    /// the spin after the round's last spin (passed in, read under the lock, so a feature's locked cells are never
+    /// stale), stores it and the round's new spins-left and paid units, and commits. Null when the round is not this
+    /// player's, not this game's, or has no free spin left. Two concurrent calls therefore each consume a spin.
     /// </summary>
-    Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, Func<RoundRecord, int, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
+    Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
 
     /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> when nothing is owed any more (one atomic statement).</summary>
     Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken);

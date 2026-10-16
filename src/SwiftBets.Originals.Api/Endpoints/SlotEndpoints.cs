@@ -5,8 +5,9 @@ using SwiftBets.Originals.Application;
 namespace SwiftBets.Originals.Api.Endpoints;
 
 /// <summary>
-/// The game's API, behind the public gateway at <c>/originals</c> (prefix stripped). The casino session token is the
-/// credential: the casino validates it on every wallet call, so these endpoints are anonymous.
+/// The games' API, behind the public gateway at <c>/originals</c> (prefix stripped), one set of routes per game id.
+/// The casino session token is the credential: the casino validates it on every wallet call, so these endpoints are
+/// anonymous.
 /// </summary>
 public static class SlotEndpoints
 {
@@ -20,11 +21,17 @@ public static class SlotEndpoints
 
     public static IEndpointRouteBuilder MapSlotEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/play", (string? session, IWebHostEnvironment env, HttpContext context) =>
+        // The casino's launch link: /play?session=…&game=…, one page per game.
+        endpoints.MapGet("/play", (string? session, string? game, SlotEngines games, IWebHostEnvironment env, HttpContext context) =>
         {
             if (string.IsNullOrEmpty(session))
             {
                 return Results.BadRequest("session is required");
+            }
+
+            if (games.Find(game) is null)
+            {
+                return Results.NotFound();
             }
 
             // The game page is HTML framed by the site, so it replaces the JSON API's baseline headers with its own:
@@ -32,17 +39,18 @@ public static class SlotEndpoints
             context.Response.Headers.CacheControl = "no-store";
             context.Response.Headers.ContentSecurityPolicy = PagePolicy;
             context.Response.Headers.XFrameOptions = "SAMEORIGIN";
-            return Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html; charset=utf-8");
+            return Results.File(Path.Combine(env.WebRootPath, "games", game!, "index.html"), "text/html; charset=utf-8");
         }).AllowAnonymous();
 
-        endpoints.MapGet("/slot/state", async (string? session, StateQuery query, HttpContext context, CancellationToken cancellationToken) =>
-            Respond(await query.GetAsync(session ?? string.Empty, cancellationToken), context)).AllowAnonymous();
+        var game = endpoints.MapGroup("/games/{gameId}").AllowAnonymous();
+        game.MapGet("/state", async (string gameId, string? session, StateQuery query, HttpContext context, CancellationToken cancellationToken) =>
+            Respond(await query.GetAsync(gameId, session ?? string.Empty, cancellationToken), context));
 
-        endpoints.MapPost("/slot/spin", async (SpinBody body, SpinHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            Respond(await handler.SpinAsync(new SpinRequest(body.Session ?? string.Empty, body.Stake, body.Key ?? string.Empty), cancellationToken), context)).AllowAnonymous();
+        game.MapPost("/spin", async (string gameId, SpinBody body, SpinHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            Respond(await handler.SpinAsync(new SpinRequest(gameId, body.Session ?? string.Empty, body.Stake, body.Key ?? string.Empty), cancellationToken), context));
 
-        endpoints.MapPost("/slot/feature/next", async (NextBody body, FeatureHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            Respond(await handler.NextAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context)).AllowAnonymous();
+        game.MapPost("/feature/next", async (string gameId, NextBody body, FeatureHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            Respond(await handler.NextAsync(gameId, body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
 
         return endpoints;
     }
@@ -57,6 +65,7 @@ public static class SlotEndpoints
         "insufficient_funds" => new Error(e.Code, "Not enough balance for this stake.", ErrorKind.BusinessRule),
         "limit_exceeded" => new Error(e.Code, "You have reached a limit you set.", ErrorKind.Forbidden),
         "account_restricted" => new Error(e.Code, "Play is not available on this account right now.", ErrorKind.Forbidden),
+        "game_not_found" => new Error(e.Code, "No such game.", ErrorKind.NotFound),
         "round_not_found" => new Error(e.Code, "No such round.", ErrorKind.NotFound),
         "feature_in_progress" => new Error(e.Code, "Finish your free spins first.", ErrorKind.Conflict),
         "no_feature" => new Error(e.Code, "There are no free spins to play.", ErrorKind.Conflict),

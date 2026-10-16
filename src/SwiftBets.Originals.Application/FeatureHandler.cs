@@ -4,16 +4,22 @@ using SwiftBets.Originals.Domain.Slot;
 namespace SwiftBets.Originals.Application;
 
 /// <summary>
-/// One free spin of an open feature: no stake; its win (×2, under the round's cap) is paid as it lands. 3+ Scatters
-/// add spins; the feature ends when the spins run out or the cap is reached (remaining spins are forfeited).
+/// One free spin of an open feature: no stake; its win (× the game's multiplier, under the round's cap) is paid as it
+/// lands. A retriggering game adds spins for 3+ Scatters; a locking game carries its locked cells from the last spin.
+/// The feature ends when the spins run out or the cap is reached (remaining spins are forfeited).
 /// The spin is drawn and the round updated inside one locked transaction, so concurrent requests each consume a
 /// spin and the cap is always checked against the true total; the win is paid after the commit.
 /// </summary>
-public sealed class FeatureHandler(IRoundStore store, IWallet wallet, RoundEngine engine)
+public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngines games)
 {
-    public async Task<Result<SpinView>> NextAsync(string sessionToken, Guid roundId, CancellationToken cancellationToken)
+    public async Task<Result<SpinView>> NextAsync(string gameId, string sessionToken, Guid roundId, CancellationToken cancellationToken)
     {
-        var game = engine.Game;
+        if (games.Find(gameId) is not var (slot, engine))
+        {
+            return SpinError.GameNotFound;
+        }
+
+        var game = slot.Definition;
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
         if (error is not null)
         {
@@ -22,28 +28,29 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, RoundEngin
 
         SpinOutcome? outcome = null;
         var capped = false;
-        var claim = await store.ClaimFreeSpinAsync(roundId, playerRef!, (round, seq) =>
+        var claim = await store.ClaimFreeSpinAsync(roundId, playerRef!, game.GameId, (round, last) =>
         {
-            outcome = engine.PlaySpin(free: true);
+            var seq = last.Seq + 1;
+            outcome = engine.PlaySpin(free: true, last.Seq == 0 ? [] : Play.LocksOf(game, last.OutcomeJson));
             var (paidUnits, reached) = Cap.Apply(round.PaidUnits, outcome.TotalUnits, game.CapUnits);
             capped = reached;
             var win = Play.Money(paidUnits, round.Stake, game.LineCount);
-            var left = reached ? 0 : round.FreeSpinsLeft - 1 + (outcome.TriggersFeature ? game.FreeSpinsAwarded : 0);
-            var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
+            var left = reached ? 0 : engine.SpinsLeftAfter(round.FreeSpinsLeft, outcome);
+            var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(game, outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
             return (spin, left, round.PaidUnits + paidUnits);
         }, cancellationToken);
 
         if (claim is not { } claimed)
         {
             var round = await store.GetAsync(roundId, cancellationToken);
-            return round is null || round.PlayerRef != playerRef ? SpinError.RoundNotFound : SpinError.NoFeature;
+            return round is null || round.PlayerRef != playerRef || round.GameId != game.GameId ? SpinError.RoundNotFound : SpinError.NoFeature;
         }
 
         var (updated, played) = claimed;
         var winPaid = true;
         if (played.Win > 0)
         {
-            var paid = await wallet.WinAsync(updated.SessionToken, played.WinTx!, roundId.ToString(), played.Win, cancellationToken);
+            var paid = await wallet.WinAsync(updated.SessionToken, game.GameId, played.WinTx!, roundId.ToString(), played.Win, cancellationToken);
             winPaid = paid.Status == WalletStatus.Ok;
             if (winPaid)
             {
@@ -59,7 +66,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, RoundEngin
 
         return Play.View(updated, played with { WinPaid = winPaid }, game, balance) with
         {
-            FeatureTriggered = outcome!.TriggersFeature && !capped,
+            FeatureTriggered = outcome!.TriggersFeature && game.Feature.Retrigger && !capped,
             CapReached = capped,
         };
     }

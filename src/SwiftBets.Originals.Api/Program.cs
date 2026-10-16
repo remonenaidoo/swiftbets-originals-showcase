@@ -5,7 +5,7 @@ using SwiftBets.BuildingBlocks.Observability;
 using SwiftBets.BuildingBlocks.Web;
 using SwiftBets.Originals.Api.Endpoints;
 using SwiftBets.Originals.Application;
-using SwiftBets.Originals.Domain.Slot;
+using SwiftBets.Originals.Games;
 using SwiftBets.Originals.Infrastructure;
 
 if (HealthProbe.TryRun(args) is { } probeExitCode)
@@ -20,7 +20,7 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Ad
 builder.Services.AddValidatedOptions<OriginalsOptions>(builder.Configuration, OriginalsOptions.SectionName);
 builder.Services.AddOriginalsInfrastructure(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton(_ => new RoundEngine(GildedSavanna.Definition, RandomNumberGenerator.GetInt32));
+builder.Services.AddSingleton(new SlotEngines(OriginalsGames.Catalog, RandomNumberGenerator.GetInt32));
 builder.Services.AddSingleton<SpinHandler>();
 builder.Services.AddSingleton<FeatureHandler>();
 builder.Services.AddSingleton<StateQuery>();

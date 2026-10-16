@@ -1,4 +1,6 @@
 using SwiftBets.Originals.Application.Ports;
+using SwiftBets.Originals.Domain.Slot;
+using SwiftBets.Originals.Games;
 
 namespace SwiftBets.Originals.Application.Tests;
 
@@ -13,15 +15,15 @@ public sealed class FakeWallet : IWallet
 
     public Task<WalletReply> BalanceAsync(string sessionToken, CancellationToken cancellationToken) => Reply("balance", "", 0, null);
 
-    public Task<WalletReply> BetAsync(string sessionToken, string transactionId, string roundId, long amount, CancellationToken cancellationToken) => Reply("bet", transactionId, amount, null);
+    public Task<WalletReply> BetAsync(string sessionToken, string gameId, string transactionId, string roundId, long amount, CancellationToken cancellationToken) => Reply("bet", transactionId, amount, null);
 
-    public async Task<WalletReply> WinAsync(string sessionToken, string transactionId, string roundId, long amount, CancellationToken cancellationToken)
+    public async Task<WalletReply> WinAsync(string sessionToken, string gameId, string transactionId, string roundId, long amount, CancellationToken cancellationToken)
     {
         await Task.Delay(WinDelay, cancellationToken);
         return await Reply("win", transactionId, amount, null);
     }
 
-    public Task<WalletReply> RollbackAsync(string sessionToken, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken) => Reply("rollback", transactionId, 0, betTransactionId);
+    public Task<WalletReply> RollbackAsync(string sessionToken, string gameId, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken) => Reply("rollback", transactionId, 0, betTransactionId);
 
     private Task<WalletReply> Reply(string action, string tx, long amount, string? reference)
     {
@@ -45,17 +47,17 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public List<SpinRecord> Spins { get; } = [];
     public HashSet<Guid> RollbackPending { get; } = [];
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, Func<RoundRecord, int, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
+    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
     {
         await gate.WaitAsync(cancellationToken);
         try
         {
-            if (!Rounds.TryGetValue(roundId, out var round) || round.PlayerRef != playerRef || round.Status != RoundStatus.Feature || round.FreeSpinsLeft <= 0)
+            if (!Rounds.TryGetValue(roundId, out var round) || round.PlayerRef != playerRef || round.GameId != gameId || round.Status != RoundStatus.Feature || round.FreeSpinsLeft <= 0)
             {
                 return null;
             }
 
-            var (spin, left, paid) = play(round, Spins.Count(s => s.RoundId == roundId));
+            var (spin, left, paid) = play(round, Spins.Where(s => s.RoundId == roundId).MaxBy(s => s.Seq)!);
             Spins.Add(spin);
             round = round with { FreeSpinsLeft = left, PaidUnits = paid, Status = left > 0 ? RoundStatus.Feature : RoundStatus.WinPending };
             Rounds[roundId] = round;
@@ -89,8 +91,8 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public Task<RoundRecord?> FindByKeyAsync(string playerRef, string idempotencyKey, CancellationToken cancellationToken) =>
         Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.IdempotencyKey == idempotencyKey));
 
-    public Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, CancellationToken cancellationToken) =>
-        Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.Status == RoundStatus.Feature));
+    public Task<RoundRecord?> FindOpenFeatureAsync(string playerRef, string gameId, CancellationToken cancellationToken) =>
+        Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.GameId == gameId && r.Status == RoundStatus.Feature));
 
     public Task<RoundRecord?> GetAsync(Guid roundId, CancellationToken cancellationToken) => Task.FromResult(Rounds.GetValueOrDefault(roundId));
 
@@ -128,9 +130,34 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public Task<IReadOnlyList<SpinRecord>> SpinsAsync(Guid roundId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<SpinRecord>>([.. Spins.Where(s => s.RoundId == roundId).OrderBy(s => s.Seq)]);
 
-    public Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, int count, CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<RoundRecord>>([.. Rounds.Values.Where(r => r.PlayerRef == playerRef).Take(count)]);
+    public Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, string gameId, int count, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<RoundRecord>>([.. Rounds.Values.Where(r => r.PlayerRef == playerRef && r.GameId == gameId).Take(count)]);
 
     public Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<(RoundRecord, SpinRecord)>>([.. Spins.Where(s => s.Win > 0 && !s.WinPaid).Select(s => (Rounds[s.RoundId], s))]);
+}
+
+/// <summary>The real catalogue plus a small locking game, drawn by a scripted sequence (0 when it runs out).</summary>
+public static class TestGames
+{
+    public const string Locking = "lock-test";
+
+    public static SlotEngines Engines(params int[] draws)
+    {
+        var next = 0;
+        return new SlotEngines(new GameCatalog([GildedSavanna.Game, LockingGame]), _ => next < draws.Length ? draws[next++] : 0);
+    }
+
+    /// <summary>One line (top row). Free strips Gold2, Coal, Coal, Rock: stop 0 shows Gold2 on top, stop 1 does not.</summary>
+    private static readonly SlotGame LockingGame = BuildLockingGame();
+
+    private static SlotGame BuildLockingGame()
+    {
+        SymbolDef[] symbols = [new("Gold"), new("Gold2", Weight: 2, PaysAs: "Gold"), new("Coal"), new("Rock"), new("Bomb", SymbolKind.Scatter)];
+        IReadOnlyList<byte> free = [1, 2, 2, 3];
+        IReadOnlyList<byte> baseStrip = [2, 3, 2];
+        var definition = new GameDefinition(Locking, symbols, [baseStrip, baseStrip, baseStrip, baseStrip, baseStrip], [free, free, free, free, free],
+            [[0, 0, 0, 0, 0]], new Dictionary<byte, int[]> { [0] = [1, 2, 3, 4, 5, 6, 7, 8] }, [1, 5, 25], new FeatureRules(8, 1, Retrigger: false, LockSplits: true), 5000);
+        return new SlotGame(definition, new GameProfile("Lock test", 96m, [100]));
+    }
 }
