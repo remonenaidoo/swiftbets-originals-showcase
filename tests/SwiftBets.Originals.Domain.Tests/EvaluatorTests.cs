@@ -61,6 +61,15 @@ public sealed class EvaluatorTests
         outcome.Locked.ShouldBe([new LockedCell(1, 1, game.Id("Gold3")), new LockedCell(2, 1, game.Id("Gold3"))]);
     }
 
+    [Fact]
+    public void A_stake_that_does_not_split_into_whole_line_bets_is_rejected()
+    {
+        var game = SplitGame() with { Lines = [.. Enumerable.Repeat(new[] { 1, 1, 1, 1, 1 }, 15)] };
+
+        Should.Throw<ArgumentException>(() => new SlotGame(game, new GameProfile("x", 96m, [150, 100])));
+        Should.NotThrow(() => new SlotGame(game, new GameProfile("x", 96m, [150, 300])));
+    }
+
     /// <summary>Five strips of three whose middle row, at stop 0, is the given symbols; the other rows cannot line up.</summary>
     private static IReadOnlyList<byte>[] Fixed(GameDefinition game, params string[] middle)
     {

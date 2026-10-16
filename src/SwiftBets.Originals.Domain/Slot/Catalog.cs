@@ -7,8 +7,24 @@ namespace SwiftBets.Originals.Domain.Slot;
 public sealed record GameProfile(string Name, decimal StatedRtp, long[] Stakes);
 
 /// <summary>A playable slot: its definition (the maths) and its profile.</summary>
-public sealed record SlotGame(GameDefinition Definition, GameProfile Profile)
+public sealed record SlotGame
 {
+    public SlotGame(GameDefinition definition, GameProfile profile)
+    {
+        // Pays are line-bet units × (stake / lines): a stake that does not divide by the line count would underpay.
+        if (profile.Stakes.Length == 0 || profile.Stakes.Any(s => s <= 0 || s % definition.LineCount != 0))
+        {
+            throw new ArgumentException($"Every stake of {definition.GameId} must be a positive multiple of its {definition.LineCount} lines.", nameof(profile));
+        }
+
+        Definition = definition;
+        Profile = profile;
+    }
+
+    public GameDefinition Definition { get; init; }
+
+    public GameProfile Profile { get; init; }
+
     public string Id => Definition.GameId;
 }
 

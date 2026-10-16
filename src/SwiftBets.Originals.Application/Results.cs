@@ -11,6 +11,7 @@ public sealed record SpinError(int Http, string Code)
     public static readonly SpinError GameNotFound = new(404, "game_not_found");
     public static readonly SpinError RoundNotFound = new(404, "round_not_found");
     public static readonly SpinError FeatureInProgress = new(409, "feature_in_progress");
+    public static readonly SpinError KeyInUse = new(409, "key_in_use");
     public static readonly SpinError NoFeature = new(409, "no_feature");
     public static readonly SpinError WalletUnavailable = new(503, "wallet_unavailable");
 }

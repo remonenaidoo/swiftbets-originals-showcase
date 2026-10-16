@@ -68,6 +68,7 @@ public static class SlotEndpoints
         "game_not_found" => new Error(e.Code, "No such game.", ErrorKind.NotFound),
         "round_not_found" => new Error(e.Code, "No such round.", ErrorKind.NotFound),
         "feature_in_progress" => new Error(e.Code, "Finish your free spins first.", ErrorKind.Conflict),
+        "key_in_use" => new Error(e.Code, "That request key was already used for another game.", ErrorKind.Conflict),
         "no_feature" => new Error(e.Code, "There are no free spins to play.", ErrorKind.Conflict),
         _ => new Error(e.Code, "The wallet is unavailable. Try again.", ErrorKind.Unavailable),
     };

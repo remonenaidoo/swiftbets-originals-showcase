@@ -70,6 +70,33 @@ public sealed class SpinHandlerTests
     }
 
     [Fact]
+    public async Task A_key_already_used_in_another_game_is_refused_cleanly()
+    {
+        await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
+
+        var other = await Handler().SpinAsync(new SpinRequest(TestGames.Locking, "s", 100, "k1"), CancellationToken.None);
+
+        other.Error!.Code.ShouldBe("key_in_use");
+        wallet.Calls.Count(c => c.Action == "bet").ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_round_stored_before_split_symbols_still_resumes()
+    {
+        var open = new RoundRecord(Guid.NewGuid(), "player-1", "s", GildedSavanna.GameId, 100, "k0", RoundStatus.Feature, 4, 0, DateTimeOffset.UtcNow);
+        // The outcome shape written before this change: no "reels", no "locked".
+        const string old = "{\"lines\":[{\"line\":0,\"symbol\":\"Lion\",\"count\":5,\"units\":500}],\"scatters\":3,\"scatterUnits\":40,\"totalUnits\":540,\"trigger\":true}";
+        await store.InsertAsync(open, new SpinRecord(open.RoundId, 0, [0, 0, 0, 0, 0], old, 0, null, null, true), CancellationToken.None);
+
+        var state = (await new StateQuery(store, wallet, TestGames.Engines()).GetAsync(GildedSavanna.GameId, "s", CancellationToken.None)).Value!;
+        var next = await new FeatureHandler(store, wallet, TestGames.Engines()).NextAsync(GildedSavanna.GameId, "s", open.RoundId, CancellationToken.None);
+
+        state.OpenFeature!.Lines.ShouldHaveSingleItem().Reels.ShouldBe(5);
+        next.Error.ShouldBeNull();
+        next.Value!.Seq.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Expired_session_is_401()
     {
         wallet.Replies["balance"] = WalletStatus.SessionInvalid;

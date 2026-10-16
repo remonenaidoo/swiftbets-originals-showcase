@@ -31,8 +31,14 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
             return error;
         }
 
-        if (await store.FindByKeyAsync(playerRef!, request.IdempotencyKey, cancellationToken) is { } repeat && repeat.GameId == game.GameId)
+        if (await store.FindByKeyAsync(playerRef!, request.IdempotencyKey, cancellationToken) is { } repeat)
         {
+            // Keys are unique per player across games: the same key in another game is a client bug, not a repeat.
+            if (repeat.GameId != game.GameId)
+            {
+                return SpinError.KeyInUse;
+            }
+
             var first = (await store.SpinsAsync(repeat.RoundId, cancellationToken))[0];
             return Play.View(repeat, first, game, balance);
         }
