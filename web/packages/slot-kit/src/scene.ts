@@ -39,7 +39,7 @@ export class Scene {
   constructor(private readonly config: SlotConfig) {}
 
   async init(host: HTMLElement, info: GameInfo, onProgress: (p: number) => void) {
-    await this.app.init({ resizeTo: host, background: this.config.colours.background, antialias: true, resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true });
+    await this.app.init({ resizeTo: host, background: this.config.colours.background, antialias: true, resolution: Math.min(3, window.devicePixelRatio || 1), autoDensity: true });
     host.appendChild(this.app.canvas);
     this.textures = await this.config.art(this.app, info, (p) => onProgress(p * 0.8));
     const extra = [this.config.background?.portrait, this.config.background?.landscape, this.config.logo].filter((x): x is string => !!x);
@@ -92,41 +92,43 @@ export class Scene {
     }
     this.tint.clear().rect(0, 0, w, h).fill(this.config.colours.featureTint);
 
-    const hud = portrait ? 190 : 110;
-    const logoH = portrait ? Math.min(h * 0.17, 160) : Math.min(h * 0.15, 130);
-    const availW = w * (portrait ? 0.96 : 0.7);
-    const availH = h - hud - logoH - (portrait ? 40 : 28);
-    // 5 cells + gaps + the frame's padding on both sides ≈ 5.5 cells wide, 3.3 tall.
-    const cell = Math.floor(Math.min(availW / 5.5, availH / 3.3));
-    this.cellW = cell;
-    // Phones are tall: taller rows use the height without shrinking the symbols (they fit the shorter side).
-    this.cellH = portrait ? Math.floor(Math.min(cell * 1.3, availH / 3.3)) : cell;
-    this.gap = Math.max(3, Math.round(cell * 0.05));
-    const boardW = cell * 5 + this.gap * 4, boardH = this.cellH * 3;
-    const top = logoH + (portrait ? 26 : 16) + Math.max(0, (availH - boardH) / 2);
+    // The HUD is HTML over the canvas: measure it, so a compact phone HUD gives its height back to the reels.
+    const hud = document.getElementById('hud')?.getBoundingClientRect().height || (portrait ? 150 : 110);
+    const logoH = portrait ? Math.min(h * 0.12, 120) : Math.min(h * 0.15, 130);
+    const availW = portrait ? w - 12 : w * 0.7;
+    const availH = h - hud - logoH - (portrait ? 22 : 28);
+    // 5 cells + gaps + the frame's padding on both sides ≈ 5.45 cells wide, 3.25 tall.
+    const cell = Math.floor(Math.min(availW / 5.45, availH / 3.25));
+    // Phones: the reels take the full width; rows grow taller when there is room, never shorter than square.
+    this.cellW = portrait ? Math.floor(availW / 5.45) : cell;
+    this.cellH = portrait ? Math.floor(Math.max(cell, Math.min(this.cellW * 1.3, availH / 3.25))) : cell;
+    this.gap = Math.max(2, Math.round(this.cellW * 0.04));
+    const boardW = this.cellW * 5 + this.gap * 4, boardH = this.cellH * 3;
+    const top = logoH + (portrait ? 14 : 16) + Math.max(0, (availH - boardH) / 2);
     this.board.position.set(Math.round((w - boardW) / 2), Math.round(top));
-    this.reels.layout(cell, this.cellH, this.gap);
+    this.reels.layout(this.cellW, this.cellH, this.gap);
 
-    const pad = Math.round(cell * 0.12);
+    const pad = Math.round(Math.min(this.cellW, this.cellH) * 0.12);
     this.frame.clear()
       .roundRect(-pad, -pad, boardW + pad * 2, boardH + pad * 2, pad * 1.4).fill({ color: 0x06161a, alpha: 0.78 })
       .roundRect(-pad, -pad, boardW + pad * 2, boardH + pad * 2, pad * 1.4).stroke({ width: Math.max(3, pad * 0.45), color: this.config.colours.frame })
       .roundRect(-pad * 0.55, -pad * 0.55, boardW + pad * 1.1, boardH + pad * 1.1, pad).stroke({ width: 1.5, color: this.config.colours.accent, alpha: 0.55 });
     for (let i = 1; i < 5; i++) {
-      const x = i * (cell + this.gap) - this.gap / 2;
+      const x = i * (this.cellW + this.gap) - this.gap / 2;
       this.frame.moveTo(x, 4).lineTo(x, boardH - 4).stroke({ width: 1, color: this.config.colours.frame, alpha: 0.25 });
     }
     this.glow.clear().roundRect(-pad * 2, -pad * 2, boardW + pad * 4, boardH + pad * 4, pad * 2).fill({ color: 0xffb347, alpha: 0.10 });
 
     this.logo.scale.set(1);
-    const logoScale = Math.min(logoH / this.logo.height, (w * 0.8) / this.logo.width);
+    // Phones: narrow enough to clear the clock and RTP pills either side.
+    const logoScale = Math.min(logoH / this.logo.height, (w * (portrait ? 0.5 : 0.8)) / this.logo.width);
     this.logoScale = logoScale;
     this.logo.scale.set(logoScale);
     this.amount.position.set(boardW / 2, boardH / 2);
-    this.amount.style.fontSize = Math.round(cell * 0.62);
+    this.amount.style.fontSize = Math.round(Math.min(this.cellW, this.cellH) * 0.62);
     this.boardH = boardH;
     this.drawLocks();
-    this.logo.position.set(w / 2, portrait ? 18 : 10);
+    this.logo.position.set(w / 2, portrait ? 8 : 10);
     return { portrait, boardBottom: top + boardH + pad, boardTop: top - pad };
   }
 

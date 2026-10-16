@@ -59,7 +59,14 @@ button:disabled { opacity: .45; cursor: default; }
   #hud .right { display: flex; gap: 10px; justify-content: flex-end; }
 }
 @media (max-aspect-ratio: 1/1) {
-  #hud .left { display: flex; gap: 16px; }
+  /* Phones: everything fits one screen width; compact, so the reels get the height. */
+  #hud { padding: 6px 8px calc(8px + env(safe-area-inset-bottom)); gap: 6px; }
+  #hud .icon { width: 40px; height: 40px; border-radius: 12px; font-size: 17px; }
+  #hud .stake { gap: 2px; }
+  #hud .stake button { width: 32px; height: 32px; }
+  #hud .stake .v { min-width: 64px; }
+  #spin { width: 74px; height: 74px; flex: none; }
+  #hud .left { display: flex; gap: 16px; min-width: 0; }
   #hud .right { display: flex; gap: 8px; }
   #hud .mid { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; }
 }

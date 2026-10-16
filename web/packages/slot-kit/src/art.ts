@@ -9,8 +9,15 @@ export function imageArt(files: Record<string, string>): ArtLoader {
   return async (_app, _info, onProgress) => {
     const urls = Object.values(files).map(assetUrl);
     const loaded = await Assets.load(urls, onProgress);
-    return Object.fromEntries(Object.entries(files).map(([name, path]) => [name, loaded[assetUrl(path)] as Texture]));
+    return Object.fromEntries(Object.entries(files).map(([name, path]) => [name, smooth(loaded[assetUrl(path)] as Texture)]));
   };
+}
+
+/** Mipmapped, so art drawn smaller than its file stays crisp instead of shimmering. */
+function smooth(texture: Texture): Texture {
+  texture.source.autoGenerateMipmaps = true;
+  texture.source.updateMipmaps();
+  return texture;
 }
 
 export interface TileSpec {
@@ -50,7 +57,7 @@ export function placeholderArt(tiles: Record<string, TileSpec>): ArtLoader {
         b.position.set(size / 2, size - 58);
         tile.addChild(badge, b);
       }
-      out[name] = app.renderer.generateTexture({ target: tile, resolution: 1 });
+      out[name] = app.renderer.generateTexture({ target: tile, resolution: 2 });
       tile.destroy({ children: true });
       onProgress((i + 1) / names.length);
     });
