@@ -46,6 +46,8 @@ button:disabled { opacity: .45; cursor: default; }
   box-shadow: 0 0 0 4px rgba(242,194,91,.25), 0 8px 26px rgba(0,0,0,.5), inset 0 -6px 12px rgba(120,70,10,.5); color: #3b2508; font-weight: 900; font-size: 15px; letter-spacing: .08em; }
 #spin:active:not(:disabled) { transform: scale(.96); }
 #spin.stop { background: radial-gradient(circle at 35% 30%, #ffb3a8, var(--danger) 55%, #a83226); color: #fff; }
+#btn-turbo { position: relative; }
+#btn-turbo .lvl { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); background: var(--teal); color: #052; border-radius: 999px; font-size: 8px; font-weight: 700; letter-spacing: .06em; padding: 1px 5px; display: none; }
 #spin .count { position: absolute; top: -6px; right: -6px; background: var(--teal); color: #052; border-radius: 999px; font-size: 11px; padding: 2px 7px; display: none; }
 
 /* Wide screens: one bar */

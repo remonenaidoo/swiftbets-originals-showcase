@@ -115,7 +115,7 @@ export class Scene {
   }
 
   /** Draws the winning lines, dims everything else and pulses the winning symbols. */
-  async showWins(info: GameInfo, wins: LineWin[], scatterCells: [number, number][], turbo: boolean) {
+  async showWins(info: GameInfo, wins: LineWin[], scatterCells: [number, number][], pulseMs: number) {
     this.clearWins();
     const winning = new Set<string>(scatterCells.map(([r, row]) => `${r}:${row}`));
     wins.forEach((w, i) => {
@@ -134,7 +134,7 @@ export class Scene {
     });
     const sprites = [...winning].map((k) => { const [reel, row] = k.split(':').map(Number); return this.reels.reels[reel].cell(row); });
     const base = sprites.map((s) => s.scale.x);
-    await this.tweens.to(0, 1, turbo ? 260 : 520, (v) => {
+    await this.tweens.to(0, 1, pulseMs, (v) => {
       const k = 1 + Math.sin(v * Math.PI) * 0.14;
       sprites.forEach((s, i) => s.scale.set(base[i] * k));
     }, ease.linear);

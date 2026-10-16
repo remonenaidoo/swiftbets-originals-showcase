@@ -3,6 +3,7 @@ import { api, ApiError, describe, rand, type GameInfo, type SpinView, type Sym }
 import { sound } from './audio';
 import { Scene } from './scene';
 import { close, open, renderHistory, renderRules } from './sheets';
+import { SPEEDS, savedSpeed, saveSpeed } from './speed';
 import { ease } from './tweens';
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -11,38 +12,61 @@ let info!: GameInfo;
 let balance: number | null = null;
 let stakeIndex = 0;
 let busy = false;
-let turbo = false;
+let speedLevel = savedSpeed();
+let quick = false; // the player tapped to stop this spin: show the rest of it at Turbo speed
 let auto: { left: number; loss: number; start: number } | null = null;
 const started = Date.now();
 
 const stake = () => info.stakes[stakeIndex];
+const sp = () => SPEEDS[quick ? SPEEDS.length - 1 : speedLevel];
 const sleep = (ms: number) => scene.tweens.wait(ms);
 const windowOf = (strips: Sym[][], stops: number[]) =>
   strips.map((strip, reel) => [0, 1, 2].map((row) => strip[(stops[reel] + row) % strip.length]));
 
+/** The balance as the wallet last reported it (or will once the bet in flight lands). */
 function setBalance(v: number | null) {
   if (v !== null) balance = v;
   $('balance').textContent = balance === null ? '…' : rand(balance);
 }
 
-function setWin(v: number, animate = false) {
+/** Counts the win up; the balance counts up with it, from `balanceBefore` to `balanceBefore + v`. */
+function setWin(v: number, animate = false, balanceBefore: number | null = null) {
   const el = $('win');
-  if (!animate || v === 0) { el.textContent = rand(v); return Promise.resolve(); }
-  return scene.tweens.to(0, v, turbo ? 300 : Math.min(2200, 500 + v / 4), (x) => (el.textContent = rand(Math.round(x))), ease.outCubic);
+  const ms = sp().countUp(v);
+  if (!animate || v === 0 || ms === 0) {
+    el.textContent = rand(v);
+    if (balanceBefore !== null) setBalance(balanceBefore + v);
+    return Promise.resolve();
+  }
+  return scene.tweens.to(0, v, ms, (x) => {
+    const shown = Math.round(x);
+    el.textContent = rand(shown);
+    if (balanceBefore !== null) $('balance').textContent = rand(balanceBefore + shown);
+  }, ease.outCubic).then(() => { if (balanceBefore !== null) setBalance(balanceBefore + v); });
+}
+
+/** After a failed or uncertain request, show what the wallet really holds. */
+async function refreshBalance(fallback: number | null) {
+  try { setBalance((await api.state()).balance); } catch { setBalance(fallback); }
 }
 
 function refreshControls() {
+  document.body.dataset.busy = String(busy);
   ($('stake-down') as HTMLButtonElement).disabled = busy || !!auto || stakeIndex === 0;
   ($('stake-up') as HTMLButtonElement).disabled = busy || !!auto || stakeIndex === info.stakes.length - 1;
   $('stake').textContent = rand(stake());
   const spin = $('spin') as HTMLButtonElement;
   spin.classList.toggle('stop', !!auto);
   spin.firstChild!.textContent = auto ? 'STOP' : 'SPIN';
-  spin.disabled = busy && !auto;
+  spin.disabled = busy && !auto && !scene.reels.spinning;
   const count = $('auto-count');
   count.style.display = auto ? 'block' : 'none';
   count.textContent = auto ? String(auto.left) : '';
-  $('btn-turbo').classList.toggle('on', turbo);
+  const turbo = $('btn-turbo');
+  turbo.classList.toggle('on', speedLevel > 0);
+  turbo.title = `Spin speed: ${SPEEDS[speedLevel].name}`;
+  $('speed-level').textContent = speedLevel > 0 ? SPEEDS[speedLevel].name.toUpperCase() : '';
+  $('speed-level').style.display = speedLevel > 0 ? 'block' : 'none';
   $('btn-sound').textContent = sound.muted ? '🔇' : '🔊';
 }
 
@@ -79,13 +103,13 @@ async function bigWin(win: number, st: number) {
   const label = x >= 50 ? 'EPIC WIN' : x >= 25 ? 'MEGA WIN' : 'BIG WIN';
   sound.big();
   scene.coins(x >= 50 ? 160 : x >= 25 ? 100 : 60);
-  const done = overlay(label, rand(0), `${x.toFixed(1)}× stake`, '', turbo ? 1600 : 3600);
-  void scene.tweens.to(0, win, turbo ? 900 : 2400, (v) => ($('ov-amount').textContent = rand(Math.round(v))), ease.outCubic);
+  const done = overlay(label, rand(0), `${x.toFixed(1)}× stake`, '', sp().bigWin);
+  void scene.tweens.to(0, win, sp().bigWin * 0.65, (v) => ($('ov-amount').textContent = rand(Math.round(v))), ease.outCubic);
   await done;
 }
 
 /** Shows what the server decided: winning lines, scatters, the win count-up and any celebration. */
-async function present(view: SpinView, strips: Sym[][], st: number) {
+async function present(view: SpinView, strips: Sym[][], st: number, balanceBefore: number | null) {
   const win = windowOf(strips, view.stops);
   const scatterCells: [number, number][] = [];
   win.forEach((col, reel) => col.forEach((s, row) => { if (s === 'Scatter') scatterCells.push([reel, row]); }));
@@ -93,22 +117,23 @@ async function present(view: SpinView, strips: Sym[][], st: number) {
   if (view.win > 0 || scatterPays) {
     sound.win(view.win / st);
     if (view.win > 0 && view.win < st * 10) scene.coins(Math.min(40, 6 + Math.round((view.win / st) * 6)));
-    const shown = scene.showWins(info, view.lines, scatterPays ? scatterCells : [], turbo);
-    await Promise.all([shown, setWin(view.win, true)]);
+    const shown = scene.showWins(info, view.lines, scatterPays ? scatterCells : [], sp().pulse);
+    await Promise.all([shown, setWin(view.win, true, balanceBefore)]);
     await bigWin(view.win, st);
   } else {
     setWin(0);
+    setBalance(view.balance);
   }
 }
 
 function spinReels() {
   sound.spin();
   scene.clearWins();
-  scene.reels.spin(turbo);
+  scene.reels.spin(sp());
 }
 
 async function landReels(stops: number[], strips: Sym[][]) {
-  await scene.reels.stop(stops, strips, turbo, (reel, tease) => {
+  await scene.reels.stop(stops, strips, sp(), (reel, tease) => {
     sound.stop(reel);
     const col = windowOf(strips, stops)[reel];
     if (col.includes('Scatter')) sound.scatter(reel);
@@ -122,11 +147,27 @@ async function abortSpin(strips: Sym[][]) {
   scene.clearWins();
 }
 
+/** Waits out the rest of the minimum spin time, unless the player taps to stop. */
+async function minSpin(since: number) {
+  const left = sp().minSpin - (performance.now() - since);
+  if (left > 0 && !quick) await Promise.race([sleep(left), new Promise<void>((r) => (hurry = r))]);
+  hurry = null;
+}
+let hurry: (() => void) | null = null;
+
+/** The amount a reply's balance had before its win was added: what to show while the reels land. */
+const beforeWin = (v: SpinView) => (v.balance === null ? null : v.balance - v.win);
+
 async function spinOnce(): Promise<boolean> {
   busy = true;
-  refreshControls();
+  quick = false;
+  const before = balance;
+  // The stake leaves the balance the moment Spin is pressed; the wallet's reply confirms it.
+  if (balance !== null) setBalance(balance - stake());
   setWin(0);
   spinReels();
+  refreshControls();
+  const since = performance.now();
   let view: SpinView;
   const key = crypto.randomUUID();
   try {
@@ -140,6 +181,7 @@ async function spinOnce(): Promise<boolean> {
     }
   } catch (e) {
     await abortSpin(info.baseReels);
+    await refreshBalance(before);
     if (e instanceof ApiError && e.code === 'feature_in_progress') {
       await resumeFeature();
     } else {
@@ -149,9 +191,12 @@ async function spinOnce(): Promise<boolean> {
     refreshControls();
     return false;
   }
+  setBalance(beforeWin(view));
+  await minSpin(since);
   await landReels(view.stops, info.baseReels);
+  refreshControls();
+  await present(view, info.baseReels, stake(), beforeWin(view));
   setBalance(view.balance);
-  await present(view, info.baseReels, stake());
   if (view.featureTriggered && view.freeSpinsLeft > 0) await playFeature(view, stake(), view.win);
   busy = false;
   refreshControls();
@@ -176,8 +221,11 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
   while (left > 0) {
     $('fs-left').textContent = String(left);
     $('fs-won').textContent = rand(won);
-    await sleep(turbo ? 150 : 450);
+    await sleep(sp().between + 120);
+    quick = false;
     spinReels();
+    refreshControls();
+    const since = performance.now();
     let next: SpinView;
     try {
       next = await api.next(view.roundId);
@@ -187,9 +235,12 @@ async function playFeature(view: SpinView, st: number, alreadyWon: number) {
       interrupted = true;
       break;
     }
+    setBalance(beforeWin(next));
+    await minSpin(since);
     await landReels(next.stops, info.freeReels);
+    refreshControls();
+    await present(next, info.freeReels, st, beforeWin(next));
     setBalance(next.balance);
-    await present(next, info.freeReels, st);
     won += next.win;
     $('fs-won').textContent = rand(won);
     if (next.featureTriggered) {
@@ -222,7 +273,7 @@ async function runAuto() {
     if (!ok || !auto) break;
     auto.left--;
     refreshControls();
-    await sleep(turbo ? 150 : 350);
+    await sleep(sp().between);
   }
   auto = null;
   refreshControls();
@@ -252,14 +303,23 @@ function setupControls() {
   $('spin').addEventListener('click', () => {
     sound.unlock();
     if (auto) { auto = null; refreshControls(); return; }
-    if (!busy) void spinOnce();
+    if (!busy) { void spinOnce(); return; }
+    // Tap while the reels turn: stop them now (the result is the server's either way).
+    if (scene.reels.spinning) { quick = true; hurry?.(); scene.reels.slam(); }
   });
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && !e.repeat && !document.querySelector('.sheet[style*="block"]')) { e.preventDefault(); $('spin').click(); }
   });
   $('stake-down').addEventListener('click', () => { if (stakeIndex > 0) { stakeIndex--; refreshControls(); } });
   $('stake-up').addEventListener('click', () => { if (stakeIndex < info.stakes.length - 1) { stakeIndex++; refreshControls(); } });
-  $('btn-turbo').addEventListener('click', () => { turbo = !turbo; refreshControls(); });
+  $('btn-turbo').addEventListener('click', () => {
+    speedLevel = (speedLevel + 1) % SPEEDS.length;
+    saveSpeed(speedLevel);
+    refreshControls();
+    toast(`Spin speed: ${SPEEDS[speedLevel].name}`);
+  });
+  // Coming back to the game (another tab, the site, a deposit): show the wallet as it is now.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !busy) void refreshBalance(balance); });
   $('btn-sound').addEventListener('click', () => { sound.toggle(); refreshControls(); });
   $('btn-rules').addEventListener('click', () => { renderRules(info, stake()); open('sheet-rules'); });
   $('btn-history').addEventListener('click', async () => {

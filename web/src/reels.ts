@@ -1,5 +1,6 @@
 import { BlurFilter, Container, Graphics, Sprite, type Texture, type Ticker } from 'pixi.js';
 import type { Sym } from './api';
+import type { Speed } from './speed';
 import { ease, type Tweens } from './tweens';
 
 /**
@@ -18,6 +19,7 @@ export class Reel extends Container {
   private startIn = 0; // ms until a staggered spin starts
   private target: number | null = null;
   private landing: ((value: void) => void) | null = null;
+  private landMs = 210;
   private cellW = 100;
   private cellH = 100;
 
@@ -57,17 +59,20 @@ export class Reel extends Container {
     if (delay <= 0) this.speed = speed;
   }
 
-  /** Lands on `stop` after spinning at least a few more cells; resolves when the reel is at rest. */
-  stop(stop: number): Promise<void> {
+  /**
+   * Lands on `stop`, bouncing for `landMs`; resolves when the reel is at rest. While the reel is blurred the strip
+   * is re-based so the stop is a few cells away (the way slot reels swap in their result), instead of rolling the
+   * rest of the strip round to reach it.
+   */
+  stop(stop: number, landMs: number): Promise<void> {
+    this.landMs = landMs;
     if (this.speed <= 0) {
-      this.speed = this.pendingSpeed || 26;
+      this.speed = this.pendingSpeed || 28;
       this.startIn = 0;
     }
-    const n = this.strip.length;
-    const min = this.pos - 3.5;
-    let t = Math.floor(min) - (((Math.floor(min) - stop) % n) + n) % n;
-    if (t > min) t -= n;
-    this.target = t;
+    const lead = 3.4 + (this.pos - Math.floor(this.pos));
+    this.target = stop;
+    this.pos = stop + lead;
     return new Promise((r) => (this.landing = r));
   }
 
@@ -93,7 +98,7 @@ export class Reel extends Container {
       this.target = null;
       this.landing = null;
       this.blur.strengthY = 0;
-      void this.tweens.to(from, to, (3 / 26) * 1000 * 1.6, (v) => { this.pos = v; this.render(); }, ease.outBack).then(() => {
+      void this.tweens.to(from, to, this.landMs, (v) => { this.pos = v; this.render(); }, ease.outBack).then(() => {
         this.pos = Math.round(to);
         this.render();
         done?.();
@@ -127,7 +132,7 @@ export class Reel extends Container {
 export class ReelSet extends Container {
   readonly reels: Reel[] = [];
 
-  constructor(textures: Record<Sym, Texture>, private readonly tweens: Tweens, ticker: Ticker) {
+  constructor(textures: Record<Sym, Texture>, tweens: Tweens, ticker: Ticker) {
     super();
     for (let i = 0; i < 5; i++) {
       const r = new Reel(textures, tweens, ticker);
@@ -147,23 +152,54 @@ export class ReelSet extends Container {
     });
   }
 
-  spin(turbo: boolean) {
-    this.reels.forEach((r, i) => r.spin(turbo ? 34 : 26, turbo ? 0 : i * 60));
+  private hurry: (() => void) | null = null;
+  private slammed = false;
+
+  get spinning() {
+    return this.reels.some((r) => r.spinning);
+  }
+
+  spin(speed: Speed) {
+    this.slammed = false;
+    this.reels.forEach((r, i) => r.spin(speed.reelSpeed, i * speed.startGap));
+  }
+
+  /** The player tapped to stop: the reels land together as soon as the result is in, skipping the gaps. */
+  slam() {
+    this.slammed = true;
+    this.hurry?.();
+  }
+
+  private gap(ms: number): Promise<void> {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((done) => {
+      const t = setTimeout(finish, ms);
+      function finish() { clearTimeout(t); done(); }
+      this.hurry = () => { this.hurry = null; finish(); };
+    });
   }
 
   /**
-   * Stops left to right. When two Scatters are already showing after reel 3, the remaining reels slow down
-   * (anticipation) before landing. `onStop` fires as each reel lands.
+   * Stops left to right, each reel starting its landing `stopGap` after the one before (they overlap). A reel that
+   * could complete three Scatters waits `tease` longer (anticipation). `onStop` fires as each reel lands.
    */
-  async stop(stops: number[], strips: Sym[][], turbo: boolean, onStop: (reel: number, tease: boolean) => void) {
+  async stop(stops: number[], strips: Sym[][], speed: Speed, onStop: (reel: number, tease: boolean) => void) {
+    const landed: Promise<void>[] = [];
     let scatters = 0;
     for (let i = 0; i < 5; i++) {
       const tease = i >= 3 && scatters >= 2;
-      if (tease) await this.tweens.wait(turbo ? 300 : 900);
-      else if (i > 0) await this.tweens.wait(turbo ? 40 : 130);
-      await this.reels[i].stop(stops[i]);
-      for (let row = 0; row < 3; row++) if (strips[i][(stops[i] + row) % strips[i].length] === 'Scatter') scatters++;
-      onStop(i, i >= 2 && scatters >= 2 && i < 4);
+      if (!this.slammed && i > 0) await this.gap(speed.stopGap + (tease ? speed.tease : 0));
+      const shownScatters = scatters;
+      landed.push(this.reels[i].stop(stops[i], this.slammed ? 120 : speed.land).then(() => onStop(i, i >= 2 && i < 4 && shownScatters + count(i) >= 2)));
+      scatters += count(i);
+    }
+    this.hurry = null;
+    await Promise.all(landed);
+
+    function count(reel: number) {
+      let n = 0;
+      for (let row = 0; row < 3; row++) if (strips[reel][(stops[reel] + row) % strips[reel].length] === 'Scatter') n++;
+      return n;
     }
   }
 }
