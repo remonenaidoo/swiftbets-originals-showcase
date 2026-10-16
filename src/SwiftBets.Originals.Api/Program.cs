@@ -24,6 +24,8 @@ builder.Services.AddSingleton(new SlotEngines(OriginalsGames.Catalog, RandomNumb
 builder.Services.AddSingleton<SpinHandler>();
 builder.Services.AddSingleton<FeatureHandler>();
 builder.Services.AddSingleton<StateQuery>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.MinesHandler>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.InstantQueries>();
 
 var app = builder.Build();
 app.UseSwiftBetsObservability();
@@ -31,6 +33,7 @@ app.UseSwiftBetsWeb();
 app.MapSwiftBetsOperationalEndpoints();
 app.UseStaticFiles();
 app.MapSlotEndpoints();
+app.MapInstantEndpoints();
 app.Run();
 return 0;
 

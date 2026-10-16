@@ -5,6 +5,12 @@ using SwiftBets.Originals.Maths;
 
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 string? Arg(string name) => Array.IndexOf(args, name) is var at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+if (args.FirstOrDefault() == "mines")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return InstantSheets.Mines("docs/par-sheet/mines.md", Arg("--layouts") is { } l ? long.Parse(l, CultureInfo.InvariantCulture) : 10_000_000);
+}
+
 var slot = OriginalsGames.Catalog.Find(Arg("--game") ?? GildedSavanna.GameId);
 if (slot is null)
 {
