@@ -16,7 +16,7 @@ The hold starts 1 in 156.1 spins (6 or more coins); a full board (the Grand) 1 i
 
 Lines: a stop is uniform on each independent reel, so each cell of a line holds a symbol with that reel's share of it; a line pays a symbol from reel 1 over adjacent reels, Wilds standing in on reels 2–4. The hold's start: the convolution of each reel's coin count (coins come in stacks). The hold: a Markov chain over (coins, respins left); every empty cell lands a coin with the same chance, so only the count matters; a new coin resets the respins to 3. Coin values are drawn independently of where and when they land.
 
-## Simulation: 20,000,000 whole rounds through the production code (0.1 min)
+## Simulation: 1,000,000,000 whole rounds through the production code (6.0 min)
 
-- RTP as paid: 95.6234 % ± 0.4858 % (99%).
-- Holds 127,771 (1 in 156.5); Grands 921; rounds stopped by the 5,000× cap 0; largest round 1,324.00× stake; standard deviation 8.43 stakes.
+- RTP as paid: 95.9871 % ± 0.0702 % (99%).
+- Holds 6,402,456 (1 in 156.2); Grands 48,849; rounds stopped by the 5,000× cap 0; largest round 1,621.00× stake; standard deviation 8.62 stakes.

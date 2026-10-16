@@ -16,8 +16,8 @@ Free spins trigger 1 in 214.6 base spins (3 Pearls 1 in 223.9, 4 in 5263, 5 in 3
 
 Each reel's stop is uniform and the reels are independent, so for a symbol the expected ways over its first k reels are the product of each reel's expected matching weight (a cell with the symbol or a Wild counts 1, a ×2 or ×3 Wild counts 2 or 3), times the chance that reel k + 1 has none. Pearls anywhere: the convolution of each reel's Pearl count. Free spins carry no state, so the feature is P(trigger) × spins × the free-spin value, exactly.
 
-## Simulation: 10,000,000 whole rounds through the production code (0.1 min)
+## Simulation: 1,000,000,000 whole rounds through the production code (9.7 min)
 
-- RTP as paid: 96.0348 % ± 0.4831 % (99%); uncapped 96.0348 %.
-- Rounds stopped by the 5,000× cap: 0; largest round 711.05× stake; features 46,740 (1 in 213.9).
-- Standard deviation of a round: 5.93 stakes.
+- RTP as paid: 95.9707 % ± 0.0480 % (99%); uncapped 95.9707 %.
+- Rounds stopped by the 5,000× cap: 0; largest round 1,027.70× stake; features 4,654,874 (1 in 214.8).
+- Standard deviation of a round: 5.90 stakes.
