@@ -8,6 +8,9 @@ public static class RoundStatus
     public const string WinPending = "win_pending";
     public const string Feature = "feature";
     public const string Settled = "settled";
+
+    /// <summary>An instant round that has taken its stake and is still being played (Mines picks, a Crash bet in flight).</summary>
+    public const string Open = "open";
 }
 
 public sealed record RoundRecord(
@@ -55,8 +58,25 @@ public interface IRoundStore
     /// </summary>
     Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
 
+    /// <summary>The player's unfinished instant round of this game (open, or still taking its stake), if any.</summary>
+    Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// One step of an open round, atomically: locks the round, and only when it is this player's, this game's and
+    /// still <c>open</c>, hands it and its spins so far to <paramref name="step"/>, then stores the step's spin and
+    /// the round's new status and paid amount, and commits. Null when the round is not open for this player or the
+    /// step refuses (returns null), so a pick after the round ended, or two picks at once, never both count.
+    /// </summary>
+    Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken);
+
     /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> when nothing is owed any more (one atomic statement).</summary>
     Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Voids the round only if it is still <paramref name="fromStatus"/>, marking its rollback as owed, in one
+    /// statement; false when it has moved on (cashed out, settled). A round is never voided after it was paid.
+    /// </summary>
+    Task<bool> VoidIfAsync(Guid roundId, string fromStatus, CancellationToken cancellationToken);
 
     /// <summary>Records whether a voided round's rollback still needs the casino's confirmation.</summary>
     Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken);

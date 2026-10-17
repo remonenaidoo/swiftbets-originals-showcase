@@ -1,0 +1,95 @@
+{
+  "style": "Premium modern casino game art, polished stylised 3D render, cinematic lighting, vivid but tasteful neon accents on deep dark backgrounds, crisp clean edges, high detail, original design, no text, no letters, no numbers, no watermark, no brand logos",
+  "items": {
+    "concept-sheet": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Game art concept sheet on a dark presentation board with five panels for five casino mini games: a glowing translucent crystal dice with cyan edges over a neon magenta arena floor; a blazing golden comet streaking up through a cosmic portal; a glossy golden orb ball falling through rows of glowing pegs over a Kalahari desert night with red dunes and a huge starry sky; a giant African baobab tree at night with lanterns and wooden platforms, a golden glowing baobab fruit and a coiled green cobra; bright glossy lottery balls over a bold geometric South African Ndebele-inspired mural pattern in black, white, yellow, blue and red"
+    },
+    "dice-die": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single glowing translucent crystal six-sided die with rounded corners, cyan and magenta internal light, sparkling, three-quarter view, centred, isolated on a plain pure black background"
+    },
+    "dice-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A futuristic dark arena at night with a glossy reflective black floor, magenta and cyan neon light strips curving into the distance, soft haze, empty centre for game controls, moody and premium"
+    },
+    "dice-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A futuristic dark arena at night with a glossy reflective black floor, magenta and cyan neon light strips curving into the distance, soft haze, empty centre for game controls, moody and premium"
+    },
+    "limbo-comet": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single blazing golden comet with a white-hot core and a short flaring tail, pointing up and to the right, centred, isolated on a plain pure black background"
+    },
+    "limbo-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A swirling cosmic portal in deep space, rings of violet and gold light spiralling around a bright centre, star fields, the Drakensberg mountain silhouette along the very bottom edge, dark edges, premium and dramatic"
+    },
+    "limbo-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A swirling cosmic portal in deep space, rings of violet and gold light spiralling around a bright centre, star fields, the Drakensberg mountain silhouette along the very bottom edge, dark edges, premium and dramatic"
+    },
+    "peg-ball": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single glossy golden orb ball with a pink and white specular highlight and a soft glow, perfect sphere, centred, isolated on a plain pure black background"
+    },
+    "peg-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "The Kalahari desert at night, rolling red sand dunes under a huge starry sky with the Milky Way, a lone camel thorn tree silhouette at the side, deep indigo and warm orange tones, darker in the centre"
+    },
+    "peg-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "The Kalahari desert at night, rolling red sand dunes under a huge starry sky with the Milky Way, a lone camel thorn tree silhouette at the side, deep indigo and warm orange tones, darker in the centre"
+    },
+    "towers-fruit": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single glowing golden baobab fruit pod with a velvety texture and warm magical light, centred, isolated on a plain pure black background"
+    },
+    "towers-snake": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single coiled emerald green cobra with its hood spread, menacing but stylised, glowing yellow eyes, centred, isolated on a plain pure black background"
+    },
+    "towers-plank": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single rounded rectangular weathered wooden platform plank seen straight from above, warm brown wood grain with brass corner fittings and a soft warm rim light, centred, filling most of the frame, isolated on a plain pure black background"
+    },
+    "towers-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A giant ancient African baobab tree at night seen from below, its massive trunk rising up the middle with glowing lanterns and rope ladders, a starry sky and a big moon behind its branches, warm lantern light and cool moonlight, darker in the centre"
+    },
+    "towers-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A giant ancient African baobab tree at night seen from below, its massive trunk rising up the middle with glowing lanterns and rope ladders, a starry sky and a big moon behind its branches, warm lantern light and cool moonlight, darker in the centre"
+    },
+    "keno-ball": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single plain glossy white lottery ball with a soft glow and a blank coloured band around it, perfect sphere, centred, isolated on a plain pure black background"
+    },
+    "keno-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A wall painted in the style of South African Ndebele mural art: bold zigzag chevrons, stepped triangles, diamond shapes and razor-blade motifs outlined in thick black, filled with white, yellow, cobalt blue, red and green, a dark night scene lit softly from below, the whole wall darkened and slightly blurred so it reads as a backdrop, no writing of any kind"
+    },
+    "keno-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A wall painted in the style of South African Ndebele mural art: bold zigzag chevrons, stepped triangles, diamond shapes and razor-blade motifs outlined in thick black, filled with white, yellow, cobalt blue, red and green, a dark night scene lit softly from below, the whole wall darkened and slightly blurred so it reads as a backdrop, no writing of any kind"
+    }
+  }
+}

@@ -24,6 +24,16 @@ builder.Services.AddSingleton(new SlotEngines(OriginalsGames.Catalog, RandomNumb
 builder.Services.AddSingleton<SpinHandler>();
 builder.Services.AddSingleton<FeatureHandler>();
 builder.Services.AddSingleton<StateQuery>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.MinesHandler>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.InstantQueries>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.TowersHandler>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.OneShotHandler>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Ports.ICrashBroadcast, SwiftBets.Originals.Api.Hubs.SignalRCrashBroadcast>();
+builder.Services.AddSingleton(sp => new SwiftBets.Originals.Application.Instant.CrashRoom(
+    sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IRoundStore>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashStore>(),
+    sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IWallet>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashBroadcast>(),
+    TimeProvider.System, SwiftBets.Originals.Domain.Instant.Fair.NewSeed));
 
 var app = builder.Build();
 app.UseSwiftBetsObservability();
@@ -31,6 +41,8 @@ app.UseSwiftBetsWeb();
 app.MapSwiftBetsOperationalEndpoints();
 app.UseStaticFiles();
 app.MapSlotEndpoints();
+app.MapInstantEndpoints();
+app.MapHub<SwiftBets.Originals.Api.Hubs.CrashHub>(SwiftBets.Originals.Api.Hubs.CrashHub.Path).AllowAnonymous();
 app.Run();
 return 0;
 

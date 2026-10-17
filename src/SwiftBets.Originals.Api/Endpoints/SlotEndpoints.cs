@@ -1,6 +1,7 @@
 using SwiftBets.BuildingBlocks.Web;
 using SwiftBets.Contracts.Errors;
 using SwiftBets.Originals.Application;
+using SwiftBets.Originals.Application.Instant;
 
 namespace SwiftBets.Originals.Api.Endpoints;
 
@@ -29,7 +30,7 @@ public static class SlotEndpoints
                 return Results.BadRequest("session is required");
             }
 
-            if (games.Find(game) is null)
+            if (games.Find(game) is null && Array.IndexOf(InstantGames.Ids, game) < 0)
             {
                 return Results.NotFound();
             }
@@ -37,7 +38,8 @@ public static class SlotEndpoints
             // The game page is HTML framed by the site, so it replaces the JSON API's baseline headers with its own:
             // only its own scripts and styles, only this origin for data, framed only by the same origin.
             context.Response.Headers.CacheControl = "no-store";
-            context.Response.Headers.ContentSecurityPolicy = PagePolicy;
+            // Crash's live round is a websocket to this host; older Safari does not count wss: as 'self'.
+            context.Response.Headers.ContentSecurityPolicy = PagePolicy.Replace("connect-src 'self'", $"connect-src 'self' wss://{context.Request.Host}", StringComparison.Ordinal);
             context.Response.Headers.XFrameOptions = "SAMEORIGIN";
             return Results.File(Path.Combine(env.WebRootPath, "games", game!, "index.html"), "text/html; charset=utf-8");
         }).AllowAnonymous();
@@ -55,7 +57,7 @@ public static class SlotEndpoints
         return endpoints;
     }
 
-    private static IResult Respond<T>(Result<T> result, HttpContext context) =>
+    internal static IResult Respond<T>(Result<T> result, HttpContext context) =>
         result.Error is { } e ? ToError(e).ToHttpResult(context) : Results.Ok(result.Value);
 
     private static Error ToError(SpinError e) => e.Code switch
@@ -70,6 +72,11 @@ public static class SlotEndpoints
         "feature_in_progress" => new Error(e.Code, "Finish your free spins first.", ErrorKind.Conflict),
         "key_in_use" => new Error(e.Code, "That request key was already used for another game.", ErrorKind.Conflict),
         "no_feature" => new Error(e.Code, "There are no free spins to play.", ErrorKind.Conflict),
+        "invalid_seed" => new Error(e.Code, "A client seed is 1 to 64 letters, digits, - or _.", ErrorKind.Validation),
+        "round_in_progress" => new Error(e.Code, "Finish the round you are playing first.", ErrorKind.Conflict),
+        "round_over" => new Error(e.Code, "That round is already over.", ErrorKind.Conflict),
+        "tile_taken" => new Error(e.Code, "Pick a tile you have not revealed.", ErrorKind.Validation),
+        "nothing_to_cash_out" => new Error(e.Code, "Reveal a tile before cashing out.", ErrorKind.Conflict),
         _ => new Error(e.Code, "The wallet is unavailable. Try again.", ErrorKind.Unavailable),
     };
 }

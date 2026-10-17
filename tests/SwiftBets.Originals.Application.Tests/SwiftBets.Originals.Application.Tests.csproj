@@ -6,6 +6,7 @@
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <ProjectReference Include="../../src/SwiftBets.Originals.Application/SwiftBets.Originals.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
