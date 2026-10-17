@@ -1,0 +1,36 @@
+{
+  "style": "Premium modern casino crash game art, polished stylised 3D render, cinematic night lighting, electric blue and hot magenta neon accents on deep navy, crisp clean edges, high detail, vibrant, original design, no text, no watermark, no brand logos",
+  "items": {
+    "concept-sheet": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Game art concept sheet on a dark presentation board: a sleek white and chrome rocket with electric blue and magenta stripes and a glowing blue cockpit window, side view and three-quarter view; a vertical journey strip showing Cape Town at night with Table Mountain silhouette and glittering city lights by the ocean, then layers of moonlit clouds, then the edge of space with Earth's curve, then a colourful nebula with planets; a fiery blue-white exhaust plume study; a bright explosion study; colour swatches"
+    },
+    "rocket": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single sleek futuristic rocket ship in exact side view pointing to the right, white ceramic and polished chrome hull, electric blue and magenta racing stripes, glowing cyan cockpit window, three swept fins, small engine nozzle at the left end, no exhaust flame, isolated on a plain pure black background, centred, full ship visible"
+    },
+    "city": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Wide panoramic view of Cape Town at night seen from the sea, the flat-topped silhouette of Table Mountain with Devil's Peak and Lion's Head against a deep navy sky, glittering warm city lights along the waterfront and up the slopes, calm dark ocean with light reflections in the foreground, the upper half of the image is empty dark night sky"
+    },
+    "clouds": {
+      "ultra": true,
+      "aspect": "21:9",
+      "prompt": "Wide band of soft moonlit cumulus clouds seen from above at night, silver blue highlights, isolated on a pure black background, the clouds fill the middle of the frame, black above and below"
+    },
+    "space": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Deep space vista, a vivid magenta and electric blue nebula with dense star fields, a ringed gas giant planet and a small moon at the edges, the thin glowing curve of Earth's atmosphere along the very bottom edge, rich and colourful, pure black space between"
+    },
+    "rocket2": {
+      "w": 1024,
+      "h": 1024,
+      "prompt": "A single sleek futuristic rocket ship in exact side view pointing to the right, white ceramic and polished chrome hull, electric blue and magenta racing stripes, glowing cyan cockpit window, three swept fins, small engine nozzle at the left end, no exhaust flame, isolated on a plain pure black background, centred, full ship visible",
+      "seed": 29
+    }
+  }
+}

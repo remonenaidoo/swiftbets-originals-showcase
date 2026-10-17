@@ -1,0 +1,57 @@
+{
+ "style": "Premium modern casino video slot game art, polished stylised 3D render, gleaming polished gold with deep oxblood red and warm amber lamplight accents, rich dark coal-blue shadows, cinematic rim lighting, crisp clean edges, high detail, vibrant, original design, no watermark, no brand logos",
+ "items": {
+  "concept-sheet": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Game art concept sheet for an original video slot about the 1886 Witwatersrand gold rush called Gold Reef Rush, laid out on a neutral dark presentation board: a row of premium symbols (a stack of gleaming gold bars, a large cut diamond, a wooden mine cart heaped with gold nuggets, a brass miner's oil lantern glowing warmly), a row of three low symbols (a copper ore nugget, a silver ore nugget, a white quartz crystal cluster, each set on a small rough rock base), a cheerful bearded gold miner with a helmet lamp and pickaxe as the wild symbol, a bundle of red dynamite sticks with a sparkling lit fuse as the scatter symbol, a bold chunky gold title logo reading GOLD REEF RUSH with a pickaxe, a reel frame made of riveted timber mine beams and brass, and a background of a steel mine headframe on a ridge at dusk with lamplit tunnels"
+  },
+  "goldbar": {
+   "prompt": "A single slot machine symbol: one thick gleaming polished gold bullion ingot bar with bevelled edges and a smooth top, three-quarter view, bright glints, centered, isolated on a plain flat solid black background, no text, no frame, no border"
+  },
+  "diamond": {
+   "prompt": "A single slot machine symbol: one large brilliant-cut sparkling blue-white diamond with bright light refractions, three-quarter view, centered, isolated on a plain flat solid black background, no text"
+  },
+  "cart": {
+   "prompt": "A single slot machine symbol: a sturdy wooden mine cart with riveted iron bands and small iron wheels, heaped high with glittering gold nuggets, three-quarter view, centered, isolated on a plain flat solid black background, no text"
+  },
+  "lantern": {
+   "prompt": "A single slot machine symbol: an ornate brass miner's oil lantern with glass panes, glowing warm amber flame inside, three-quarter view, centered, isolated on a plain flat solid black background, no text"
+  },
+  "copper": {
+   "prompt": "A single slot machine symbol: one chunky raw copper ore nugget with orange metallic gleam and green patina, resting on a small rough dark rock base, centered, isolated on a plain flat solid black background, no text"
+  },
+  "silver": {
+   "prompt": "A single slot machine symbol: one chunky raw native silver ore nugget, cool bright silver-white metallic gleam with blue-grey reflections, no orange, resting on a small rough dark rock base, centered, isolated on a plain flat solid black background, no text, no frame, no border"
+  },
+  "quartz": {
+   "prompt": "A single slot machine symbol: a cluster of milky white quartz crystals with gold flecks, resting on a small rough dark rock base, centered, isolated on a plain flat solid black background, no text"
+  },
+  "miner": {
+   "prompt": "A single slot machine wild symbol: bust portrait of a jolly laughing 1880s gold miner with a big bushy ginger beard and rosy cheeks, a brown leather miner's helmet with a glowing brass head lamp, braces over a work shirt, a pickaxe resting on his shoulder, wide happy grin showing teeth, friendly cartoon 3D style, facing forward, centered, isolated on a plain flat solid black background, no text, no frame, no border"
+  },
+  "dynamite": {
+   "prompt": "A single slot machine symbol: a bundle of four bright red dynamite sticks tied with twine, a lit fuse throwing bright golden sparks, three-quarter view, centered, isolated on a plain flat solid black background, no text"
+  },
+  "logo": {
+   "prompt": "Slot game title logo: the words GOLD REEF RUSH in bold chunky carved 3D polished gold letters with a dark oxblood red bevelled outline, two lines, GOLD REEF on top and RUSH below, a small crossed pickaxe behind the letters, sparkling glints, centered, isolated on a plain flat solid black background",
+   "w": 1440,
+   "h": 736
+  },
+  "bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Wide background painting for a video slot game, no text, no symbols: a dusk scene of the 1886 Witwatersrand gold fields, a tall riveted steel mine headframe on a ridge on the left, timber-shored lamplit tunnel entrances glowing warm amber, mine carts on rails, distant hills under a deep blue and amber sunset sky with first stars, the centre kept calm and darker for the game reels, atmospheric depth"
+  },
+  "bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "Tall portrait background painting for a mobile video slot game, no text, no symbols: a dusk scene of the 1886 Witwatersrand gold fields, a tall riveted steel mine headframe on a ridge at the top, a timber-shored lamplit tunnel entrance glowing warm amber at the bottom, mine cart rails, a deep blue and amber sunset sky with first stars, the middle kept calm and darker for the game reels, atmospheric depth"
+  },
+  "cover": {
+   "ultra": true,
+   "aspect": "1:1",
+   "prompt": "Square key art for a video slot game, no text: a cheerful 1880s gold miner with a big ginger beard and a helmet lamp, grinning, beside a wooden mine cart overflowing with gold bars and nuggets, a lit dynamite bundle sparking, in a lamplit mine tunnel with warm amber light, the top third kept clear and dark for a title"
+  }
+ }
+}

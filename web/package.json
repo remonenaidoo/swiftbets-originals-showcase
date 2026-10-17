@@ -1,0 +1,25 @@
+{
+  "name": "swiftbets-originals-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^9.0.19",
+    "@originals/slot-kit": "*",
+    "@originals/instant-kit": "*",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}

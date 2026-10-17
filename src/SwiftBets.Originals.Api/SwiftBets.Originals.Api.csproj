@@ -2,6 +2,10 @@
   <ItemGroup>
     <PackageReference Include="SwiftBets.BuildingBlocks.Observability" />
     <PackageReference Include="SwiftBets.BuildingBlocks.Web" />
+    <PackageReference Include="SwiftBets.Contracts" />
     <ProjectReference Include="../SwiftBets.Originals.Infrastructure/SwiftBets.Originals.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SwiftBets.Originals.Games\SwiftBets.Originals.Games.csproj" />
   </ItemGroup>
 </Project>

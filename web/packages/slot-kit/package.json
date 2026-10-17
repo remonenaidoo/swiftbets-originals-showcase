@@ -1,0 +1,9 @@
+{
+  "name": "@originals/slot-kit",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The shared SwiftBets Originals slot client: reels, HUD, speed levels, balance, autoplay, rules, history, sound and the game API.",
+  "exports": { ".": "./src/index.ts", "./style.css": "./src/style.css" },
+  "peerDependencies": { "pixi.js": "^8.22.0" }
+}
