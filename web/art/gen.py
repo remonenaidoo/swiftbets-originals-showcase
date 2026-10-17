@@ -3,7 +3,9 @@ Prompts live in prompts.json; output goes to raw/<name>.jpg. Reads BFL_API_KEY f
 import json, os, sys, time, urllib.request
 
 KEY = os.environ["BFL_API_KEY"]
-STYLE = json.load(open("prompts.json"))["style"]
+PROMPTS = os.environ.get("PROMPTS", "prompts.json")
+STYLE = json.load(open(PROMPTS))["style"]
+OUT = os.environ.get("OUT", "raw")
 
 def post(url, body):
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"x-key": KEY, "content-type": "application/json"})
@@ -26,15 +28,15 @@ def generate(name, prompt, ultra=False, aspect="1:1", w=1024, h=1024, seed=None)
         time.sleep(2)
         r = get(job["polling_url"])
         if r["status"] == "Ready":
-            os.makedirs("raw", exist_ok=True)
-            urllib.request.urlretrieve(r["result"]["sample"], f"raw/{name}.png")
-            return f"raw/{name}.png"
+            os.makedirs(OUT, exist_ok=True)
+            urllib.request.urlretrieve(r["result"]["sample"], f"{OUT}/{name}.png")
+            return f"{OUT}/{name}.png"
         if r["status"] not in ("Pending", "Processing"):
             raise SystemExit(f"{name}: {r['status']} {r}")
     raise SystemExit(f"{name}: timed out")
 
 if __name__ == "__main__":
-    prompts = json.load(open("prompts.json"))["items"]
+    prompts = json.load(open(PROMPTS))["items"]
     a = sys.argv[1:]
     name = a[0]
     item = prompts[name]

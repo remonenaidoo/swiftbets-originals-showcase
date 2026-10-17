@@ -4,6 +4,6 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/SwiftBets.Originals.Domain/SwiftBets.Originals.Domain.csproj" />
+    <ProjectReference Include="../../src/SwiftBets.Originals.Games/SwiftBets.Originals.Games.csproj" />
   </ItemGroup>
 </Project>

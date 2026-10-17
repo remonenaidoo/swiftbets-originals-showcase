@@ -2,7 +2,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using SwiftBets.Originals.Application.Ports;
-using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Infrastructure;
 
@@ -16,18 +15,19 @@ public sealed class WalletClient(HttpClient http, IOptions<OriginalsOptions> opt
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public Task<WalletReply> BalanceAsync(string sessionToken, CancellationToken cancellationToken) =>
-        CallAsync("balance", sessionToken, $"balance:{Guid.NewGuid():N}", string.Empty, 0, null, cancellationToken);
+        CallAsync("balance", sessionToken, null, $"balance:{Guid.NewGuid():N}", string.Empty, 0, null, cancellationToken);
 
-    public Task<WalletReply> BetAsync(string sessionToken, string transactionId, string roundId, long amount, CancellationToken cancellationToken) =>
-        CallAsync("bet", sessionToken, transactionId, roundId, amount, null, cancellationToken);
+    public Task<WalletReply> BetAsync(string sessionToken, string gameId, string transactionId, string roundId, long amount, CancellationToken cancellationToken) =>
+        CallAsync("bet", sessionToken, gameId, transactionId, roundId, amount, null, cancellationToken);
 
-    public Task<WalletReply> WinAsync(string sessionToken, string transactionId, string roundId, long amount, CancellationToken cancellationToken) =>
-        CallAsync("win", sessionToken, transactionId, roundId, amount, null, cancellationToken);
+    public Task<WalletReply> WinAsync(string sessionToken, string gameId, string transactionId, string roundId, long amount, CancellationToken cancellationToken) =>
+        CallAsync("win", sessionToken, gameId, transactionId, roundId, amount, null, cancellationToken);
 
-    public Task<WalletReply> RollbackAsync(string sessionToken, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken) =>
-        CallAsync("rollback", sessionToken, transactionId, roundId, 0, betTransactionId, cancellationToken);
+    public Task<WalletReply> RollbackAsync(string sessionToken, string gameId, string transactionId, string roundId, string betTransactionId, CancellationToken cancellationToken) =>
+        CallAsync("rollback", sessionToken, gameId, transactionId, roundId, 0, betTransactionId, cancellationToken);
 
-    private async Task<WalletReply> CallAsync(string action, string sessionToken, string transactionId, string roundId, long amount, string? reference, CancellationToken cancellationToken)
+    // gameId null (balance): the casino uses the session's game.
+    private async Task<WalletReply> CallAsync(string action, string sessionToken, string? gameId, string transactionId, string roundId, long amount, string? reference, CancellationToken cancellationToken)
     {
         var o = options.Value;
         var body = JsonSerializer.SerializeToUtf8Bytes(new
@@ -35,7 +35,7 @@ public sealed class WalletClient(HttpClient http, IOptions<OriginalsOptions> opt
             sessionToken,
             providerTransactionId = transactionId,
             roundId,
-            gameId = GildedSavanna.GameId,
+            gameId,
             amount,
             currency = o.Currency,
             referenceTransactionId = reference,

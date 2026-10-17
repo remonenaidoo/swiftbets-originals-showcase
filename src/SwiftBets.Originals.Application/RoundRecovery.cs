@@ -25,9 +25,13 @@ public sealed class RoundRecovery(IRoundStore store, IWallet wallet, TimeProvide
                 continue;
             }
 
-            await store.SetRollbackPendingAsync(round.RoundId, true, cancellationToken);
-            await store.UpdateAsync(round.RoundId, RoundStatus.Voided, 0, 0, cancellationToken);
-            var reply = await wallet.RollbackAsync(round.SessionToken, Play.RollbackTx(round.RoundId), round.RoundId.ToString(), Play.BetTx(round.RoundId), cancellationToken);
+            // A round still pending is voided only if it is still pending now; one already voided is retried as is.
+            if (round.Status == RoundStatus.Pending && !await store.VoidIfAsync(round.RoundId, RoundStatus.Pending, cancellationToken))
+            {
+                continue;
+            }
+
+            var reply = await wallet.RollbackAsync(round.SessionToken, round.GameId, Play.RollbackTx(round.RoundId), round.RoundId.ToString(), Play.BetTx(round.RoundId), cancellationToken);
             if (reply.Status == WalletStatus.Ok)
             {
                 await store.SetRollbackPendingAsync(round.RoundId, false, cancellationToken);
@@ -36,7 +40,7 @@ public sealed class RoundRecovery(IRoundStore store, IWallet wallet, TimeProvide
 
         foreach (var (round, spin) in await store.UnpaidWinsAsync(100, cancellationToken))
         {
-            var reply = await wallet.WinAsync(round.SessionToken, spin.WinTx!, round.RoundId.ToString(), spin.Win, cancellationToken);
+            var reply = await wallet.WinAsync(round.SessionToken, round.GameId, spin.WinTx!, round.RoundId.ToString(), spin.Win, cancellationToken);
             if (reply.Status != WalletStatus.Ok)
             {
                 continue;

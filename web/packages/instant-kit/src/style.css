@@ -1,0 +1,143 @@
+:root {
+  --accent: #36e2a0; --accent-2: #12a874; --bg: #0b1220;
+  --ink: #eef3fb; --muted: #93a3bd; --panel: rgba(13, 20, 36, 0.92); --line: rgba(255, 255, 255, 0.09); --danger: #ff5d6c;
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:disabled { opacity: .4; cursor: default; }
+
+/* Phones: the stage fills what the panel leaves. Wide screens: the panel is a column on the right. */
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+#stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#panel { flex: none; min-width: 0; overflow: hidden; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); display: grid; gap: 8px;
+  background: linear-gradient(180deg, rgba(8, 12, 22, .2), var(--panel) 18%); border-top: 1px solid var(--line); }
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  #app { flex-direction: row; }
+  #panel { width: 360px; order: -1; align-content: start; padding: 18px 16px; border-top: 0; border-right: 1px solid var(--line); background: var(--panel); gap: 14px; }
+  #panel .act { flex-direction: column; align-items: stretch; }
+  #panel .action { width: 100%; height: 64px; }
+  #panel .stake { justify-content: space-between; }
+  #controls .row { flex-direction: column; align-items: stretch; }
+  #controls .row > .field { width: 100% !important; }
+  #controls .chips { flex-wrap: nowrap; }
+}
+
+#top { position: absolute; top: 8px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 3; pointer-events: none; font-size: 12px; color: var(--muted); }
+.pill { background: rgba(0, 0, 0, .38); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-variant-numeric: tabular-nums; }
+
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.stats { gap: 14px; min-width: 0; }
+#controls .row { min-width: 0; }
+.stat { min-width: 0; }
+.stat small { display: block; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.stat b { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat.win b { color: var(--accent); }
+.icons { display: flex; gap: 6px; margin-left: auto; }
+.icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); font-size: 16px; }
+
+.stake { display: flex; align-items: center; gap: 2px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); border-radius: 14px; padding: 4px; }
+.stake button { width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, .07); font-size: 20px; font-weight: 800; }
+.stake .v { min-width: 72px; text-align: center; }
+.stake .v small { display: block; font-size: 9px; letter-spacing: .16em; color: var(--muted); }
+.stake .v b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.action { flex: 1; height: 56px; border-radius: 16px; font-weight: 900; font-size: 17px; letter-spacing: .08em; color: #04140d;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.action:active:not(:disabled) { transform: translateY(1px) scale(.99); }
+.action.cash { background: linear-gradient(180deg, #ffd166, #f5a524); color: #2a1700; box-shadow: 0 6px 22px rgba(255, 190, 70, .45), inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.action small { display: block; font-size: 12px; letter-spacing: .02em; font-weight: 800; opacity: .85; }
+
+/* A game's own controls: chips and steppers. */
+#controls { display: grid; gap: 8px; }
+#controls:empty { display: none; }
+.label { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { flex: 1; min-width: 44px; padding: 9px 8px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); font-weight: 800; font-variant-numeric: tabular-nums; }
+.chip.on { background: color-mix(in srgb, var(--accent) 20%, transparent); border-color: var(--accent); color: var(--accent); }
+.field { display: flex; align-items: center; gap: 6px; min-width: 0; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); border-radius: 12px; padding: 4px 6px; }
+.field input { flex: 1; min-width: 0; width: 100%; background: none; border: 0; color: var(--ink); font: inherit; font-size: 15px; font-weight: 800; padding: 6px; text-align: center; font-variant-numeric: tabular-nums; }
+.field button { width: 32px; height: 32px; border-radius: 9px; background: rgba(255, 255, 255, .07); font-weight: 800; }
+.field input:disabled { opacity: .5; }
+
+#toast { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 30; background: rgba(30, 8, 12, .94); border: 1px solid rgba(255, 93, 108, .6);
+  padding: 10px 16px; border-radius: 12px; max-width: 86vw; text-align: center; display: none; font-size: 14px; }
+
+#bigwin { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: radial-gradient(circle, rgba(0, 0, 0, .3), rgba(0, 0, 0, .78)); }
+#bigwin .card { text-align: center; animation: pop .5s cubic-bezier(.2, 1.4, .4, 1); }
+#bigwin .kicker { font-size: clamp(30px, 9vw, 64px); font-weight: 900; letter-spacing: .06em; background: linear-gradient(180deg, #fff6cf, #ffd166 45%, #e08a12);
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 22px rgba(255, 200, 80, .55)); }
+#bigwin .amount { margin-top: 6px; font-size: clamp(30px, 10vw, 70px); font-weight: 900; font-variant-numeric: tabular-nums; text-shadow: 0 4px 24px rgba(0, 0, 0, .6); }
+#bigwin .sub { margin-top: 6px; color: var(--accent); font-weight: 800; font-size: 20px; }
+@keyframes pop { from { transform: scale(.55); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.sheet { position: fixed; inset: 0; z-index: 40; display: none; background: rgba(0, 0, 0, .62); }
+.sheet .panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(94vw, 680px); max-height: 88vh; overflow: auto;
+  background: linear-gradient(180deg, #121c31, #0b1222); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 22px; user-select: text; }
+.sheet h2 { margin: 0 0 6px; color: var(--accent); font-size: 20px; }
+.sheet h3 { margin: 18px 0 8px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sheet p { margin: 6px 0; line-height: 1.5; font-size: 14px; color: #dbe3f1; }
+.sheet .close { position: absolute; right: 10px; top: 8px; font-size: 22px; width: 40px; height: 40px; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.facts div { background: rgba(255, 255, 255, .04); border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
+.facts b { display: block; font-size: 18px; color: var(--accent); }
+.facts small { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.note { color: var(--muted); font-size: 12px; }
+.kv { display: grid; gap: 2px; margin: 8px 0; }
+.kv small { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.kv code { font-size: 12px; word-break: break-all; background: rgba(255, 255, 255, .04); border-radius: 8px; padding: 6px 8px; }
+.seedrow { display: flex; gap: 8px; margin-top: 8px; }
+.seedrow input { flex: 1; min-width: 0; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); padding: 9px 10px; font: inherit; }
+.primary-sm { padding: 9px 14px; border-radius: 10px; font-weight: 800; color: #04140d; background: linear-gradient(180deg, var(--accent), var(--accent-2)); }
+.hist { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hist td, .hist th { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; font-variant-numeric: tabular-nums; }
+.hist th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.hist .won { color: var(--accent); font-weight: 800; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.table td, .table th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+.table th:first-child, .table td:first-child { text-align: left; }
+.foot { margin-top: 16px; font-size: 12px; color: var(--muted); }
+
+/* A game with its own bet boxes: no shared stake/action row. Stacked phones: the stage keeps its height, the panel scrolls. */
+.own-actions #panel .act { display: none; }
+@media (max-aspect-ratio: 1/1), (max-width: 899px) {
+  .stacked #stage { flex: none; height: clamp(250px, 44vh, 480px); }
+  .stacked #panel { flex: 1; overflow-y: auto; align-content: start; -webkit-overflow-scrolling: touch; }
+}
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) { .stacked #panel { overflow-y: auto; } }
+
+/* Bet boxes (Crash). */
+.betbox { background: rgba(255, 255, 255, .035); border: 1px solid var(--line); border-radius: 16px; padding: 8px; display: grid; gap: 7px; }
+.betbox .top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 8px; align-items: stretch; }
+.betbox .left { display: grid; gap: 6px; min-width: 0; }
+.betbox .quick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+.betbox .quick button { padding: 6px 0; border-radius: 9px; background: rgba(255, 255, 255, .05); font-weight: 700; font-size: 13px; color: #c8d2e8; }
+.betbox .go { border-radius: 14px; font-weight: 900; font-size: 18px; letter-spacing: .04em; color: #04140d; line-height: 1.15; min-height: 84px;
+  background: linear-gradient(180deg, #4ff0a8, #18b873); box-shadow: 0 6px 18px rgba(40, 220, 140, .3), inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.betbox .go small { display: block; font-size: 15px; font-weight: 800; }
+.betbox .go.cash { background: linear-gradient(180deg, #ffd166, #f5a524); color: #2a1700; box-shadow: 0 6px 18px rgba(255, 190, 70, .4), inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.betbox .go.wait { background: linear-gradient(180deg, #ff7a8a, #d63a50); color: #fff; }
+.betbox .go.placed { background: rgba(255, 255, 255, .08); color: var(--ink); box-shadow: none; }
+.betbox .opts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.toggle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); font-weight: 700; font-size: 12px; color: var(--muted); }
+.toggle i { width: 30px; height: 18px; border-radius: 999px; background: rgba(255, 255, 255, .15); position: relative; transition: background .2s; }
+.toggle i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .2s; }
+.toggle.on { color: var(--ink); border-color: var(--accent); }
+.toggle.on i { background: var(--accent); }
+.toggle.on i::after { left: 14px; }
+.betbox .target { width: 92px; flex: none; }
+.bets { background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 16px; padding: 8px 10px; }
+.bets .head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding: 2px 0 6px; }
+.bets table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bets td { padding: 5px 4px; border-top: 1px solid var(--line); }
+.bets td:not(:first-child) { text-align: right; }
+.bets tr.won td { color: #ffd166; }
+.bets tr.mine td:first-child { color: var(--accent); font-weight: 800; }
+.betbox .field input { font-size: 14px; padding: 4px 2px; }
+@media (max-aspect-ratio: 1/1), (max-width: 899px) {
+  .betbox { padding: 7px; gap: 6px; }
+  .betbox .go { min-height: 70px; font-size: 16px; }
+  .betbox .quick button { padding: 4px 0; font-size: 12px; }
+  .betbox .opts { gap: 6px; }
+}

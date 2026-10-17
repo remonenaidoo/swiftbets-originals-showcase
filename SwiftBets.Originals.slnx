@@ -3,6 +3,7 @@
     <Project Path="src/SwiftBets.Originals.Api/SwiftBets.Originals.Api.csproj" />
     <Project Path="src/SwiftBets.Originals.Application/SwiftBets.Originals.Application.csproj" />
     <Project Path="src/SwiftBets.Originals.Domain/SwiftBets.Originals.Domain.csproj" />
+    <Project Path="src/SwiftBets.Originals.Games/SwiftBets.Originals.Games.csproj" />
     <Project Path="src/SwiftBets.Originals.Infrastructure/SwiftBets.Originals.Infrastructure.csproj" />
     <Project Path="src/SwiftBets.Originals.Migrator/SwiftBets.Originals.Migrator.csproj" />
   </Folder>

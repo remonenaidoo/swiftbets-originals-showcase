@@ -13,6 +13,9 @@
     <Using Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="../../docs/par-sheet/gilded-savanna.md" CopyToOutputDirectory="PreserveNewest" Link="gilded-savanna.md" />
+    <None Include="../../docs/par-sheet/*.md" CopyToOutputDirectory="PreserveNewest" LinkBase="." />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SwiftBets.Originals.Games\SwiftBets.Originals.Games.csproj" />
   </ItemGroup>
 </Project>
