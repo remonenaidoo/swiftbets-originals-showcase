@@ -88,6 +88,7 @@ const boot = async () => {
   const app = new Application();
   await app.init({ resizeTo: shell.stage, background: COLOURS.bg2, antialias: true, resolution: Math.min(3, window.devicePixelRatio || 1), autoDensity: true });
   shell.stage.prepend(app.canvas);
+  new ResizeObserver(() => app.resize()).observe(shell.stage);
   const tweens = new Tweens(app.ticker);
   const A = (f: string) => assetUrl(`assets/mines/${f}`);
   const tex = await Assets.load<Texture>([A('tile.webp'), A('diamond.webp'), A('mine.webp'), A('bg-landscape.jpg'), A('bg-portrait.jpg')]);

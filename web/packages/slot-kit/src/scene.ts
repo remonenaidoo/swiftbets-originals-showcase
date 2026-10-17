@@ -21,6 +21,7 @@ export class Scene {
   private glow = new Graphics();
   private lines = new Graphics();
   private locks = new Container();
+  private labelLayer = new Container();
   private locked: LockedCell[] = [];
   private fx = new Container();
   private tint = new Graphics();
@@ -61,7 +62,7 @@ export class Scene {
     this.tweens = new Tweens(this.app.ticker);
     const emphasised = new Set(info.symbols.filter((s) => s.kind !== 'Regular').map((s) => s.name));
     this.reels = new ReelSet(this.textures, emphasised, this.tweens, this.app.ticker);
-    this.board.addChild(this.glow, this.frame, this.teaseGlow, this.reels, this.locks, this.lines, this.amount);
+    this.board.addChild(this.glow, this.frame, this.teaseGlow, this.reels, this.locks, this.labelLayer, this.lines, this.amount);
     this.amount.anchor.set(0.5);
     this.amount.visible = false;
     // The logo breathes gently while the game is open.
@@ -184,12 +185,36 @@ export class Scene {
 
   /** Frames the winning symbols, dims everything else and pulses them. Paylines are not drawn; the rules show them. */
   async showWins(info: GameInfo, wins: LineWin[], scatterCells: [number, number][], pulseMs: number) {
-    this.clearWins();
-    const winning = new Set<string>(scatterCells.map(([r, row]) => `${r}:${row}`));
+    const cells: [number, number][] = [...scatterCells];
     for (const w of wins) {
       const rows = info.paylines[w.line];
-      for (let reel = 0; reel < w.reels; reel++) winning.add(`${reel}:${rows[reel]}`);
+      for (let reel = 0; reel < w.reels; reel++) cells.push([reel, rows[reel]]);
     }
+    await this.showCells(cells, pulseMs);
+  }
+
+  /**
+   * Values written on cells (a hold's coin values), above the symbols and locks; [] clears them. `colour` is the
+   * text fill; a label pops in when it is new.
+   */
+  setLabels(labels: { reel: number; row: number; text: string; colour?: number }[]) {
+    const before = new Set(this.labelLayer.children.map((c) => c.label));
+    this.labelLayer.removeChildren().forEach((c) => c.destroy());
+    for (const l of labels) {
+      const { x, y } = this.centre(l.reel, l.row);
+      const t = new Text({ text: l.text, style: { fontFamily: 'system-ui, sans-serif', fontWeight: '900', fontSize: Math.round(Math.min(this.cellW, this.cellH) * 0.24), fill: l.colour ?? 0xffffff, stroke: { color: 0x150a02, width: 5 }, dropShadow: { color: 0x000000, alpha: 0.7, distance: 2, blur: 4 }, padding: 8 } });
+      t.anchor.set(0.5);
+      t.position.set(x, y + this.cellH * 0.3);
+      t.label = `${l.reel}:${l.row}:${l.text}`;
+      this.labelLayer.addChild(t);
+      if (!before.has(t.label)) void this.tweens.to(1.6, 1, 320, (v) => t.scale.set(v), ease.outBack);
+    }
+  }
+
+  /** Frames any set of cells (ways, pay-anywhere, scatters), dims the rest and pulses them. */
+  async showCells(cells: [number, number][], pulseMs: number) {
+    this.clearWins();
+    const winning = new Set<string>(cells.map(([r, row]) => `${r}:${row}`));
     if (!winning.size) return;
     const inset = this.cellW * 0.04;
     for (const k of winning) {

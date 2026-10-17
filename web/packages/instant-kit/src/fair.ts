@@ -35,3 +35,14 @@ export async function crashPoint(seed: string, seq: number): Promise<number> {
   const hundredths = Math.floor(96 / (1 - u));
   return Math.min(Math.max(hundredths, 100), 500000) * 100;
 }
+
+/** Keno's draw for a round: Fisher–Yates over 1–40 by its floats, the first 10 (Keno in OneShot.cs). */
+export async function kenoDraw(serverSeed: string, clientSeed: string, nonce: number): Promise<number[]> {
+  const f = await floats(serverSeed, clientSeed, nonce, 39);
+  const balls = Array.from({ length: 40 }, (_, i) => i + 1);
+  for (let i = 39; i > 0; i--) {
+    const j = Math.floor(f[39 - i] * (i + 1));
+    [balls[i], balls[j]] = [balls[j], balls[i]];
+  }
+  return balls.slice(0, 10);
+}

@@ -1,0 +1,244 @@
+{
+ "style": "Premium modern casino video slot game art, polished stylised 3D render, cinematic lighting, rich saturated but tasteful colours, crisp clean edges, high detail, original design, no text, no letters, no numbers, no watermark, no brand logos",
+ "items": {
+  "ways-sheet": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Slot game art concept sheet on a dark presentation board for an ocean slot set at Cape Point lighthouse, South Africa: a great white shark, a humpback whale breaching, a red and white lighthouse, an African penguin, a brass ship anchor, a brass compass, a pink spiral seashell, an orange starfish, a glowing turquoise wave wild symbol, a lustrous pearl in an open shell scatter, a background of dramatic Cape Point cliffs and the lighthouse at golden sunset over a turquoise ocean, colour swatches"
+  },
+  "hold-sheet": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Slot game art concept sheet on a dark presentation board for a South African Highveld thunderstorm slot: a mythical glowing lightning bird with spread wings, a farm windpomp windmill, a leaping springbok, pink cosmos flowers, cut ruby, sapphire, emerald and amber gems, a crackling storm cloud wild symbol, a heavy gold coin with a lightning bolt, a background of golden Highveld grassland under a dramatic purple thunderstorm with lightning, colour swatches"
+  },
+  "gems-sheet": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Slot game art concept sheet on a dark presentation board for a Kalahari desert gem cascade slot: nine distinct polished gemstones (a fiery orange sunstone, a violet-blue tanzanite, a banded golden tiger's eye, a desert rose crystal cluster, clear quartz, a banded agate, a red jasper, a purple amethyst, a rainbow opal), a radiant golden sun symbol, a blazing meteor rock with a glowing core, a background of red Kalahari dunes at dusk with a giant gem-filled sky, colour swatches"
+  },
+  "ways-shark": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a fierce great white shark mid-turn with open jaws, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-whale": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a humpback whale breaching with water spray, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-lighthouse": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a red and white striped lighthouse on a small rock with a glowing lamp, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-penguin": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cute African penguin standing, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-anchor": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a polished brass ship anchor with a rope, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-compass": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "an ornate brass ship compass, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-shell": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a pink spiral conch seashell, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-starfish": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a bright orange starfish, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-wild": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a glowing turquoise ocean wave curling into a perfect circle, magical sparkles, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-pearl": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a lustrous white pearl resting in an open golden scallop shell, glowing, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "ways-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "dramatic Cape Point cliffs with a red and white lighthouse at golden sunset over a turquoise ocean, crashing waves, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "ways-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "dramatic Cape Point cliffs with a red and white lighthouse at golden sunset over a turquoise ocean, crashing waves, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "ways-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"CAPE POINT WAYS\" (all three words: CAPE, POINT, WAYS) in bold chunky 3D lettering, turquoise and coral ocean colours with foam and a small lighthouse emblem, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background"
+  },
+  "hold-thunderbird": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a mythical golden lightning bird with spread wings crackling with electricity, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-windpomp": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a tall steel South African farm wind pump: a thin metal lattice tower topped by a round many-bladed metal fan wheel and a tail vane, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-springbok": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a leaping springbok antelope, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-cosmos": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cluster of pink and white cosmos flowers, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-ruby": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cut red ruby gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-sapphire": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cut blue sapphire gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-emerald": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cut green emerald gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-amber": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cut golden amber gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-wild": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a dark purple storm cloud with a bright lightning bolt striking down, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-coin": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a heavy shiny gold coin with an embossed lightning bolt, face on, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "hold-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "golden Highveld grassland under a dramatic purple thunderstorm with lightning and a lone windpomp on the horizon, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "hold-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "golden Highveld grassland under a dramatic purple thunderstorm with lightning and a lone windpomp on the horizon, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "hold-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading \"HIGHVELD HOLD\" in bold chunky 3D lettering, electric gold and storm purple with lightning crackling around the letters, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background"
+  },
+  "gems-sunstone": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a fiery orange faceted sunstone gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-tanzanite": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a violet-blue faceted tanzanite gem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-tigerseye": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a polished banded golden tiger's eye cabochon stone, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-desertrose": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a desert rose crystal cluster of sandy rose petals, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-quartz": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a clear quartz crystal point, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-agate": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a polished banded agate slice in blue and white, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-jasper": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a polished red jasper oval stone, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-amethyst": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a purple amethyst crystal cluster, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-opal": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a rainbow fire opal oval cabochon, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-sun": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a radiant golden sun disc with flaming rays, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-meteor": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a blazing meteor rock with a glowing molten core and fiery tail, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "gems-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "red Kalahari sand dunes at dusk under a violet sky glittering with gem-like stars, a lone camel thorn tree, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "gems-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "red Kalahari sand dunes at dusk under a violet sky glittering with gem-like stars, a lone camel thorn tree, wide and atmospheric, darker in the centre where slot reels will sit"
+  },
+  "gems-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"KALAHARI GEM FALL\" (all three words: KALAHARI, GEM, FALL) in bold chunky 3D lettering, fiery sunset orange and gem violet with sparkling gemstones set into the letters, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background"
+  },
+  "ways-logo-11": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"CAPE POINT WAYS\" (all three words: CAPE, POINT, WAYS) in bold chunky 3D lettering, turquoise and coral ocean colours with foam and a small lighthouse emblem, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background",
+   "seed": 11
+  },
+  "ways-logo-29": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"CAPE POINT WAYS\" (all three words: CAPE, POINT, WAYS) in bold chunky 3D lettering, turquoise and coral ocean colours with foam and a small lighthouse emblem, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background",
+   "seed": 29
+  },
+  "gems-logo-11": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"KALAHARI GEM FALL\" (all three words: KALAHARI, GEM, FALL) in bold chunky 3D lettering, fiery sunset orange and gem violet with sparkling gemstones set into the letters, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background",
+   "seed": 11
+  },
+  "gems-logo-29": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"KALAHARI GEM FALL\" (all three words: KALAHARI, GEM, FALL) in bold chunky 3D lettering, fiery sunset orange and gem violet with sparkling gemstones set into the letters, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background",
+   "seed": 29
+  }
+ }
+}

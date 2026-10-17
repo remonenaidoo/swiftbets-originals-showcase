@@ -141,7 +141,88 @@ def mines_art():
 
 crash, mines = crash_art, mines_art
 
-for name, make in [('crash', crash), ('mines', mines)]:
+def slot_cover(game, hero, size=340):
+    """A slot's cover: its backdrop, its hero symbol, its logo across the bottom."""
+    def make():
+        b = Image.open(f'{A}/{game}/bg-portrait.jpg').convert('RGBA')
+        b = b.resize((S, int(b.height * S / b.width)), Image.LANCZOS)
+        top = max(0, (b.height - S) // 2)
+        im = b.crop((0, top, S, top + S))
+        im.alpha_composite(Image.new('RGBA', im.size, (0, 0, 0, 70)))
+        h = Image.open(f'{A}/{game}/symbols/{hero}.webp'); h.thumbnail((size, size), Image.LANCZOS)
+        im.alpha_composite(h, ((S - h.width) // 2, 70))
+        band = Image.new('RGBA', im.size); ImageDraw.Draw(band).rectangle((0, 380, S, S), fill=(0, 0, 0, 150))
+        im.alpha_composite(band.filter(ImageFilter.GaussianBlur(30)))
+        logo = Image.open(f'{A}/{game}/logo.webp'); logo.thumbnail((540, 200), Image.LANCZOS)
+        im.alpha_composite(logo, ((S - logo.width) // 2, S - logo.height - 22))
+        return im.convert('RGB')
+    return make
+
+def hero(game, sprite, title_text, colour, size=330, at=(0.5, 0.42), bg='bg-portrait.jpg', darken=0, pegs=False, layers=False):
+    """A cover from a game's backdrop and its key sprite, title at the bottom."""
+    def make():
+        b = Image.open(f'{A}/{game}/{bg}').convert('RGBA')
+        b = b.resize((S, int(b.height * S / b.width)), Image.LANCZOS)
+        top = max(0, (b.height - S) // 2 - 60)
+        im = b.crop((0, top, S, top + S))
+        if darken:
+            im.alpha_composite(Image.new('RGBA', im.size, (4, 2, 14, darken)))
+        if pegs:
+            d = ImageDraw.Draw(im)
+            for r in range(8):
+                for j in range(r + 3):
+                    x, y = S / 2 + (j - (r + 2) / 2) * 44, 200 + r * 36
+                    d.ellipse((x - 5, y - 5, x + 5, y + 5), fill=(255, 224, 176))
+            cols = [(255, 61, 110), (255, 122, 61), (255, 179, 71), (255, 217, 107), (255, 217, 107), (255, 179, 71), (255, 122, 61), (255, 61, 110)]
+            for k, c in enumerate(cols + [cols[0]]):
+                x = S / 2 + (k - 4) * 44
+                d.rounded_rectangle((x - 19, 470 - 60, x + 19, 470 - 34), radius=6, fill=c)
+        sp = Image.open(f'{A}/{game}/{sprite}')
+        sp.thumbnail((size, size), Image.LANCZOS)
+        glow = Image.new('RGBA', im.size)
+        if not layers:
+            g = Image.new('RGBA', sp.size, colour + (200,))
+            g.putalpha(sp.getchannel('A'))
+            glow.alpha_composite(g, (int(S * at[0] - sp.width / 2), int(S * at[1] - sp.height / 2)))
+        if not layers:
+            im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(28)))
+        if layers:  # light on black (a comet): added, not pasted
+            from PIL import ImageChops
+            add = Image.new('RGB', im.size)
+            add.paste(sp.convert('RGB'), (int(S * at[0] - sp.width / 2), int(S * at[1] - sp.height / 2)))
+            im = ImageChops.add(im.convert('RGB'), add).convert('RGBA')
+        else:
+            im.alpha_composite(sp, (int(S * at[0] - sp.width / 2), int(S * at[1] - sp.height / 2)))
+        im = im.convert('RGB')
+        title(im, title_text, colour, 486)
+        return im
+    return make
+
+def keno_art():
+    im = Image.open(f'{A}/keno/bg-landscape.jpg').convert('RGBA')
+    im = im.resize((int(im.width * S / im.height), S), Image.LANCZOS)
+    im = im.crop(((im.width - S) // 2, 0, (im.width + S) // 2, S))
+    ball = Image.open(f'{A}/keno/ball.webp')
+    d = ImageDraw.Draw(im)
+    f = ImageFont.truetype(BOLD, 44)
+    for i, (n, x, y, c) in enumerate([(7, 130, 150, (54, 226, 160)), (21, 300, 110, (59, 109, 255)), (34, 470, 160, (255, 210, 63)), (12, 215, 290, (255, 77, 109)), (40, 390, 290, (54, 226, 160))]):
+        b = ball.resize((150, 150), Image.LANCZOS)
+        im.alpha_composite(b, (x - 75, y - 75))
+        d.ellipse((x - 42, y - 42, x + 42, y + 42), fill=c)
+        d.text((x, y), str(n), font=f, anchor='mm', fill=(255, 255, 255))
+    im = im.convert('RGB')
+    title(im, 'KENO', (255, 210, 63), 486)
+    return im
+
+for name, make in [('crash', crash), ('mines', mines),
+                   ('dice', hero('dice', 'die.webp', 'DICE', (255, 95, 210))),
+                   ('limbo', hero('limbo', 'comet.webp', 'LIMBO', (255, 194, 77), 400, (0.5, 0.4), darken=150, layers=True)),
+                   ('peg-drop', hero('peg-drop', 'ball.webp', 'PEG DROP', (255, 179, 71), 120, (0.53, 0.2), darken=60, pegs=True)),
+                   ('towers', hero('towers', 'snake.webp', 'TOWERS', (255, 194, 77), 300)),
+                   ('keno', keno_art),
+                   ('cape-point-ways', slot_cover('cape-point-ways', 'shark')),
+                   ('highveld-hold', slot_cover('highveld-hold', 'coin', 300)),
+                   ('kalahari-gems', slot_cover('kalahari-gems', 'sunstone', 300))]:
     os.makedirs(f'{OUT}/{name}', exist_ok=True)
     make().save(f'{OUT}/{name}/cover.jpg', quality=88)
     print('wrote', name)
