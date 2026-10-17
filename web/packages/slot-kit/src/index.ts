@@ -9,3 +9,8 @@ export type { GameInfo } from './api';
 export { sound } from './audio';
 export { Tweens, ease } from './tweens';
 export { rand } from './api';
+export { Scene } from './scene';
+export { HUD } from './hud';
+export { wireSheets, open, close, renderHistory } from './sheets';
+export { SPEEDS, savedSpeed, saveSpeed, type Speed } from './speed';
+export type { SymbolInfo, RoundSummary } from './api';

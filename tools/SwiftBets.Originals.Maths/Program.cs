@@ -11,6 +11,39 @@ if (args.FirstOrDefault() == "mines")
     return InstantSheets.Mines("docs/par-sheet/mines.md", Arg("--layouts") is { } l ? long.Parse(l, CultureInfo.InvariantCulture) : 10_000_000);
 }
 
+if (args.FirstOrDefault() == "cascade")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    var n = Arg("--rounds") is { } r ? long.Parse(r, CultureInfo.InvariantCulture) : 1_000_000_000;
+    if (Arg("--try") is { } file)
+    {
+        // Tuning: a JSON config {"base":{..counts}, "free":{..}, "pays":{sym:[3]}, "sun":[3], "meteors":[[v,w],..]}.
+        var d = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file)).RootElement;
+        Dictionary<string, int> Counts(string k) => d.GetProperty(k).EnumerateObject().ToDictionary(p => p.Name, p => p.Value.GetInt32());
+        var cfg = new SwiftBets.Originals.Domain.Instant.CascadeConfig(Counts("base"), Counts("free"),
+            d.GetProperty("pays").EnumerateObject().ToDictionary(p => p.Name, p => p.Value.EnumerateArray().Select(x => x.GetInt32()).ToArray()),
+            [.. d.GetProperty("sun").EnumerateArray().Select(x => x.GetInt32())],
+            [.. d.GetProperty("meteors").EnumerateArray().Select(x => (x[0].GetInt32(), x[1].GetInt32()))]);
+        var t = InstantSheets.Cascade(cfg, n);
+        Console.WriteLine(FormattableString.Invariant($"base {t.Base:P3} free {t.Free:P3} total {t.Total:P3} ± {t.Half:P3} hit {t.Hit:P1} fs 1 in {1 / t.Trigger:F0} capped {t.Capped}"));
+        return 0;
+    }
+
+    return InstantSheets.CascadeSheet("docs/par-sheet/kalahari-gems.md", n);
+}
+
+if (args.FirstOrDefault() == "hold")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return InstantSheets.Hold("docs/par-sheet/highveld-hold.md", Arg("--rounds") is { } r ? long.Parse(r, CultureInfo.InvariantCulture) : 100_000_000);
+}
+
+if (args.FirstOrDefault() == "ways")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return InstantSheets.Ways("docs/par-sheet/cape-point-ways.md", Arg("--rounds") is { } r ? long.Parse(r, CultureInfo.InvariantCulture) : 100_000_000);
+}
+
 if (args.FirstOrDefault() == "instant")
 {
     Directory.CreateDirectory("docs/par-sheet");
