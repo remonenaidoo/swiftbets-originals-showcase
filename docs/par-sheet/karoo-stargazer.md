@@ -11,6 +11,8 @@ Definition hash: 66a056610aa172c070128e5f2a8ebea07e19292c0fb23c6afa74826433a64e0
 | Base game | 67.7110 % | 13647409/20155392 |
 | Free spins | 28.2878 % | closed form, below |
 | **Total (uncapped)** | **95.9988 %** | |
+| Cap effect | −0.0000 % | simulation |
+| **Total (as played)** | **95.9988 %** | |
 
 ## How the RTP is computed
 
@@ -29,6 +31,8 @@ Each reel stop is drawn uniformly and independently (OS CSPRNG, `RandomNumberGen
 - Feature frequency: 1 in 196.55 base spins; average 10.54 spins worth 55.60× stake.
 - Standard deviation of a base spin (exact): 2.0583 stakes.
 - Largest single base-spin win: 109.25× stake (108 of 60,466,176 combinations).
+- Standard deviation per round incl. feature (simulation): 5.5308 stakes.
+- Rounds reaching the 5,000× cap: 0 of 1,000,000,000; largest round seen 707.80× stake.
 
 Base-spin win distribution (stakes):
 
