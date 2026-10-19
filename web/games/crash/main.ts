@@ -283,14 +283,14 @@ const boot = async () => {
   const stars = new Container();
   const city = new Sprite(T('city.webp'));
   const cloudA = new Sprite(T('clouds.webp')), cloudB = new Sprite(T('clouds.webp'));
-  const grid = new Graphics(), labels = new Container(), area = new Graphics(), glow = new Graphics(), line = new Graphics();
+  const area = new Graphics(), glow = new Graphics(), line = new Graphics();
   const trail = new Container(), fx = new Container();
   const rocket = new Sprite(T('rocket.webp'));
   const flash = new Graphics();
   const textStyle = (top: number, bottom: number, shadow: number) => ({
     fontFamily: 'Trebuchet MS, system-ui, sans-serif', fontWeight: '900' as const, fontSize: 64,
     fill: new FillGradient({ type: 'linear', start: { x: 0, y: 0 }, end: { x: 0, y: 1 }, colorStops: [{ offset: 0, color: top }, { offset: 1, color: bottom }], textureSpace: 'local' }),
-    stroke: { color: 0x0a0620, width: 6 }, dropShadow: { color: shadow, alpha: 0.85, blur: 22, distance: 0 }, padding: 48,
+    stroke: { color: 0x0a0620, width: 4 }, dropShadow: { color: shadow, alpha: 0.45, blur: 12, distance: 0 }, padding: 32,
   });
   const big = new Text({ text: '', style: textStyle(0xffffff, 0xd6f4ff, 0x3aa8ff) });
   const sub = new Text({ text: '', style: { fontFamily: 'Trebuchet MS, system-ui, sans-serif', fontWeight: '800', fontSize: 18, fill: 0xd9def5, dropShadow: { color: 0x000000, alpha: 0.7, blur: 8, distance: 0 } } });
@@ -303,7 +303,7 @@ const boot = async () => {
   space.anchor.set(0.5);
   glow.blendMode = 'add';
   trail.blendMode = 'add';
-  app.stage.addChild(sky, space, stars, city, cloudA, cloudB, grid, labels, area, glow, line, trail, rocket, fx, big, sub, bar, flash);
+  app.stage.addChild(sky, space, stars, city, cloudA, cloudB, area, glow, line, trail, rocket, fx, big, sub, bar, flash);
 
   const starList: { g: Graphics; depth: number; tw: number }[] = [];
   for (let i = 0; i < 160; i++) {
@@ -338,10 +338,10 @@ const boot = async () => {
     cloudA.scale.set(cs);
     cloudB.scale.set(cs);
     X0 = 44; Y0 = H - 30; PW = W - X0 - 30; PH = Y0 - 86;
-    big.style.fontSize = Math.round(Math.min(W * 0.2, H * 0.22, 150));
+    big.style.fontSize = Math.round(Math.min(W * 0.13, H * 0.15, 96));
     sub.style.fontSize = Math.round(Math.max(14, Math.min(W, H) * 0.04));
-    big.position.set(W / 2, 86 + PH * 0.24);
-    sub.position.set(W / 2, big.y + big.height * 0.6);
+    big.position.set(W / 2, 70 + big.style.fontSize * 0.6);
+    sub.position.set(W / 2, big.y + big.style.fontSize * 0.75);
     rocket.scale.set((Math.min(W, H) * (portrait ? 0.24 : 0.19)) / rocket.texture.width);
   };
   layout();
@@ -352,25 +352,6 @@ const boot = async () => {
     const r = (c1 >> 16) + (((c2 >> 16) - (c1 >> 16)) * k), g = ((c1 >> 8) & 255) + ((((c2 >> 8) & 255) - ((c1 >> 8) & 255)) * k), b = (c1 & 255) + (((c2 & 255) - (c1 & 255)) * k);
     return (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b);
   };
-  const yMaxFor = (bp: number) => Math.max(2, 1 + (bp / 10000 - 1) / 0.7);
-  const tMaxFor = (ms: number) => Math.max(10000, ms / 0.7);
-  const toScreen = (ms: number, m: number, tMax: number, yMax: number) => ({ x: X0 + (ms / tMax) * PW, y: Y0 - ((m - 1) / (yMax - 1)) * PH });
-
-  const drawAxes = (_tMax: number, yMax: number) => {
-    grid.clear();
-    labels.removeChildren().forEach((c) => c.destroy());
-    const stepY = yMax <= 3 ? 0.5 : yMax <= 8 ? 1 : yMax <= 30 ? 5 : yMax <= 150 ? 25 : Math.pow(10, Math.floor(Math.log10(yMax)));
-    for (let m = 1 + stepY; m <= yMax + 1e-9; m += stepY) {
-      const y = Y0 - ((m - 1) / (yMax - 1)) * PH;
-      grid.moveTo(X0, y).lineTo(X0 + PW, y).stroke({ width: 1, color: 0xffffff, alpha: 0.07 });
-      const t = new Text({ text: `${m.toFixed(m < 10 ? 1 : 0)}×`, style: { fontSize: 11, fill: 0xc8cff0, fontFamily: 'system-ui', dropShadow: { color: 0, alpha: 0.8, blur: 4, distance: 0 } } });
-      t.anchor.set(1, 0.5);
-      t.position.set(X0 - 6, y);
-      labels.addChild(t);
-    }
-  };
-
-  let lastAxes = '';
   let crashShownFor = '';
   let shown = 0;
   let climb = 0; // how far the camera has risen this flight, in px
@@ -407,7 +388,7 @@ const boot = async () => {
     city.position.set(W / 2, H + climb * 0.9);
     city.visible = city.y - city.height < H;
     // Cloud banks at fixed heights: each comes in from above and falls through the screen as the rocket climbs.
-    const banks = [H * 1.6, H * 4.2, H * 7.4];
+    const banks = [H * 1.1, H * 3.4, H * 6.2];
     const near = banks.map((alt) => H / 2 + (climb * 1.35 - alt)).filter((y) => y > -cloudA.height && y < H + cloudA.height);
     drift = (drift + dt * 0.3) % (cloudA.width || 1);
     for (const [i, c] of [cloudA, cloudB].entries()) {
@@ -421,15 +402,15 @@ const boot = async () => {
       s.tw += dt * 0.05;
       s.g.alpha = (0.55 + Math.sin(s.tw) * 0.35) * (s.depth > 0.5 ? 1 : 0.6);
       s.g.y += (0.08 + rate * 1.6 * s.depth) * dt;
+      s.g.x -= rate * 1.0 * s.depth * dt;
+      if (s.g.x < -8) s.g.x += W + 16;
       s.g.scale.set(1, streak * s.depth + (1 - s.depth));
+      s.g.rotation = Math.atan2(1.0, 1.6); // along the stream: down and back, away from the climb
       // Back in above the top at a random height, so the stream never bunches into rows.
       if (s.g.y > H + 8) { s.g.y = -8 - Math.random() * H * 0.6; s.g.x = Math.random() * W; }
     }
 
     const tEnd = over ? Math.max(0, Math.log((round?.pointBp ?? 10000) / 10000) / state.info.rate) : Math.max(0, ms);
-    const tMax = tMaxFor(phase === 'betting' ? 0 : tEnd), yMax = yMaxFor(m);
-    const axesKey = `${Math.round(tMax / 500)}:${yMax.toFixed(2)}:${W}x${H}`;
-    if (axesKey !== lastAxes) { drawAxes(tMax, yMax); lastAxes = axesKey; }
 
     area.clear(); glow.clear(); line.clear(); bar.clear(); flash.alpha = Math.max(0, flash.alpha - 0.04 * dt);
     const nozzle = () => {
@@ -454,14 +435,20 @@ const boot = async () => {
       bar.roundRect(W / 2 - 120, sub.y + 22, 240, 6, 3).fill({ color: 0xffffff, alpha: 0.12 }).roundRect(W / 2 - 120, sub.y + 22, 240 * k, 6, 3).fill(0xff6fd8);
       rocket.visible = true;
       rocket.rotation = -Math.PI / 2 - ROCKET_NOSE; // standing on the pad, nose up
-      rocket.position.set(W * (portrait ? 0.5 : 0.18), H - rocket.height * 0.55 - 6 + Math.sin(performance.now() / 300) * 1.5);
+      rocket.position.set(X0 + rocket.width * 0.45, H - rocket.height * 0.55 - 6 + Math.sin(performance.now() / 300) * 1.5);
       if (Math.random() < 0.5) exhaust(0.05);
       shown = 0;
     } else if (round) {
-      const n = 90, pts: { x: number; y: number }[] = [];
+      // The flight: the rocket lifts off and climbs to a cruising spot up and to the right in under two seconds, then
+      // holds there, bobbing, while the world streams past (the climb above). The trail bends up behind it to the pad.
+      const lift = smooth(0, 1800, tEnd), bob = lift >= 1 && !over ? Math.sin(performance.now() / 420) : 0;
+      const start = { x: X0 + rocket.width * 0.45, y: Y0 };
+      const cruise = { x: X0 + PW * (portrait ? 0.6 : 0.66), y: Y0 - PH * (portrait ? 0.55 : 0.6) };
+      const end = { x: start.x + (cruise.x - start.x) * lift + bob * 3, y: start.y + (cruise.y - start.y) * lift + bob * 6 };
+      const n = 60, k = 1.6, pts: { x: number; y: number }[] = [];
       for (let i = 0; i <= n; i++) {
-        const t = (tEnd * i) / n;
-        pts.push(toScreen(t, Math.exp(state.info.rate * t), tMax, yMax));
+        const u = i / n;
+        pts.push({ x: start.x + (end.x - start.x) * u, y: start.y - (start.y - end.y) * ((Math.exp(k * u) - 1) / (Math.exp(k) - 1)) });
       }
       area.moveTo(pts[0].x, Y0);
       for (const q of pts) area.lineTo(q.x, q.y);
