@@ -1,0 +1,270 @@
+{
+ "style": "Premium modern casino video slot game art, polished stylised 3D render, cinematic lighting, rich saturated but tasteful colours, crisp clean edges, high detail, original design, no text, no letters, no numbers, no watermark, no brand logos",
+ "items": {
+  "sheet": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "One wide panoramic painting divided into four vertical slices by thin gold lines, four slot game worlds side by side, each slice shows floating glossy slot symbols over its scenery. Slice 1: deep blue night sky with the Milky Way over a dry Karoo plain with white observatory domes, a leopard head and a meerkat under starlight, a glowing cross of four stars. Slice 2: bright turquoise ocean with a swirling silver sardine shoal, a leaping dolphin and a white gannet, a breaking wave. Slice 3: warm amber lamplight over a huge round open-pit diamond mine with a wooden headframe, a brass lantern and rough pink, blue, green and yellow diamonds. Slice 4: sunny mountain slope of Cape fynbos with a pink king protea, an orange pincushion protea, a red disa orchid and a golden flower burst. Completely wordless image"
+  },
+  "star-leopard": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a majestic leopard head and shoulders with spotted coat, lit by cool blue moonlight with a soft silver starlight rim glow and a few tiny sparkles, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-kudu": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a greater kudu bull antelope head and neck, grey-brown coat with thin white stripes, white chevron between the eyes, large rounded ears, very long corkscrew spiral horns twisting upward in two and a half open turns, lit by cool blue moonlight with a soft silver starlight rim glow and a few tiny sparkles, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-meerkat": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cute meerkat standing upright on its hind legs gazing up, sandy fur with dark eye patches, lit by cool blue moonlight with a soft silver starlight rim glow and a few tiny sparkles, no moon, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-ostrich": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a South African ostrich head and long bare pinkish neck with large dark eyes and long eyelashes, flat broad beak, fluffy black body feathers with white wing plumes at the bottom, lit by cool blue moonlight with a soft silver starlight rim glow and a few tiny sparkles, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-ace": {
+   "prompt": "A single slot machine symbol: the capital letter A as a chunky carved polished silver letter inlaid with deep midnight blue enamel and glowing gold star dust, with small glowing silver star ornaments, starry night style, centered, isolated on a plain flat solid black background, only the single letter A"
+  },
+  "star-king": {
+   "prompt": "A single slot machine symbol: the capital letter K as a chunky carved polished silver letter inlaid with deep violet purple enamel and glowing star dust, with small glowing silver star ornaments, starry night style, centered, isolated on a plain flat solid black background, only the single letter K"
+  },
+  "star-queen": {
+   "prompt": "A single slot machine symbol: the capital letter Q as a chunky carved polished silver letter inlaid with deep teal enamel and glowing star dust, with small glowing silver star ornaments, starry night style, centered, isolated on a plain flat solid black background, only the single letter Q"
+  },
+  "star-jack": {
+   "prompt": "A single slot machine symbol: the capital letter J as a chunky carved polished silver letter inlaid with deep rose magenta enamel and glowing star dust, with small glowing silver star ornaments, starry night style, centered, isolated on a plain flat solid black background, only the single letter J"
+  },
+  "star-ten": {
+   "prompt": "A single slot machine symbol: the number 10 as chunky carved polished silver numerals inlaid with warm amber orange enamel and glowing star dust, with small glowing silver star ornaments, starry night style, centered, isolated on a plain flat solid black background, only the number 10"
+  },
+  "star-wild": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a glowing emblem of the Southern Cross constellation: four bright blue-white stars in a kite-shaped cross plus one smaller fifth star, joined by thin glowing light lines, inside a round polished silver and midnight blue medallion ring, radiant starlight glow, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-scatter": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a white astronomical observatory telescope dome on a small round building, the dome slit open with a large telescope pointing up at the stars, small piece of rocky Karoo ground, starry glow behind, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "star-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "the Karoo semi-desert at night under a brilliant Milky Way arching across a deep blue and violet sky full of stars, white astronomical observatory domes on a low flat-topped koppie hill on the left and right edges, silhouetted quiver trees, faint blue moonlight on the plains, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "star-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "the Karoo semi-desert at night under a brilliant Milky Way arching across a deep blue and violet sky full of stars, white astronomical observatory domes on a low flat-topped koppie hill on the left and right edges, silhouetted quiver trees, faint blue moonlight on the plains, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "star-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"KAROO STARGAZER\" (2 words: KAROO, STARGAZER) in bold chunky 3D lettering, polished silver and deep midnight blue lettering with glowing gold stars and a small Milky Way swirl, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background, no other text"
+  },
+  "run-dolphin": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a playful common dolphin leaping out of turquoise water with spray, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-gannet": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cape gannet seabird diving with wings folded back, white body, golden head, black-edged wings, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-seal": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a cute cape fur seal sitting upright with wet glossy fur and whiskers, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-shoal": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a dense swirling ball of shiny silver sardines fish swimming in a tight round shoal, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-hook": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a polished silver fishing hook with a sharp barbed point and an eye at the top, a short neat coil of blue fishing line tied to the eye, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-buoy": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a round red and white striped fishing buoy float with a rope loop, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-mussel": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a pair of glossy blue-black mussel shells, one slightly open, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-crab": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a bright red crab with raised claws, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-wild": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a compact self-contained turquoise ocean wave emblem curling over into a round barrel with a bright white foam crest and sparkling spray, floating on its own with no sea or horizon around it, magical glow, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-scatter": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a large rocky island with a natural sea arch hole through it standing in turquoise ocean waves, glowing orange sunset sky seen through the arch, inside a round glowing golden emblem ring, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "run-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "the rugged Wild Coast of South Africa at golden hour, turquoise ocean with rolling waves, green grassy hills and dark rocky cliffs on the left and right edges, a silver sardine shoal shimmering under the clear water, seabirds in the sky, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "run-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "the rugged Wild Coast of South Africa at golden hour, turquoise ocean with rolling waves, green grassy hills and dark rocky cliffs on the left and right edges, a silver sardine shoal shimmering under the clear water, seabirds in the sky, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "run-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"SARDINE RUN\" (2 words: SARDINE, RUN) in bold chunky 3D lettering, turquoise ocean blue and shiny silver fish-scale lettering with white sea foam splashes and a small leaping sardine, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background, no other text"
+  },
+  "kim-prospector": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a friendly bearded 1870s diamond prospector man wearing a wide-brimmed hat and waistcoat, head and shoulders portrait, smiling, warm golden lamplight, rich sepia and amber tones, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-headgear": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "an 1870s wooden mine headframe tower with a large iron pulley wheel on top and ropes, warm golden lamplight, rich sepia and amber tones, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-mule": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a sturdy working mule head and shoulders, a cross between a donkey and a horse with very long donkey ears, short upright mane, pale muzzle, wearing a worn leather harness, warm golden lamplight, rich sepia and amber tones, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-lantern": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a glowing antique brass miner's oil lantern with a warm flame behind glass and a wire handle, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-pink": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a single large raw uncut pink diamond crystal just dug from the earth, a rounded octahedron with natural frosted matte faces, slightly translucent, bright glinting edges and a soft inner glow, not faceted, not polished, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-blue": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a single large raw uncut pale blue diamond crystal just dug from the earth, a rounded octahedron with natural frosted matte faces, slightly translucent, bright glinting edges and a soft inner glow, not faceted, not polished, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-green": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a single large raw uncut green diamond crystal just dug from the earth, a rounded octahedron with natural frosted matte faces, slightly translucent, bright glinting edges and a soft inner glow, not faceted, not polished, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-yellow": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a single large raw uncut canary yellow diamond crystal just dug from the earth, a rounded octahedron with natural frosted matte faces, slightly translucent, bright glinting edges and a soft inner glow, not faceted, not polished, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-wild": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a round emblem of the Big Hole of Kimberley: a deep vast circular open pit mine seen from above with terraced walls and a glowing turquoise pool at the bottom, framed by an ornate antique brass ring with rivets, warm glow, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-coin": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a round diamond rush token coin, face on: a thick polished gold rim set with a ring of small sparkling brilliant-cut diamonds around the edge, the large centre is a smooth plain flat polished warm gold surface with no engraving and no design, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "kim-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "an 1870s diamond rush camp on the edge of the Big Hole of Kimberley at dusk, the vast pit with ropes and wooden headframes, tents and tin shacks glowing with warm oil lamplight on the left and right edges, amber and deep blue sky, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "kim-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "an 1870s diamond rush camp on the edge of the Big Hole of Kimberley at dusk, the vast pit with ropes and wooden headframes, tents and tin shacks glowing with warm oil lamplight on the left and right edges, amber and deep blue sky, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "kim-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"KIMBERLEY HOLD\" (2 words: KIMBERLEY, HOLD) in bold chunky 3D lettering, antique polished gold and brass lettering with rivets and sparkling rough diamonds set into the letters, warm lamplight glow, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background, no other text"
+  },
+  "fyn-kingprotea": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a magnificent king protea flower, a large goblet-shaped bloom of pointed pink and cream bracts around a fuzzy silvery dome centre, with a few leaves, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-pincushion": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a bright orange pincushion protea flower (Leucospermum) with many long curved pin-like styles, with green leaves, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-disa": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a red disa orchid (Disa uniflora), the pride of Table Mountain: one bloom with three large broad spreading scarlet red sepals with fine darker red veins, the top sepal hooded with a short spur, a small yellow-veined centre, on a short green stem with a few narrow leaves, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-erica": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a sprig of pink erica heath with many tiny bell-shaped tubular pink flowers on a curved stem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-buchu": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a small sprig of buchu herb with glossy round green leaves and tiny white star-shaped flowers, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-restio": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a graceful clump of Cape thatching reed restio (Elegia): tall slender green jointed stems with papery golden-brown sheaths and fluffy brown flower tufts at the tips, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-sunbird": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "an orange-breasted sunbird with iridescent emerald green head, orange chest and long curved beak, perched on a flower stem, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-seedpod": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a dried silver-grey protea seed head cone with fluffy silky seeds, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-dewdrop": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a single large perfectly clear water droplet resting on top of a small green fynbos leaf, sparkling with sunlight, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-sun": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "the iconic long perfectly flat-topped Table Mountain silhouette with steep cliffs at both ends, a radiant golden sun rising right behind its flat top with golden light rays, inside a round glowing golden emblem ring, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-bloom": {
+   "w": 1024,
+   "h": 1024,
+   "prompt": "a glowing golden flower burst: a round radiant mandala of shiny gold petals with a large smooth glowing empty golden disc in the centre, sparkles, face on, single object, centred, three-quarter view, glossy and detailed, isolated on a plain pure black background"
+  },
+  "fyn-bg-landscape": {
+   "ultra": true,
+   "aspect": "16:9",
+   "prompt": "Cape fynbos in full bloom on sunlit mountain slopes in the Western Cape, pink proteas, orange pincushions and purple ericas in the foreground on the left and right edges, rugged blue mountains and a bright blue sky with soft clouds, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "fyn-bg-portrait": {
+   "ultra": true,
+   "aspect": "9:16",
+   "prompt": "Cape fynbos in full bloom on sunlit mountain slopes in the Western Cape, pink proteas, orange pincushions and purple ericas in the foreground on the left and right edges, rugged blue mountains and a bright blue sky with soft clouds, wide and atmospheric, darker and calmer in the centre where slot reels will sit, no animals or people in the centre"
+  },
+  "fyn-logo": {
+   "w": 1440,
+   "h": 736,
+   "prompt": "A premium casino slot game logo reading exactly \"FYNBOS BLOOM\" (2 words: FYNBOS, BLOOM) in bold chunky 3D lettering, fresh leaf green and protea pink lettering with golden edges and small protea flowers and leaves, polished bevelled letters with strong rim light, centred, isolated on a plain pure black background, no other text"
+  }
+ }
+}
