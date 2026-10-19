@@ -10,7 +10,6 @@ export interface ShellConfig {
   /** The page background behind the stage. */
   background: string;
   stakes: number[];
-  rtp: number;
   /**
    * 'stacked': on phones the stage keeps a fixed share of the height and the panel scrolls under it (a game with
    * several bet boxes and a list); the stage and panel otherwise share the screen. The game draws its own action
@@ -35,7 +34,7 @@ export function mountShell(config: ShellConfig) {
   if (config.ownActions) document.body.classList.add('own-actions');
   document.body.insertAdjacentHTML('afterbegin', `
     <div id="app">
-      <div id="stage"><div id="top"><span class="pill" id="clock">00:00</span><span class="pill">RTP ${config.rtp.toFixed(2)}%</span></div></div>
+      <div id="stage"><div id="top"><span class="pill" id="clock">00:00</span></div></div>
       <aside id="panel">
         <div class="row stats">
           <div class="stat"><small>Balance</small><b id="balance">…</b></div>

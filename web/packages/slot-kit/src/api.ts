@@ -25,7 +25,8 @@ export interface SymbolInfo { name: Sym; kind: 'Regular' | 'Wild' | 'Scatter'; w
 export interface GameInfo {
   gameId: string;
   name: string;
-  rtp: number;
+  /** The rate the game pays at, in basis points of the design's 96% (9,600). */
+  rateBp: number;
   maxWinStakes: number;
   stakes: number[];
   lines: number;

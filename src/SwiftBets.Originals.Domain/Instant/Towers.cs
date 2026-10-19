@@ -2,7 +2,7 @@ namespace SwiftBets.Originals.Domain.Instant;
 
 /// <summary>
 /// Towers: climb 8 rows; each row has a few tiles and one or two hide a trap. After k safe rows the multiplier is
-/// 0.96 × (tiles / safe tiles)^k, floored to a basis point: the inverse of the chance of getting there, times the RTP.
+/// r × (tiles / safe tiles)^k at the game's rate r, floored to a basis point: the inverse of the chance of getting there, times the rate.
 /// The round cashes out by itself at the top, or before a row would pass the 5,000× cap (as Mines does).
 /// </summary>
 public static class Towers
@@ -39,11 +39,11 @@ public static class Towers
         return rows;
     }
 
-    public static long MultiplierBp(string level, int safeRows) => (long)Int128.Min(Raw(level, safeRows), Mult.CapBp);
+    public static long MultiplierBp(string level, int safeRows, long rateBp = Mult.Base) => (long)Int128.Min(Raw(level, safeRows, rateBp), Mult.CapBp);
 
-    public static bool Finished(string level, int safeRows) => safeRows >= Rows || Raw(level, safeRows + 1) > Mult.CapBp;
+    public static bool Finished(string level, int safeRows, long rateBp = Mult.Base) => safeRows >= Rows || Raw(level, safeRows + 1, rateBp) > Mult.CapBp;
 
-    private static Int128 Raw(string level, int k)
+    private static Int128 Raw(string level, int k, long rateBp)
     {
         if (k == 0)
         {
@@ -51,7 +51,7 @@ public static class Towers
         }
 
         var (tiles, traps) = Levels[level];
-        Int128 num = 9600, den = 1;
+        Int128 num = rateBp, den = 1;
         for (var i = 0; i < k; i++)
         {
             num *= tiles;

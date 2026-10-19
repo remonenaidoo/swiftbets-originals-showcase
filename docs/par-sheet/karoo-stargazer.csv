@@ -1,0 +1,44 @@
+section,key,value
+rtp,base,0.677109579411802
+rtp,feature,0.2828781734382496
+rtp,total,0.9599877528500517
+contribution,Ace:03,0.021338210638622162;0.0027919270701014516
+contribution,Ace:04,0.021676912394790766;0.00330895060160172
+contribution,Ace:05,0.01354807024674423;0.002068094126001075
+contribution,Jack:03,0.01015232053040695;0.0016751562420608708
+contribution,Jack:04,0.007260918897864486;0.00165447530080086
+contribution,Jack:05,0.004538074311165303;0.0010340470630005375
+contribution,King:03,0.021338210638622162;0.0013959635350507258
+contribution,King:04,0.016257684296093075;0.0013184100053256855
+contribution,King:05,0.010161052685058172;0.00038776764862520163
+contribution,Kudu:03,0.05076160265203475;0.022059670677344802
+contribution,Kudu:04,0.04211900220050297;0.03561717661446297
+contribution,Kudu:05,0.015316000800182899;0.022978823622234173
+contribution,Leopard:03,0.06345200331504344;0.027574588346681007
+contribution,Leopard:04,0.05615866960067063;0.04748956881928394
+contribution,Leopard:05,0.02552666800030483;0.03829803937039028
+contribution,Meerkat:03,0.05076160265203475;0.014481446136928824
+contribution,Meerkat:04,0.036304594489322425;0.018289530121084186
+contribution,Meerkat:05,0.018152297244661213;0.011799696852312375
+contribution,Ostrich:03,0.042676421277244324;0.006638326824200981
+contribution,Ostrich:04,0.04335382478958153;0.009078053776685104
+contribution,Ostrich:05,0.020322105370116344;0.0042553377078211425
+contribution,Queen:03,0.025605852766346592;0.0019914980472602946
+contribution,Queen:04,0.01828989483310471;0.0021063921653714656
+contribution,Queen:05,0.01828989483310471;0.0009574509842597571
+contribution,Scatter:03,0.009725437242798354;0.0010426641218588754
+contribution,Scatter:04,0.002210326646090535;0.00023696911860428987
+contribution,Scatter:05,0.00020093878600823046;2.1542647145844533E-05
+contribution,Ten:03,0.005076160265203475;0.0008375781210304354
+contribution,Ten:04,0.00449269356805365;0.0010237065923705323
+contribution,Ten:05,0.0020421334400243865;0.0004653211783502419
+base_strip,reel1,Queen Meerkat Ostrich Ace King Jack Leopard Kudu Ten Queen Scatter Meerkat Ostrich Ace King Jack Queen Leopard Kudu Ten Queen Meerkat Ostrich Ace King Jack Queen Leopard Kudu Ten Meerkat Ostrich Ace King Jack Queen
+base_strip,reel2,Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Scatter Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild
+base_strip,reel3,Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Scatter Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild
+base_strip,reel4,Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Scatter Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild Leopard Kudu Meerkat Jack Ten Ostrich Ace King Queen Wild
+base_strip,reel5,Queen Meerkat Ostrich Ace King Jack Leopard Kudu Ten Queen Scatter Meerkat Ostrich Ace King Jack Queen Leopard Kudu Ten Queen Meerkat Ostrich Ace King Jack Queen Leopard Kudu Ten Meerkat Ostrich Ace King Jack Queen
+free_strip,reel1,Leopard Kudu Meerkat Ostrich Ace Jack Queen Ten King Leopard Kudu Meerkat Ostrich Ace Jack Scatter Queen Leopard Kudu Meerkat Ten Ostrich Ace Jack Leopard Kudu Meerkat King Queen Ten Ostrich Ace Jack Leopard Kudu Meerkat
+free_strip,reel2,Wild Leopard Kudu Meerkat Ostrich Queen Ace Wild King Jack Ten Leopard Kudu Wild Meerkat Scatter Ostrich Leopard Wild Kudu Queen Meerkat Wild Leopard Kudu Ace King Jack Wild Ten Ostrich Queen Meerkat Leopard Kudu Wild
+free_strip,reel3,Wild Leopard Kudu Meerkat Ostrich Queen Ace Wild King Jack Ten Leopard Kudu Wild Meerkat Scatter Ostrich Leopard Wild Kudu Queen Meerkat Wild Leopard Kudu Ace King Jack Wild Ten Ostrich Queen Meerkat Leopard Kudu Wild
+free_strip,reel4,Wild Leopard Kudu Meerkat Ostrich Queen Ace Wild King Jack Ten Leopard Kudu Wild Meerkat Scatter Ostrich Leopard Wild Kudu Queen Meerkat Wild Leopard Kudu Ace King Jack Wild Ten Ostrich Queen Meerkat Leopard Kudu Wild
+free_strip,reel5,Leopard Kudu Meerkat Ostrich Ace Jack Queen Ten King Leopard Kudu Meerkat Ostrich Ace Jack Scatter Queen Leopard Kudu Meerkat Ten Ostrich Ace Jack Leopard Kudu Meerkat King Queen Ten Ostrich Ace Jack Leopard Kudu Meerkat

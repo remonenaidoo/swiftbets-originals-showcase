@@ -20,6 +20,7 @@ public sealed record SpinError(int Http, string Code)
     public static readonly SpinError RoundOver = new(409, "round_over");
     public static readonly SpinError TileTaken = new(409, "tile_taken");
     public static readonly SpinError NothingToCashOut = new(409, "nothing_to_cash_out");
+    public static readonly SpinError GuessNotAllowed = new(409, "guess_not_allowed");
     public static readonly SpinError WalletUnavailable = new(503, "wallet_unavailable");
 }
 
@@ -58,7 +59,7 @@ public sealed record SymbolInfo(string Name, string Kind, int Weight, string Pay
 public sealed record GameInfo(
     string GameId,
     string Name,
-    decimal Rtp,
+    long RateBp,
     int MaxWinStakes,
     long[] Stakes,
     int Lines,

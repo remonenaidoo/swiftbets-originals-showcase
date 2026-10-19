@@ -5,13 +5,15 @@ import { bootInstant, call, describe, key, times } from '@originals/instant-kit'
 interface DiceView { roundId: string; multiplierBp: number; win: number; detail: { roll: number; target: number; over: boolean; win: boolean }; balance: number | null }
 
 const count = (target: number, over: boolean) => (over ? 9999 - target : target);
-const payBp = (target: number, over: boolean) => Math.floor(96_000_000 / count(target, over));
+let rateBp = 9600;
+const payBp = (target: number, over: boolean) => Math.floor((rateBp * 10000) / count(target, over));
 
 const boot = async () => {
-  const { shell, app, tex, refresh } = await bootInstant({
+  const { shell, app, tex, refresh, state } = await bootInstant({
     gameId: 'dice', title: 'Dice', accent: '#ff5fd2', accent2: '#9b3cff', background: '#07040f', art: ['die.webp'],
     verify: async (s, c, n) => { const { floats } = await import('@originals/instant-kit'); const [f] = await floats(s, c, n, 1); return `the roll was ${(Math.floor(f * 10000) / 100).toFixed(2)}.`; },
   });
+  rateBp = state.info.rateBp;
   let target = 5000, over = true, busy = false, roll: number | null = null;
 
   shell.controls.innerHTML = `
@@ -38,9 +40,9 @@ const boot = async () => {
   shell.rules(`
     <h2>Dice</h2>
     <p>Choose a target and whether the roll will land over or under it, then roll. The roll is a number from 0.00 to 99.99. The lower your chance, the more it pays.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>48×</b><small>Max multiplier</small></div><div><b>2–98%</b><small>Win chance</small></div></div>
+    <div class="facts"><div><b>${times(Math.floor((rateBp * 10000) / 200))}</b><small>Max multiplier</small></div><div><b>2–98%</b><small>Win chance</small></div></div>
     <h3>How it pays</h3>
-    <p>With a win chance of c%, the pay is 96 ÷ c times your stake (floored to 0.0001×). A 50% chance pays 1.92×; a 10% chance pays 9.6×.</p>
+    <p>The lower your chance, the more it pays: the multiplier is the game's return rate divided by your chance (floored to 0.0001×), and it is shown as you move the slider.</p>
     <h3>Fairness</h3>
     <p>The roll is the first float of HMAC-SHA256(server seed, "client seed:nonce:0") × 10,000, floored, ÷ 100. Change seeds to reveal the server seed and check any roll. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

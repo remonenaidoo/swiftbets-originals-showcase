@@ -25,7 +25,11 @@ function payGrid(counts: number[], amount: (n: number) => number) {
  * stake. `images` holds each symbol's picture as a data URL.
  */
 export function renderRules(config: SlotConfig, info: GameInfo, stake: number, images: Record<string, string>) {
-  const lineBet = stake / info.lines;
+  // Pays are in line bets at the design rate; the game pays them at its rate.
+  const rate = info.rateBp / 9600;
+  const lineBet = (stake / info.lines) * rate;
+  // The cap counts design units, so the most a round pays scales with the rate.
+  const maxWin = Math.floor(info.maxWinStakes * rate);
   const img = (s: string) => `<img src="${images[s] ?? ''}" alt="${s}">`;
   const splits = (name: string) => info.symbols.filter((s) => s.paysAs === name && s.name !== name).map((s) => s.name);
   const pays = Object.entries(info.pays).map(([s, p]) => {
@@ -33,15 +37,14 @@ export function renderRules(config: SlotConfig, info: GameInfo, stake: number, i
     return `<div class="pay${counts.length > 5 ? ' wide' : ''}"><div class="pics">${img(s)}${splits(s).map(img).join('')}</div>${payGrid(counts, (n) => p[n - 3] * lineBet)}</div>`;
   }).join('');
   const scatter = info.symbols.find((s) => s.kind === 'Scatter')!.name;
-  const scatterPays = `<div class="pay"><div class="pics">${img(scatter)}</div>${payGrid([5, 4, 3], (n) => info.scatterPays[n - 3] * stake)}</div>`;
+  const scatterPays = `<div class="pay"><div class="pics">${img(scatter)}</div>${payGrid([5, 4, 3], (n) => info.scatterPays[n - 3] * stake * rate)}</div>`;
   const lines = info.paylines.map((rows, i) =>
     `<div class="line"><span>${i + 1}</span>${[0, 1, 2].map((r) => [0, 1, 2, 3, 4].map((c) => `<i class="${rows[c] === r ? 'on' : ''}"></i>`).join('')).join('')}</div>`).join('');
   $('rules-body').innerHTML = `
     <h2>${info.name}</h2>
     <p>A 5-reel, 3-row slot with ${info.lines} fixed lines by SwiftBets Originals.</p>
     <div class="facts">
-      <div><b>${info.rtp.toFixed(2)}%</b><small>Return to player</small></div>
-      <div><b>${info.maxWinStakes.toLocaleString('en-ZA')}×</b><small>Max win</small></div>
+      <div><b>${maxWin.toLocaleString('en-ZA')}×</b><small>Max win</small></div>
       <div><b>${info.lines}</b><small>Lines</small></div>
     </div>
     <h3>Pays at ${rand(stake)} stake</h3>
@@ -50,11 +53,11 @@ export function renderRules(config: SlotConfig, info: GameInfo, stake: number, i
     ${config.rules(info, stake, img)}
     <h3>How wins pay</h3>
     <p>Line wins pay for one symbol running across at least three adjacent reels, left to right from reel 1. Only the highest win per line is paid. Line wins and Scatter wins are added. Wins are shown for the current stake; the line bet is the stake divided by ${info.lines}.</p>
-    <p>The most a single paid spin can win, together with the free spins it triggers, is ${info.maxWinStakes.toLocaleString('en-ZA')}× the stake; the feature ends when that is reached.</p>
+    <p>The most a single paid spin can win, together with the free spins it triggers, is ${maxWin.toLocaleString('en-ZA')}× the stake; the feature ends when that is reached.</p>
     <h3>Paylines</h3>
     <div class="lines">${lines}</div>
     <h3>Fairness</h3>
-    <p>Every result is decided on the server by a cryptographic random number generator before it is shown. The theoretical return to player is ${info.rtp.toFixed(2)}%; actual results over a session will vary.</p>
+    <p>Every result is decided on the server by a cryptographic random number generator before it is shown.</p>
     <p>An interrupted round is kept: reopen the game to finish your free spins. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`;
 }

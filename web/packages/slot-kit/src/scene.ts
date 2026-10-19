@@ -121,7 +121,7 @@ export class Scene {
     this.glow.clear().roundRect(-pad * 2, -pad * 2, boardW + pad * 4, boardH + pad * 4, pad * 2).fill({ color: 0xffb347, alpha: 0.10 });
 
     this.logo.scale.set(1);
-    // Phones: narrow enough to clear the clock and RTP pills either side.
+    // Phones: narrow enough to clear the clock pill and the corner.
     const logoScale = Math.min(logoH / this.logo.height, (w * (portrait ? 0.5 : 0.8)) / this.logo.width);
     this.logoScale = logoScale;
     this.logo.scale.set(logoScale);

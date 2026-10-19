@@ -26,7 +26,7 @@ public sealed record TowersView(
 /// Towers rounds, built like Mines: start takes the stake (the traps are drawn and stored first), each pick climbs one
 /// row in a locked step, cash-out pays the row reached; a trap ends the round with nothing to pay.
 /// </summary>
-public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time)
+public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time, IGameRates? rates = null)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -61,7 +61,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
         var layout = Towers.Layout(Fair.Floats(draw.ServerSeed, draw.ClientSeed, draw.Nonce, Towers.FloatsNeeded), request.Level);
-        var start = new StartOutcome(request.Level, layout, draw.Nonce, draw.ClientSeed, draw.ServerSeedHash);
+        var start = new StartOutcome(request.Level, layout, draw.Nonce, draw.ClientSeed, draw.ServerSeedHash, (rates ?? FixedRates.Design).For(Towers.GameId));
         var roundId = Guid.NewGuid();
         var round = new RoundRecord(roundId, playerRef!, request.SessionToken, Towers.GameId, request.Stake, request.IdempotencyKey, RoundStatus.Pending, 0, 0, time.GetUtcNow());
         var first = new SpinRecord(roundId, 0, [], JsonSerializer.Serialize(start, Json), 0, Play.BetTx(roundId), null, false);
@@ -99,13 +99,13 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
                 return (new SpinRecord(roundId, seq, [tile], "{}", 0, null, null, false), RoundStatus.Settled, 0L);
             }
 
-            if (!Towers.Finished(start.Level, row + 1))
+            if (!Towers.Finished(start.Level, row + 1, start.RateBp))
             {
                 return (new SpinRecord(roundId, seq, [tile], "{}", 0, null, null, false), RoundStatus.Open, 0L);
             }
 
             // The top, or the cap: the round cashes out on this pick.
-            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(start.Level, row + 1));
+            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(start.Level, row + 1, start.RateBp));
             return (new SpinRecord(roundId, seq, [tile], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: true, cancellationToken);
     }
@@ -120,7 +120,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
             }
 
             var seq = spins.Count;
-            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(Start(spins).Level, safe));
+            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(Start(spins).Level, safe, Start(spins).RateBp));
             return (new SpinRecord(roundId, seq, [], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: false, cancellationToken);
 
@@ -161,11 +161,12 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
         var safe = picks.Count - (fell ? 1 : 0);
         var win = spins.Sum(s => s.Win);
         var status = round.Status == RoundStatus.Open ? "open" : fell ? "busted" : round.Status is RoundStatus.Settled or RoundStatus.WinPending ? "cashed" : round.Status;
-        return new TowersView(round.RoundId, round.Stake, start.Level, picks, Towers.MultiplierBp(start.Level, safe), Towers.MultiplierBp(start.Level, safe + 1), win, status,
+        return new TowersView(round.RoundId, round.Stake, start.Level, picks, Towers.MultiplierBp(start.Level, safe, start.RateBp), Towers.MultiplierBp(start.Level, safe + 1, start.RateBp), win, status,
             // The traps are shown only for a round played out; a refused or voided round's draw is never shown (or used).
             round.Status is RoundStatus.Settled or RoundStatus.WinPending ? start.Layout : null, start.Nonce, start.ClientSeed, start.ServerSeedHash, balance);
     }
 
     /// <summary>The first spin's stored outcome: the round's traps. Never sent while the round is open.</summary>
-    private sealed record StartOutcome(string Level, int[][] Layout, long Nonce, string ClientSeed, string ServerSeedHash);
+    /// <remarks><paramref name="RateBp"/> is the rate the round started at (rounds stored before rates had it are at the design rate).</remarks>
+    private sealed record StartOutcome(string Level, int[][] Layout, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Mult.Base);
 }

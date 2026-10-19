@@ -46,16 +46,17 @@ public static partial class HoldTables
 /// the Grand (1,000 stakes). The feature pays the sum of its coins. A stake is 20 line bets; one request plays the
 /// whole round, capped at 5,000× stake.
 /// </summary>
-public sealed class HoldSlot : OneShotGame
+/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+public sealed class HoldSlot(string id = HoldSlot.GameId, string name = "Highveld Hold") : OneShotGame
 {
     public const string GameId = "highveld-hold";
     public const int Units = 20;
     public const long CapUnits = 5_000L * Units;
     public const int Floats = 1024;
 
-    public override string Id => GameId;
+    public override string Id => id;
 
-    public override string Name => "Highveld Hold";
+    public override string Name => name;
 
     public override long[] Stakes { get; } = [200, 400, 1000, 2000, 4000, 10000, 20000];
 
@@ -152,15 +153,15 @@ public sealed class HoldSlot : OneShotGame
         return (stops, lines, coins, respins, featurePaid, grand, lineUnits + featurePaid, units + feature >= CapUnits);
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var r = PlayRound(floats);
-        return new(r.Units * (Mult.One / Units), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
+        return new(Mult.Rated(r.Units * (Mult.One / Units), rateBp), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
     }
 
-    public override object Info => new
+    public override object InfoAt(long rateBp) => new
     {
         units = Units, symbols = HoldTables.Symbols, pays = HoldTables.Pays, values = HoldTables.Values.Select(v => new { v.Stakes, v.Weight }), grand = HoldTables.Grand,
-        trigger = HoldTables.Trigger, respinChanceBp = HoldTables.RespinChanceBp, reels = HoldTables.Reels, lines = HoldTables.Lines, rtp = 96.00m,
+        trigger = HoldTables.Trigger, respinChanceBp = HoldTables.RespinChanceBp, reels = HoldTables.Reels, lines = HoldTables.Lines, rateBp,
     };
 }

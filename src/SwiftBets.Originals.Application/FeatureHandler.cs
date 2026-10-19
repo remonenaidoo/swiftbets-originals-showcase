@@ -10,7 +10,7 @@ namespace SwiftBets.Originals.Application;
 /// The spin is drawn and the round updated inside one locked transaction, so concurrent requests each consume a
 /// spin and the cap is always checked against the true total; the win is paid after the commit.
 /// </summary>
-public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngines games)
+public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates? rates = null)
 {
     public async Task<Result<SpinView>> NextAsync(string gameId, string sessionToken, Guid roundId, CancellationToken cancellationToken)
     {
@@ -34,7 +34,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngine
             outcome = engine.PlaySpin(free: true, last.Seq == 0 ? [] : Play.LocksOf(game, last.OutcomeJson));
             var (paidUnits, reached) = Cap.Apply(round.PaidUnits, outcome.TotalUnits, game.CapUnits);
             capped = reached;
-            var win = Play.Money(paidUnits, round.Stake, game.LineCount);
+            var win = Play.Money(paidUnits, round.Stake, game.LineCount, (rates ?? FixedRates.Design).For(game.GameId));
             var left = reached ? 0 : engine.SpinsLeftAfter(round.FreeSpinsLeft, outcome);
             var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(game, outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
             return (spin, left, round.PaidUnits + paidUnits);
@@ -64,7 +64,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngine
             await store.SettleIfPaidAsync(roundId, cancellationToken);
         }
 
-        return Play.View(updated, played with { WinPaid = winPaid }, game, balance) with
+        return Play.View(updated, played with { WinPaid = winPaid }, game, balance, (rates ?? FixedRates.Design).For(game.GameId)) with
         {
             FeatureTriggered = outcome!.TriggersFeature && game.Feature.Retrigger && !capped,
             CapReached = capped,

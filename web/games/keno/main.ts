@@ -35,10 +35,10 @@ const boot = async () => {
   shell.rules(`
     <h2>Keno</h2>
     <p>Pick 1 to 10 numbers from 40, then play: 10 numbers are drawn. The more of yours are drawn, the more you win; what each number of hits pays depends on how many you picked.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>${Math.round(Math.max(...tables.flat()) / 10000).toLocaleString('en-ZA')}×</b><small>Top pay</small></div><div><b>10 of 40</b><small>Drawn</small></div></div>
+    <div class="facts"><div><b>${Math.round(Math.max(...tables.flat()) / 10000).toLocaleString('en-ZA')}×</b><small>Top pay</small></div><div><b>10 of 40</b><small>Drawn</small></div></div>
     <h3>Pays</h3>
     <table class="table"><tr><th>Picks</th><th style="text-align:left">Hits → multiplier</th></tr>${tables.slice(1).map((row, i) => `<tr><td>${i + 1}</td><td style="text-align:left">${row.map((bp, h) => (bp ? `${h}: ${times(bp, bp >= 100000 ? 0 : 2)}` : '')).filter(Boolean).join(' · ')}</td></tr>`).join('')}</table>
-    <p>Every row returns just under 96% (each one proved exactly in the maths document).</p>
+    <p>Every row returns the same (each one proved exactly in the maths document).</p>
     <h3>Fairness</h3>
     <p>The draw is a shuffle of 1–40 by the round's floats from HMAC-SHA256(server seed, "client seed:nonce:cursor"); the first 10 are drawn. Change seeds to check any draw. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

@@ -1,6 +1,6 @@
 """Lobby covers for the instant games, drawn in code (no generated art) until the artist's set arrives.
 Run: python3 covers.py  →  ../../public/assets/{crash,mines}/cover.jpg (600×600)."""
-import math, os, random
+import math, os, random, sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 S, OUT = 600, '../../public/assets'
@@ -214,6 +214,157 @@ def keno_art():
     title(im, 'KENO', (255, 210, 63), 486)
     return im
 
+
+# --- The six (Sunburst Wheel, Coin Flip, Lucky Scratch, Gem Hand, Baccarat, Higher or Lower): art in ../six ---
+
+def title_fit(im, text, colour, y, size=112):
+    """title() with the font shrunk until a long name fits the width."""
+    while size > 40 and ImageFont.truetype(BOLD, size).getlength(text) > S - 56:
+        size -= 2
+    band = Image.new('RGBA', im.size)
+    ImageDraw.Draw(band).rectangle((0, y - 90, S, S), fill=(0, 0, 0, 150))
+    band = band.filter(ImageFilter.GaussianBlur(40))
+    im.paste(band, (0, 0), band)
+    d = ImageDraw.Draw(im)
+    f = ImageFont.truetype(BOLD, size)
+    glow = Image.new('RGBA', im.size)
+    ImageDraw.Draw(glow).text((S / 2, y), text, font=f, anchor='mm', fill=colour + (255,))
+    im.paste(glow.filter(ImageFilter.GaussianBlur(14)), (0, 0), glow.filter(ImageFilter.GaussianBlur(14)))
+    d.text((S / 2, y), text, font=f, anchor='mm', fill=(255, 255, 255), stroke_width=max(3, size // 28), stroke_fill=colour)
+    d.text((S / 2, y + 66), 'SWIFTBETS ORIGINALS', font=ImageFont.truetype(BOLD, 22), anchor='mm', fill=(210, 220, 240))
+
+def backdrop(game, shift=60, darken=0, bg='bg-portrait.jpg'):
+    b = Image.open(f'{A}/{game}/{bg}').convert('RGBA')
+    if b.width >= b.height:
+        b = b.resize((int(b.width * S / b.height), S), Image.LANCZOS)
+        x = (b.width - S) // 2
+        im = b.crop((x, 0, x + S, S))
+    else:
+        b = b.resize((S, int(b.height * S / b.width)), Image.LANCZOS)
+        top = max(0, (b.height - S) // 2 - shift)
+        im = b.crop((0, top, S, top + S))
+    if darken:
+        im.alpha_composite(Image.new('RGBA', im.size, (0, 0, 0, darken)))
+    return im
+
+def sprite_at(im, path, size, cx, cy, rotate=0, glow=None, squash=1.0):
+    sp = Image.open(path).convert('RGBA')
+    k = size / max(sp.size)
+    sp = sp.resize((max(1, int(sp.width * k * squash)), max(1, int(sp.height * k))), Image.LANCZOS)
+    if rotate:
+        sp = sp.rotate(rotate, expand=True, resample=Image.BICUBIC)
+    x, y = int(cx - sp.width / 2), int(cy - sp.height / 2)
+    if glow:
+        g = Image.new('RGBA', sp.size, glow + (190,)); g.putalpha(sp.getchannel('A'))
+        layer = Image.new('RGBA', im.size); layer.paste(g, (x, y), g)
+        im.alpha_composite(layer.filter(ImageFilter.GaussianBlur(24)))
+    shadow = Image.new('RGBA', sp.size, (0, 0, 0, 150)); shadow.putalpha(sp.getchannel('A').point(lambda v: v * 0.55))
+    sh = Image.new('RGBA', im.size); sh.paste(shadow, (x + 8, y + 12), shadow)
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(10)))
+    tmp = Image.new('RGBA', im.size); tmp.paste(sp, (x, y), sp)
+    im.alpha_composite(tmp)
+
+def sunburst_wheel_art():
+    im = backdrop('sunburst-wheel', shift=40, darken=40)
+    cx, cy, r = S / 2, 250, 178
+    wheel = Image.new('RGBA', (S * 2, S * 2)); d = ImageDraw.Draw(wheel)
+    cols = [(255, 194, 77), (124, 58, 237), (255, 140, 66), (88, 40, 170), (255, 214, 120), (150, 70, 230)]
+    c2, r2 = (cx * 2, cy * 2), r * 2
+    d.ellipse((c2[0] - r2 - 18, c2[1] - r2 - 18, c2[0] + r2 + 18, c2[1] + r2 + 18), fill=(120, 72, 20))
+    d.ellipse((c2[0] - r2 - 10, c2[1] - r2 - 10, c2[0] + r2 + 10, c2[1] + r2 + 10), fill=(255, 206, 110))
+    for k in range(12):
+        d.pieslice((c2[0] - r2, c2[1] - r2, c2[0] + r2, c2[1] + r2), k * 30 - 90 - 15, k * 30 - 75, fill=cols[k % 6])
+    for k in range(12):
+        a = math.radians(k * 30 - 90 - 15)
+        d.line([c2, (c2[0] + math.cos(a) * r2, c2[1] + math.sin(a) * r2)], fill=(255, 230, 170), width=5)
+        bx, by = c2[0] + math.cos(a) * (r2 + 2), c2[1] + math.sin(a) * (r2 + 2)
+        d.ellipse((bx - 9, by - 9, bx + 9, by + 9), fill=(255, 248, 220))
+    wheel = wheel.resize(im.size, Image.LANCZOS)
+    glow = Image.new('RGBA', im.size); ImageDraw.Draw(glow).ellipse((cx - r - 30, cy - r - 30, cx + r + 30, cy + r + 30), fill=(255, 180, 60, 120))
+    im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(30)))
+    im.alpha_composite(wheel)
+    sprite_at(im, f'{A}/sunburst-wheel/hub.webp', 112, cx, cy)
+    sprite_at(im, f'{A}/sunburst-wheel/pointer.webp', 78, cx, cy - r - 4)
+    im = im.convert('RGB')
+    title_fit(im, 'SUNBURST WHEEL', (255, 194, 77), 486)
+    return im
+
+def coin_flip_art():
+    im = backdrop('coin-flip', shift=0, bg='bg-landscape.jpg')
+    sprite_at(im, f'{A}/coin-flip/tails.webp', 210, 405, 175, rotate=-18, squash=0.42)
+    sprite_at(im, f'{A}/coin-flip/heads.webp', 300, 255, 245, glow=(255, 200, 90))
+    im = im.convert('RGB')
+    title_fit(im, 'COIN FLIP', (52, 214, 190), 486)
+    return im
+
+def lucky_scratch_art():
+    im = backdrop('lucky-scratch', shift=40, bg='bg-landscape.jpg')
+    x0, y0, w, h = 110, 40, 380, 360
+    card = Image.new('RGBA', (S * 2, S * 2)); d = ImageDraw.Draw(card)
+    d.rounded_rectangle((x0 * 2, y0 * 2, (x0 + w) * 2, (y0 + h) * 2), radius=44, fill=(255, 206, 90))
+    d.rounded_rectangle((x0 * 2 + 12, y0 * 2 + 12, (x0 + w) * 2 - 12, (y0 + h) * 2 - 12), radius=36, fill=(10, 70, 46))
+    card = card.resize(im.size, Image.LANCZOS)
+    sh = Image.new('RGBA', im.size); ImageDraw.Draw(sh).rounded_rectangle((x0 + 10, y0 + 16, x0 + w + 10, y0 + h + 16), radius=22, fill=(0, 0, 0, 160))
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(14)))
+    im.alpha_composite(card)
+    cell, gap = 104, 12
+    gx, gy = x0 + (w - (cell * 3 + gap * 2)) / 2, y0 + (h - (cell * 3 + gap * 2)) / 2
+    revealed = {0: 'p6', 2: 'p5', 4: 'p6', 6: 'p1', 8: 'p6'}
+    d = ImageDraw.Draw(im)
+    for i in range(9):
+        cx0, cy0 = gx + (i % 3) * (cell + gap), gy + (i // 3) * (cell + gap)
+        if i in revealed:
+            d.rounded_rectangle((cx0, cy0, cx0 + cell, cy0 + cell), radius=14, fill=(18, 96, 64), outline=(255, 214, 120), width=2)
+            sprite_at(im, f'{A}/lucky-scratch/{revealed[i]}.webp', cell * 0.78, cx0 + cell / 2, cy0 + cell / 2)
+        else:  # silver foil, with a few scratch marks
+            foil = Image.new('RGBA', (cell, cell)); fd = ImageDraw.Draw(foil)
+            for yy in range(cell):
+                v = int(168 + 50 * math.sin(yy / cell * math.pi))
+                fd.line([(0, yy), (cell, yy)], fill=(v, v, v + 8, 255))
+            m = Image.new('L', (cell, cell)); ImageDraw.Draw(m).rounded_rectangle((0, 0, cell - 1, cell - 1), radius=14, fill=255)
+            im.paste(foil, (int(cx0), int(cy0)), m)
+            for k in range(3):
+                yy = cy0 + 30 + k * 22
+                d.line([(cx0 + 18, yy), (cx0 + cell - 22, yy - 10)], fill=(232, 232, 238), width=3)
+    im = im.convert('RGB')
+    title_fit(im, 'LUCKY SCRATCH', (54, 226, 120), 486)
+    return im
+
+def gem_hand_art():
+    im = backdrop('gem-hand', shift=0, bg='bg-landscape.jpg', darken=40)
+    for k, g in enumerate([1, 3, 5, 6, 7]):
+        a = (k - 2) * 0.42
+        cx, cy = S / 2 + math.sin(a) * 250, 400 - math.cos(a) * 200
+        sprite_at(im, f'{A}/gem-hand/gem-{g}.webp', 128, cx, cy, rotate=-math.degrees(a) * 0.5,
+                  glow=[(255, 70, 90), (255, 214, 60), (60, 220, 255), (70, 110, 255), (190, 90, 255)][k])
+    im = im.convert('RGB')
+    title_fit(im, 'GEM HAND', (230, 90, 210), 486)
+    return im
+
+def baccarat_art():
+    im = backdrop('baccarat', shift=0, bg='bg-landscape.jpg')
+    for cx, cy, rot in [(225, 230, 14), (300, 215, 0), (375, 230, -14)]:
+        sprite_at(im, f'{A}/baccarat/card-back.webp', 290, cx, cy, rotate=rot)
+    im = im.convert('RGB')
+    title_fit(im, 'BACCARAT', (235, 70, 80), 486)
+    return im
+
+def higher_lower_art():
+    im = backdrop('higher-lower', shift=0, bg='bg-landscape.jpg')
+    sprite_at(im, f'{A}/higher-lower/card-back.webp', 300, S / 2, 225, glow=(120, 170, 255))
+    d = ImageDraw.Draw(im)
+    for side in (-1, 1):  # up / down chevrons either side of the card
+        x = S / 2 + side * 175
+        up = [(x - 40, 175), (x, 125), (x + 40, 175)]
+        dn = [(x - 40, 275), (x, 325), (x + 40, 275)]
+        lay = Image.new('RGBA', im.size); ld = ImageDraw.Draw(lay)
+        ld.line(up, fill=(80, 230, 150, 255), width=16, joint='curve'); ld.line(dn, fill=(255, 90, 110, 255), width=16, joint='curve')
+        im.alpha_composite(lay.filter(ImageFilter.GaussianBlur(8)))
+        d.line(up, fill=(200, 255, 225), width=8, joint='curve'); d.line(dn, fill=(255, 210, 215), width=8, joint='curve')
+    im = im.convert('RGB')
+    title_fit(im, 'HIGHER OR LOWER', (120, 170, 255), 486)
+    return im
+
 for name, make in [('crash', crash), ('mines', mines),
                    ('dice', hero('dice', 'die.webp', 'DICE', (255, 95, 210))),
                    ('limbo', hero('limbo', 'comet.webp', 'LIMBO', (255, 194, 77), 400, (0.5, 0.4), darken=150, layers=True)),
@@ -222,7 +373,11 @@ for name, make in [('crash', crash), ('mines', mines),
                    ('keno', keno_art),
                    ('cape-point-ways', slot_cover('cape-point-ways', 'shark')),
                    ('highveld-hold', slot_cover('highveld-hold', 'coin', 300)),
-                   ('kalahari-gems', slot_cover('kalahari-gems', 'sunstone', 300))]:
+                   ('kalahari-gems', slot_cover('kalahari-gems', 'sunstone', 300)),
+                   ('sunburst-wheel', sunburst_wheel_art), ('coin-flip', coin_flip_art), ('lucky-scratch', lucky_scratch_art),
+                   ('gem-hand', gem_hand_art), ('baccarat', baccarat_art), ('higher-lower', higher_lower_art)]:
+    if sys.argv[1:] and name not in sys.argv[1:]:  # optional: python3 covers.py <name> ... renders only those
+        continue
     os.makedirs(f'{OUT}/{name}', exist_ok=True)
     make().save(f'{OUT}/{name}/cover.jpg', quality=88)
     print('wrote', name)

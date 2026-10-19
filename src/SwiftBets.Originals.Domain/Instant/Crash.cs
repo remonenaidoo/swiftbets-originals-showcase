@@ -2,8 +2,8 @@ namespace SwiftBets.Originals.Domain.Instant;
 
 /// <summary>
 /// Crash: one shared round. The multiplier climbs as e^(0.00006 t) (t in ms, floored to 0.01×) until the round's
-/// crash point, fixed by its seed before betting opens, with P(point ≥ x) = 0.96 / x up to 5,000×. A bet that cashes
-/// out at x before the crash, or whose auto cash-out x is at most the point, is paid x; so every target returns 96%.
+/// crash point, fixed by its seed before betting opens, with P(point ≥ x) = r / x up to 5,000× for the game's rate r. A bet
+/// that cashes out at x before the crash, or whose auto cash-out x is at most the point, is paid x; so every target returns r.
 /// </summary>
 public static class Crash
 {
@@ -18,10 +18,10 @@ public static class Crash
     public static readonly long[] Stakes = Mines.Stakes;
     public const long MinAutoBp = 10_100;
 
-    /// <summary>The crash point for a uniform float: floor(96 / (1 − u)) hundredths, at least 1.00×, at most 5,000×.</summary>
-    public static long PointBp(double u)
+    /// <summary>The crash point for a uniform float at rate r (basis points): floor(100r / (1 − u)) hundredths, at least 1.00×, at most 5,000×.</summary>
+    public static long PointBp(double u, long rateBp = Mult.Base)
     {
-        var hundredths = Math.Floor(96 / (1 - u));
+        var hundredths = Math.Floor(rateBp / 100.0 / (1 - u));
         return Math.Clamp((long)Math.Min(hundredths, 1e9), 100, Mult.CapBp / 100) * 100;
     }
 

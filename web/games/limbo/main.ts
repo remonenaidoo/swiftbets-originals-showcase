@@ -6,14 +6,17 @@ interface LimboView { roundId: string; multiplierBp: number; win: number; detail
 
 const STEPS = [10100, 11000, 12500, 15000, 20000, 30000, 50000, 100000, 250000, 1000000, 10000000, 50000000];
 
+let rateBp = 9600;
+
 const boot = async () => {
-  const { shell, app, tex, refresh } = await bootInstant({
+  const { shell, app, tex, refresh, state } = await bootInstant({
     gameId: 'limbo', title: 'Limbo', accent: '#ffc24d', accent2: '#e0731a', background: '#08051a', art: ['comet.webp'],
     verify: async (s, c, n) => {
       const [u] = await floats(s, c, n, 1);
-      return `the result was ${times(Math.min(Math.max(Math.floor(96 / (1 - u)), 100), 500000) * 100)}.`;
+      return `the result was ${times(Math.min(Math.max(Math.floor(rateBp / 100 / (1 - u)), 100), 500000) * 100)}.`;
     },
   });
+  rateBp = state.info.rateBp;
   let target = 20000, busy = false;
 
   shell.controls.innerHTML = `
@@ -24,7 +27,7 @@ const boot = async () => {
   const set = (bp: number) => {
     target = Math.min(50_000_000, Math.max(10_100, Math.round(bp / 100) * 100));
     input.value = (target / 10000).toFixed(2);
-    document.getElementById('c-out')!.textContent = `${(96 / (target / 10000)).toFixed(4)}%`;
+    document.getElementById('c-out')!.textContent = `${(rateBp / 100 / (target / 10000)).toFixed(4)}%`;
     document.getElementById('p-out')!.textContent = rand(Math.floor(shell.stake * target / 10000));
     goal.text = `Target ${times(target)}`;
   };
@@ -36,11 +39,11 @@ const boot = async () => {
   shell.rules(`
     <h2>Limbo</h2>
     <p>Pick a target multiplier and bet. A result is drawn; if it reaches your target, you win your stake times the target. The higher the target, the rarer the win.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>5,000×</b><small>Max target</small></div><div><b>1.01×</b><small>Lowest target</small></div></div>
+    <div class="facts"><div><b>5,000×</b><small>Max target</small></div><div><b>1.01×</b><small>Lowest target</small></div></div>
     <h3>How it pays</h3>
-    <p>The chance of reaching a target x is 0.96 ÷ x: a 2× target wins 48% of the time, a 10× target 9.6%. Every target returns 96%.</p>
+    <p>The higher the target, the less often it is reached: the chance is shown as you set it. Every target returns the same.</p>
     <h3>Fairness</h3>
-    <p>The result is floor(96 ÷ (1 − u)) ÷ 100 (at least 1.00×, at most 5,000×), with u the first float of HMAC-SHA256(server seed, "client seed:nonce:0"). Change seeds to check any round. In case of a malfunction, all pays and plays are void.</p>
+    <p>The result is floor(R ÷ (1 − u)) ÷ 100, with R the game's return rate (at least 1.00×, at most 5,000×), with u the first float of HMAC-SHA256(server seed, "client seed:nonce:0"). Change seeds to check any round. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);
 
   const tweens = new Tweens(app.ticker);

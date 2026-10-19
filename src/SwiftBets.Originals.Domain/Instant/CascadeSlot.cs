@@ -58,7 +58,8 @@ public sealed record CascadeConfig(
 /// more pays the spin's win is multiplied by their sum. A stake is 100 units; one request plays the whole round,
 /// capped at 5,000× stake.
 /// </summary>
-public sealed class CascadeSlot : OneShotGame
+/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+public sealed class CascadeSlot(string id = CascadeSlot.GameId, string name = "Kalahari Gem Fall") : OneShotGame
 {
     public const string GameId = "kalahari-gems";
     public const int Units = 100;
@@ -70,9 +71,9 @@ public sealed class CascadeSlot : OneShotGame
 
     public static CascadeConfig Production { get; } = CascadeTables.Config;
 
-    public override string Id => GameId;
+    public override string Id => id;
 
-    public override string Name => "Kalahari Gem Fall";
+    public override string Name => name;
 
     public override long[] Stakes { get; } = [100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 
@@ -180,15 +181,15 @@ public sealed class CascadeSlot : OneShotGame
 
     private static GemCell[][] Copy(GemCell[][] b) => [.. b.Select(col => col.ToArray())];
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var (spins, units, capped) = PlayRound(Production, floats);
-        return new(units * (Mult.One / Units), new { spins, units, capped, freeSpins = spins.Count - 1 });
+        return new(Mult.Rated(units * (Mult.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
     }
 
-    public override object Info => new
+    public override object InfoAt(long rateBp) => new
     {
         units = Units, reels = Reels, rows = Rows, pays = Production.Pays, sunStakes = Production.SunStakes,
-        meteors = Production.Meteors.Select(m => new { m.Value, m.Weight }), baseStrips = Production.BaseStrips, freeStrips = Production.FreeStrips, rtp = 96.00m,
+        meteors = Production.Meteors.Select(m => new { m.Value, m.Weight }), baseStrips = Production.BaseStrips, freeStrips = Production.FreeStrips, rateBp,
     };
 }

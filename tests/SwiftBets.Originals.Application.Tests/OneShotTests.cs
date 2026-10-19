@@ -40,4 +40,16 @@ public sealed class OneShotTests : IDisposable
         result.Error.ShouldBe(SpinError.InvalidStake);
         wallet.Calls.ShouldNotContain(c => c.Action == "bet");
     }
+
+    [Fact]
+    public async Task A_game_pays_at_its_own_configured_rate()
+    {
+        var rates = new FixedRates(8_000);
+        var view = (await new OneShotHandler(store, wallet, seeds, TimeProvider.System, rates)
+            .PlayAsync(SunburstWheel.GameId, "s", 1000, Json(new { segments = 10, risk = "high" }), "k1", ct)).Value!;
+
+        // The high wheel's one paying segment is 9.6× at the design rate: 8× at 80%.
+        view.MultiplierBp.ShouldBeOneOf(0, 80_000);
+        wallet.Balance.ShouldBe(100_000 - 1000 + view.Win);
+    }
 }

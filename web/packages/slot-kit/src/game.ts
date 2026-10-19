@@ -391,7 +391,6 @@ async function boot() {
   $('fs-mult').style.display = info.freeSpinMultiplier > 1 ? '' : 'none';
   void Promise.all(Object.entries(scene.textures).map(async ([name, t]) => [name, await scene.app.renderer.extract.base64(t)] as const))
     .then((pairs) => (images = Object.fromEntries(pairs)));
-  $('rtp').textContent = `RTP ${info.rtp.toFixed(2)}%`;
   setBalance(state.balance);
   scene.reels.setStrips(info.baseReels, info.baseReels.map((s) => Math.floor(Math.random() * s.length)));
   scene.layout();

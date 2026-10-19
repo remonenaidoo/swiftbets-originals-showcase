@@ -29,7 +29,7 @@ public sealed record MinesView(
 /// Mines rounds: start takes the stake (the layout is drawn from the player's seeds and stored first), each pick is
 /// one locked step, cash-out pays the multiplier reached. A mine ends the round with nothing to pay.
 /// </summary>
-public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time)
+public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time, IGameRates? rates = null)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -64,7 +64,7 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
         var layout = Mines.Layout(Fair.Floats(draw.ServerSeed, draw.ClientSeed, draw.Nonce, Mines.Tiles), request.Mines);
-        var start = new StartOutcome(request.Mines, layout, draw.Nonce, draw.ClientSeed, draw.ServerSeedHash);
+        var start = new StartOutcome(request.Mines, layout, draw.Nonce, draw.ClientSeed, draw.ServerSeedHash, (rates ?? FixedRates.Design).For(Mines.GameId));
         var roundId = Guid.NewGuid();
         var round = new RoundRecord(roundId, playerRef!, request.SessionToken, Mines.GameId, request.Stake, request.IdempotencyKey, RoundStatus.Pending, 0, 0, time.GetUtcNow());
         var first = new SpinRecord(roundId, 0, [], JsonSerializer.Serialize(start, Json), 0, Play.BetTx(roundId), null, false);
@@ -103,13 +103,13 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
             }
 
             var safe = picks.Count + 1;
-            if (!Mines.Finished(start.Mines, safe))
+            if (!Mines.Finished(start.Mines, safe, start.RateBp))
             {
                 return (new SpinRecord(roundId, seq, [tile], "{}", 0, null, null, false), RoundStatus.Open, 0L);
             }
 
             // Nothing more to win: the last safe tile, or the cap. The round cashes out on this pick.
-            var win = Mult.Pay(round.Stake, Mines.MultiplierBp(start.Mines, safe));
+            var win = Mult.Pay(round.Stake, Mines.MultiplierBp(start.Mines, safe, start.RateBp));
             return (new SpinRecord(roundId, seq, [tile], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: true, cancellationToken);
     }
@@ -124,7 +124,7 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
             }
 
             var seq = spins.Count;
-            var win = Mult.Pay(round.Stake, Mines.MultiplierBp(Start(spins).Mines, safe));
+            var win = Mult.Pay(round.Stake, Mines.MultiplierBp(Start(spins).Mines, safe, Start(spins).RateBp));
             return (new SpinRecord(roundId, seq, [], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: false, cancellationToken);
 
@@ -165,11 +165,12 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
         var safe = picks.Count(p => !start.Layout.Contains(p));
         var win = spins.Sum(s => s.Win);
         var status = round.Status == RoundStatus.Open ? "open" : busted ? "busted" : round.Status is RoundStatus.Settled or RoundStatus.WinPending ? "cashed" : round.Status;
-        return new MinesView(round.RoundId, round.Stake, start.Mines, picks, Mines.MultiplierBp(start.Mines, safe), Mines.MultiplierBp(start.Mines, safe + 1), win, status,
+        return new MinesView(round.RoundId, round.Stake, start.Mines, picks, Mines.MultiplierBp(start.Mines, safe, start.RateBp), Mines.MultiplierBp(start.Mines, safe + 1, start.RateBp), win, status,
             // The mines are shown only for a round played out; a refused or voided round's draw is never shown (or used).
             round.Status is RoundStatus.Settled or RoundStatus.WinPending ? start.Layout : null, start.Nonce, start.ClientSeed, start.ServerSeedHash, balance);
     }
 
     /// <summary>The first spin's stored outcome: the round's draw. Never sent while the round is open.</summary>
-    private sealed record StartOutcome(int Mines, int[] Layout, long Nonce, string ClientSeed, string ServerSeedHash);
+    /// <remarks><paramref name="RateBp"/> is the rate the round started at (rounds stored before rates had it are at the design rate).</remarks>
+    private sealed record StartOutcome(int Mines, int[] Layout, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Mult.Base);
 }

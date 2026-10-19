@@ -4,7 +4,7 @@ using SwiftBets.Originals.Domain.Slot;
 namespace SwiftBets.Originals.Application;
 
 /// <summary>What a game loads with: the balance, an unfinished feature of this game to resume, its last 50 rounds, and the rules.</summary>
-public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines games)
+public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates? rates = null)
 {
     public async Task<Result<StateView>> GetAsync(string gameId, string sessionToken, CancellationToken cancellationToken)
     {
@@ -14,6 +14,7 @@ public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines ga
         }
 
         var game = slot.Definition;
+        var rate = (rates ?? FixedRates.Design).For(game.GameId);
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
         if (error is not null)
         {
@@ -24,24 +25,24 @@ public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines ga
         if (await store.FindOpenFeatureAsync(playerRef!, game.GameId, cancellationToken) is { } round)
         {
             var spins = await store.SpinsAsync(round.RoundId, cancellationToken);
-            open = Play.View(round, spins[^1], game, balance);
+            open = Play.View(round, spins[^1], game, balance, rate);
         }
 
         var recent = await store.RecentAsync(playerRef!, game.GameId, 50, cancellationToken);
         return new StateView(
             balance,
             open,
-            [.. recent.Select(r => new RoundSummary(r.RoundId, r.Stake, Play.Money(r.PaidUnits, r.Stake, game.LineCount), r.Status, r.CreatedAt))],
-            Info(slot));
+            [.. recent.Select(r => new RoundSummary(r.RoundId, r.Stake, Play.Money(r.PaidUnits, r.Stake, game.LineCount, rate), r.Status, r.CreatedAt))],
+            Info(slot, rate));
     }
 
-    public static GameInfo Info(SlotGame slot)
+    public static GameInfo Info(SlotGame slot, long rateBp = Domain.Instant.Mult.Base)
     {
         var game = slot.Definition;
         return new GameInfo(
             game.GameId,
             slot.Profile.Name,
-            slot.Profile.StatedRtp,
+            rateBp,
             game.MaxWinStakes,
             slot.Profile.Stakes,
             game.LineCount,

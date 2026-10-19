@@ -12,7 +12,8 @@ internal static class Play
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>Line-bet units to minor units: every offered stake is a multiple of the line count.</summary>
-    public static long Money(long units, long stake, int lines) => units * (stake / lines);
+    /// <summary>A line slot's units as money at the game's rate: units × line bet × rate ÷ the design rate, floored to the cent.</summary>
+    public static long Money(long units, long stake, int lines, long rateBp) => (long)((Int128)units * (stake / lines) * rateBp / Domain.Instant.Mult.Base);
 
     public static string BetTx(Guid round) => $"{round}:bet";
 
@@ -60,7 +61,7 @@ internal static class Play
         _ => SpinError.WalletUnavailable,
     };
 
-    public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance)
+    public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance, long rateBp)
     {
         var outcome = Read(spin.OutcomeJson);
         return new SpinView(
@@ -70,7 +71,7 @@ internal static class Play
             outcome.Lines,
             outcome.Scatters,
             spin.Win,
-            Money(round.PaidUnits, round.Stake, game.LineCount),
+            Money(round.PaidUnits, round.Stake, game.LineCount, rateBp),
             round.FreeSpinsLeft,
             spin.Seq == 0 && outcome.Trigger,
             round.PaidUnits >= game.CapUnits,

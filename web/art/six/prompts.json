@@ -1,0 +1,134 @@
+{
+  "style": "Premium modern casino game art, polished stylised 3D render, cinematic lighting, vivid but tasteful neon and gold accents on deep dark backgrounds, crisp clean edges, high detail, original design, no text, no letters, no numbers, no watermark, no brand logos",
+  "items": {
+    "concept-sheet": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Game art concept board, a clean grid of six borderless image panels on a black board with no captions and no writing anywhere: an empty golden prize wheel hub with radiant sunburst rays of warm gold and violet light; a shiny gold coin embossed with a protea flower floating over deep teal water light; emerald green velvet with gold lucky charms, a four-leaf clover, a golden horseshoe, a bell and a crown; seven sparkling faceted gems in red, orange, yellow, green, cyan, blue and purple on dark plum velvet; a dark green felt card table seen from above with gold trim and a deep red and gold card back; a moody dark navy blue card table under a soft spotlight with a navy and silver card back"
+    },
+    "sun-hub": {
+      "prompt": "A single ornate round polished gold centre cap medallion for a prize wheel, seen perfectly front-on, a smooth round outer edge with engraved sunburst rays, concentric filigree rings, a domed centre set with a round violet gemstone, perfectly circular and symmetrical, crisp solid metal, no glow, no aura, no sparks, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "sun-pointer": {
+      "prompt": "A single ornate polished gold pointer arrow shaped like a downward pointing teardrop flag with a rounded top and a sharp tip at the bottom, a small violet gem at the top, seen perfectly front-on, vertically symmetrical, pointing straight down, centred, isolated on a plain pure black background"
+    },
+    "sunburst-wheel-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "An abstract radiant sunburst backdrop, soft rays of warm gold light fanning out from behind the centre into deep violet and indigo darkness, faint glittering particles, elegant gold art deco arcs at the far edges, a calm dark centre, full bleed, no borders"
+    },
+    "sunburst-wheel-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "An abstract radiant sunburst backdrop, soft rays of warm gold light fanning out from behind the centre into deep violet and indigo darkness, faint glittering particles, elegant gold art deco arcs at the far edges, a calm dark centre, full bleed, no borders"
+    },
+    "coin-heads": {
+      "prompt": "A single original polished gold coin seen perfectly flat and straight-on from directly above, a wide smooth raised rim with a ring of small round beads just inside it, the flat field is plain smooth gold, in the middle an embossed relief of a stylised springbok antelope head facing forward with two lyre-shaped horns, the coin face only with no visible edge thickness, evenly lit with soft teal reflections, perfectly circular, centred, filling the frame, isolated on a plain pure black background, completely blank of any lettering or inscription"
+    },
+    "coin-tails": {
+      "prompt": "A single original polished gold coin seen perfectly flat and straight-on from directly above, a wide smooth raised rim with a ring of small round beads just inside it, the flat field is plain brushed gold, in the middle a large embossed gold relief of a South African king protea flower head, a wide cup of many pointed bracts around a domed centre, filling half the coin, the coin face only with no visible edge thickness, evenly lit, no glow, perfectly circular, centred, filling the frame, isolated on a plain pure black background, completely blank of any lettering or inscription"
+    },
+    "coin-flip-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A deep teal abstract backdrop, soft caustic light ripples and gentle gold light flares at the edges, subtle floating gold dust bokeh, a smooth calm darker teal centre, luxurious and minimal, full bleed, no borders"
+    },
+    "coin-flip-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A deep teal abstract backdrop, soft caustic light ripples and gentle gold light flares at the edges, subtle floating gold dust bokeh, a smooth calm darker teal centre, luxurious and minimal, full bleed, no borders"
+    },
+    "scratch-p1": {
+      "prompt": "A single glossy solid emerald green enamel four-leaf clover charm with a thin polished gold rim and a short stem, solid and opaque, crisp edges, no glow, no halo, no lens flare, no sparkle rays, no shadow, no reflection, nothing around it, front view, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "scratch-p2": {
+      "prompt": "A single polished golden lucky horseshoe with studs, opening upwards, solid and opaque, crisp edges, no glow, no halo, no lens flare, no sparkle rays, no shadow, no reflection, nothing around it, front view, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "scratch-p3": {
+      "prompt": "A single shiny golden bell with a small emerald bow on top, front view, centred, isolated on a plain pure black background"
+    },
+    "scratch-p4": {
+      "prompt": "A single glossy faceted solid gold five-pointed star, solid and opaque, crisp edges, no glow, no halo, no lens flare, no sparkle rays, no shadow, no reflection, nothing around it, front view, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "scratch-p5": {
+      "prompt": "A single ornate golden royal crown set with red rubies and emeralds, front view, centred, isolated on a plain pure black background"
+    },
+    "scratch-p6": {
+      "prompt": "A single huge brilliant cut white diamond with rainbow fire inside its facets, three-quarter front view, solid and opaque, crisp edges, no glow, no halo, no lens flare, no sparkle rays, no shadow, no reflection, nothing around it, front view, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "scratch-card": {
+      "prompt": "A single ornate perfectly square scratch card frame seen perfectly flat and straight-on, a thick emerald enamel and polished gold art deco border of even width with stepped gold corner ornaments, the large square inner area is plain flat pure black and empty, no shadow, no glow, crisp edges, centred, filling the frame, isolated on a plain pure black background"
+    },
+    "lucky-scratch-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A luxurious deep emerald green backdrop with a subtle gold art deco geometric pattern fading in from the edges, soft gold sparkles and bokeh, a calm smooth dark centre, full bleed, no borders"
+    },
+    "lucky-scratch-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A luxurious deep emerald green backdrop with a subtle gold art deco geometric pattern fading in from the edges, soft gold sparkles and bokeh, a calm smooth dark centre, full bleed, no borders"
+    },
+    "gem-1": {
+      "prompt": "A single glossy faceted ruby red gemstone cut in a heart shape, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-2": {
+      "prompt": "A single glossy faceted orange topaz gemstone, round brilliant cut seen from directly above showing its octagonal table, centred, nothing around it, isolated on a plain pure black background"
+    },
+    "gem-3": {
+      "prompt": "A single glossy faceted yellow citrine gemstone cut as a tall pointed triangle trillion, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-4": {
+      "prompt": "A single glossy faceted green emerald gemstone in a rectangular emerald step cut with clipped corners, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-5": {
+      "prompt": "A single glossy faceted cyan aquamarine gemstone cut as a long hexagon, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-6": {
+      "prompt": "A single glossy faceted deep blue sapphire gemstone cut as a vertical teardrop pear shape, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-7": {
+      "prompt": "A single glossy faceted purple amethyst gemstone cut as a diamond rhombus kite shape standing on its point, front view, centred, isolated on a plain pure black background"
+    },
+    "gem-hand-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "Rich dark plum and burgundy crushed velvet fabric draped in soft folds, lit softly from above, a few tiny scattered colourful gem sparkles far at the edges, a calm smooth darker centre, luxurious, full bleed, no borders"
+    },
+    "gem-hand-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "Rich dark plum and burgundy crushed velvet fabric draped in soft folds, lit softly from above, a few tiny scattered colourful gem sparkles far at the edges, a calm smooth darker centre, luxurious, full bleed, no borders"
+    },
+    "bac-back": {
+      "w": 768,
+      "h": 1088,
+      "prompt": "The back of a single playing card seen perfectly flat front-on, an original symmetrical pattern of deep crimson red with fine gold filigree lattice and a central gold rosette medallion, a thin gold inner border, rounded corners, the card fills the frame with a small margin, isolated on a plain pure white background"
+    },
+    "baccarat-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "An elegant empty dark green casino felt table seen from directly above, smooth fine felt texture, a curved polished gold trim line near the edges and dark wood rail at the very edge, soft overhead light pooling in the centre, nothing on the table, full bleed, no borders"
+    },
+    "baccarat-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "An elegant empty dark green casino felt table seen from directly above, smooth fine felt texture, a curved polished gold trim line near the edges and dark wood rail at the very edge, soft overhead light pooling in the centre, nothing on the table, full bleed, no borders"
+    },
+    "hl-back": {
+      "w": 768,
+      "h": 1088,
+      "prompt": "The back of a single playing card seen perfectly flat front-on, a fully symmetrical original pattern of deep navy blue covered edge to edge in fine silver geometric starburst lines, a central silver compass star medallion, a thin silver inner border, pure silver and chrome metal colour only with no gold, plain corners with no symbols, no card index, no suits, rounded corners, the card fills the frame with a small margin, isolated on a plain pure white background"
+    },
+    "higher-lower-bg-landscape": {
+      "ultra": true,
+      "aspect": "16:9",
+      "prompt": "A moody empty dark midnight blue card table seen from above at a slight angle, soft velvet surface, a single soft spotlight pool in the centre fading to deep darkness at the edges, a thin silver trim, subtle haze, nothing on the table, full bleed, no borders"
+    },
+    "higher-lower-bg-portrait": {
+      "ultra": true,
+      "aspect": "9:16",
+      "prompt": "A moody empty dark midnight blue card table seen from above at a slight angle, soft velvet surface, a single soft spotlight pool in the centre fading to deep darkness at the edges, a thin silver trim, subtle haze, nothing on the table, full bleed, no borders"
+    }
+  }
+}

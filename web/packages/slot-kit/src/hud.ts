@@ -8,7 +8,7 @@ export const HUD = (title: string) => `
       <div class="bar"><i></i></div>
     </div></div>
 
-    <div id="top"><span class="pill" id="clock" title="Session time">00:00</span><span class="pill" id="rtp">RTP 96.00%</span></div>
+    <div id="top"><span class="pill" id="clock" title="Session time">00:00</span></div>
     <div id="feature"><span>FREE SPINS</span><b id="fs-left">10</b><span>left</span><span class="x2" id="fs-mult">×2</span><span>won <b id="fs-won">R 0.00</b></span></div>
 
     <div id="hud">

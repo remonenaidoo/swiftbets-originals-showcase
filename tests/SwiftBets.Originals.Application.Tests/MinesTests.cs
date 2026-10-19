@@ -85,4 +85,26 @@ public sealed class MinesTests : IDisposable
         clear.Value!.Status.ShouldBe("cashed");
         clear.Value.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(24, 1)));
     }
+
+    private sealed class SwitchRates : IGameRates
+    {
+        public long Rate { get; set; } = Mult.Base;
+
+        public long For(string gameId) => Rate;
+    }
+
+    [Fact]
+    public async Task A_round_keeps_the_rate_it_started_at_when_the_setting_changes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var rates = new SwitchRates();
+        var handler = new MinesHandler(store, wallet, seeds, TimeProvider.System, rates);
+        var start = (await handler.StartAsync(new MinesStart("s", 1000, 3, "k1"), ct)).Value!;
+        rates.Rate = 8_000;
+        await handler.PickAsync("s", start.RoundId, SafeTile(), ct);
+        var cash = (await handler.CashoutAsync("s", start.RoundId, ct)).Value!;
+
+        cash.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(3, 1, Mult.Base)));
+        cash.Win.ShouldNotBe(Mult.Pay(1000, Mines.MultiplierBp(3, 1, 8_000)));
+    }
 }
