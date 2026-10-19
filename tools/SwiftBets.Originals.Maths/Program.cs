@@ -44,6 +44,12 @@ if (args.FirstOrDefault() == "ways")
     return InstantSheets.Ways("docs/par-sheet/cape-point-ways.md", Arg("--rounds") is { } r ? long.Parse(r, CultureInfo.InvariantCulture) : 100_000_000);
 }
 
+if (args.FirstOrDefault() == "six")
+{
+    Directory.CreateDirectory("docs/par-sheet");
+    return SixSheets.Write("docs/par-sheet");
+}
+
 if (args.FirstOrDefault() == "instant")
 {
     Directory.CreateDirectory("docs/par-sheet");

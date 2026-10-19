@@ -15,6 +15,10 @@ public static class InstantEndpoints
 
     public sealed record PlayBody(string? Session, long Stake, System.Text.Json.JsonElement Choices, string? Key);
 
+    public sealed record GuessBody(string? Session, Guid RoundId, int Guess);
+
+    public sealed record HigherLowerStartBody(string? Session, long Stake, string? Key);
+
     public sealed record TowersStartBody(string? Session, long Stake, string? Level, string? Key);
 
     public sealed record CrashBetBody(string? Session, long Stake, long? AutoBp, string? Key);
@@ -43,7 +47,15 @@ public static class InstantEndpoints
         towers.MapPost("/cashout", async (RoundBody body, TowersHandler handler, HttpContext context, CancellationToken cancellationToken) =>
             SlotEndpoints.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
 
-        // Dice, Limbo, Peg Drop, Keno (one draw each) and Towers' page data.
+        var higherLower = instant.MapGroup("/higher-lower");
+        higherLower.MapPost("/start", async (HigherLowerStartBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            SlotEndpoints.Respond(await handler.StartAsync(new HigherLowerStart(body.Session ?? string.Empty, body.Stake, body.Key ?? string.Empty), cancellationToken), context));
+        higherLower.MapPost("/guess", async (GuessBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            SlotEndpoints.Respond(await handler.GuessAsync(body.Session ?? string.Empty, body.RoundId, body.Guess, cancellationToken), context));
+        higherLower.MapPost("/cashout", async (RoundBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            SlotEndpoints.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
+
+        // The one-shot games (one draw each), and the page data of those, Towers and Higher or Lower.
         instant.MapPost("/{gameId}/play", async (string gameId, PlayBody body, OneShotHandler handler, HttpContext context, CancellationToken cancellationToken) =>
             SlotEndpoints.Respond(await handler.PlayAsync(gameId, body.Session ?? string.Empty, body.Stake, body.Choices, body.Key ?? string.Empty, cancellationToken), context));
         instant.MapGet("/{gameId}/state", async (string gameId, string? session, InstantQueries queries, HttpContext context, CancellationToken cancellationToken) =>

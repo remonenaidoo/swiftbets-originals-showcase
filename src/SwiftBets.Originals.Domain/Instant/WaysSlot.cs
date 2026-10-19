@@ -29,15 +29,16 @@ public static partial class WaysTables
 /// every way through them. 3, 4 or 5 Pearls pay 2, 10 or 50 stakes and award 8, 12 or 16 free spins (no retrigger).
 /// A stake is 20 units; one request plays the whole round, capped at 5,000× stake.
 /// </summary>
-public sealed class WaysSlot : OneShotGame
+/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Point Ways") : OneShotGame
 {
     public const string GameId = "cape-point-ways";
     public const int Units = 20;
     public const long CapUnits = 5_000L * Units;
 
-    public override string Id => GameId;
+    public override string Id => id;
 
-    public override string Name => "Cape Point Ways";
+    public override string Name => name;
 
     public override long[] Stakes { get; } = [200, 400, 1000, 2000, 4000, 10000, 20000];
 

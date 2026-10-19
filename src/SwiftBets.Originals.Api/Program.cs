@@ -27,6 +27,7 @@ builder.Services.AddSingleton<StateQuery>();
 builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.MinesHandler>();
 builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.InstantQueries>();
 builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.TowersHandler>();
+builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.HigherLowerHandler>();
 builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.OneShotHandler>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<SwiftBets.Originals.Application.Ports.ICrashBroadcast, SwiftBets.Originals.Api.Hubs.SignalRCrashBroadcast>();

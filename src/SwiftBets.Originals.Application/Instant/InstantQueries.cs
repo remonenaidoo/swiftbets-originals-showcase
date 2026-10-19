@@ -6,7 +6,7 @@ namespace SwiftBets.Originals.Application.Instant;
 /// <summary>The instant games this studio offers, by id (each also has a page at /play?game=).</summary>
 public static class InstantGames
 {
-    public static readonly string[] Ids = [Mines.GameId, Crash.GameId, Towers.GameId, .. OneShotGames.All.Keys];
+    public static readonly string[] Ids = [Mines.GameId, Crash.GameId, Towers.GameId, HigherLower.GameId, .. OneShotGames.All.Keys];
 }
 
 /// <summary>The fairness panel: the active seed's hash, the client seed and the next nonce, and the last revealed pair.</summary>
@@ -22,12 +22,12 @@ public sealed record CrashInfo(string GameId, string Name, decimal Rtp, int MaxW
 public sealed record CrashState(long? Balance, CrashPublic? Round, IReadOnlyList<CrashBetView> Bets, IReadOnlyList<BetPublic> Board, IReadOnlyList<long> History, IReadOnlyList<RoundSummary> Recent, CrashInfo Info);
 
 /// <summary>What a one-shot game or Towers loads with: balance, the open Towers round if any, history, seeds and the game's rules data.</summary>
-public sealed record InstantState(long? Balance, TowersView? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, object Info);
+public sealed record InstantState(long? Balance, object? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, object Info);
 
 public sealed record MinesState(long? Balance, MinesView? Open, IReadOnlyList<RoundSummary> Recent, SeedsView Seeds, MinesInfo Info);
 
 /// <summary>What the Mines page loads with, and the player's seeds: shown, and rotated (which reveals the old server seed).</summary>
-public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore seeds, MinesHandler mines, CrashRoom crash, TowersHandler towers)
+public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore seeds, MinesHandler mines, CrashRoom crash, TowersHandler towers, HigherLowerHandler higherLower)
 {
     public static object TowersInfo { get; } = new
     {
@@ -39,7 +39,12 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         }),
     };
 
-    /// <summary>The page data of Dice, Limbo, Peg Drop, Keno or Towers.</summary>
+    public static object HigherLowerInfo { get; } = new
+    {
+        gameId = HigherLower.GameId, name = "Higher or Lower", rtp = 96.00m, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = Mines.Stakes, cards = HigherLower.Cards,
+    };
+
+    /// <summary>The page data of a one-shot game, Towers or Higher or Lower.</summary>
     public async Task<Result<InstantState>> StateAsync(string gameId, string sessionToken, CancellationToken cancellationToken)
     {
         object info;
@@ -47,9 +52,13 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         {
             info = TowersInfo;
         }
+        else if (gameId == HigherLower.GameId)
+        {
+            info = HigherLowerInfo;
+        }
         else if (OneShotGames.All.TryGetValue(gameId, out var game))
         {
-            info = new { gameId = game.Id, name = game.Name, rtp = 96.00m, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = game.Stakes, rules = game.Info };
+            info = new { gameId = game.Id, name = game.Name, rtp = game.Rtp, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = game.Stakes, rules = game.Info };
         }
         else
         {
@@ -65,7 +74,8 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         var recent = await store.RecentAsync(playerRef!, gameId, 50, cancellationToken);
         return new InstantState(
             balance,
-            gameId == Towers.GameId ? await towers.OpenAsync(playerRef!, balance, cancellationToken) : null,
+            gameId == Towers.GameId ? await towers.OpenAsync(playerRef!, balance, cancellationToken)
+                : gameId == HigherLower.GameId ? await higherLower.OpenAsync(playerRef!, balance, cancellationToken) : null,
             [.. recent.Where(r => r.Status != RoundStatus.Open).Select(r => new RoundSummary(r.RoundId, r.Stake, r.PaidUnits, r.Status, r.CreatedAt))],
             SeedsView.Of(await seeds.GetAsync(playerRef!, cancellationToken)),
             info);

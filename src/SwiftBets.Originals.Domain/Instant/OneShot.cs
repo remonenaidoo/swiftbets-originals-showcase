@@ -17,6 +17,9 @@ public abstract class OneShotGame
 
     public virtual long[] Stakes => Mines.Stakes;
 
+    /// <summary>The RTP the game states, in percent (its maths document's figure).</summary>
+    public virtual decimal Rtp => 96.00m;
+
     public abstract bool Valid(JsonElement c);
 
     public abstract int FloatsNeeded(JsonElement c);
@@ -36,7 +39,12 @@ public abstract class OneShotGame
 public static class OneShotGames
 {
     public static IReadOnlyDictionary<string, OneShotGame> All { get; } =
-        new OneShotGame[] { new Dice(), new Limbo(), new PegDrop(), new Keno(), new WaysSlot(), new HoldSlot(), new CascadeSlot() }.ToDictionary(g => g.Id);
+        new OneShotGame[]
+        {
+            new Dice(), new Limbo(), new PegDrop(), new Keno(), new WaysSlot(), new HoldSlot(), new CascadeSlot(),
+            new SunburstWheel(), new CoinFlip(), new LuckyScratch(), new GemHand(), new Baccarat(),
+            new WaysSlot("sardine-run", "Sardine Run"), new HoldSlot("kimberley-hold", "Kimberley Hold"), new CascadeSlot("fynbos-bloom", "Fynbos Bloom"),
+        }.ToDictionary(g => g.Id);
 }
 
 /// <summary>

@@ -9,6 +9,7 @@ public sealed class ParSheetTests
     [Theory]
     [InlineData(GildedSavanna.GameId)]
     [InlineData(GoldReefRush.GameId)]
+    [InlineData(KarooStargazer.GameId)]
     public void Sheet_matches_the_definition(string gameId)
     {
         var sheet = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, $"{gameId}.md"));
@@ -16,5 +17,17 @@ public sealed class ParSheetTests
         var recorded = sheet.Single(l => l.StartsWith("Definition hash: ", StringComparison.Ordinal))["Definition hash: ".Length..];
 
         recorded.ShouldBe(DefinitionHash.Of(OriginalsGames.Catalog.Find(gameId)!.Definition));
+    }
+
+    [Fact]
+    public void Karoo_Stargazer_plays_Gilded_Savannas_maths_under_its_own_names()
+    {
+        var (karoo, gilded) = (KarooStargazer.Definition, GildedSavanna.Definition);
+
+        karoo.BaseReels.ShouldBe(gilded.BaseReels);
+        karoo.FreeReels.ShouldBe(gilded.FreeReels);
+        karoo.LinePays.ShouldBe(gilded.LinePays);
+        karoo.Symbols.Select(s => s.Name).ShouldContain("Leopard");
+        karoo.Symbols.Select(s => s.Name).ShouldNotContain("Lion");
     }
 }
