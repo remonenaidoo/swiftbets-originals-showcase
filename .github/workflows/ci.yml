@@ -11,12 +11,25 @@ permissions:
   contents: read
 
 jobs:
-  dotnet:
-    uses: remonenaidoo/swiftbets-platform/.github/workflows/dotnet.yml@main
-    with:
-      images: '[{"name": "swiftbets-originals", "dockerfile": "deploy/SwiftBets.Originals.Api.Dockerfile"}, {"name": "swiftbets-originals-migrator", "dockerfile": "deploy/SwiftBets.Originals.Migrator.Dockerfile"}]'
-      coverage: false
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Fetch shared packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/fetch-shared-packages.sh .
+      - run: dotnet restore
+      - run: dotnet build -c Release --no-restore
+      - run: dotnet test -c Release --no-build
+      - name: Vulnerable packages
+        run: |
+          dotnet list package --vulnerable --include-transitive | tee vulnerable.txt
+          ! grep -qE '^\s+> ' vulnerable.txt
