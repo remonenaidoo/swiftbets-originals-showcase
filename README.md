@@ -1,11 +1,13 @@
 # swiftbets-originals
 
+[![ci](https://github.com/remonenaidoo/swiftbets-originals-showcase/actions/workflows/ci.yml/badge.svg)](https://github.com/remonenaidoo/swiftbets-originals-showcase/actions/workflows/ci.yml)
+
 SwiftBets Originals: games we design, build and own, played for the SwiftBets wallet. The studio is integrated
-the way any outside provider is (D207): it reaches the wallet only through the casino's signed seamless-wallet
+the way any outside provider is: it reaches the wallet only through the casino's signed seamless-wallet
 API, as provider `swift-originals`. Restrictions, limits, idempotency and reconciliation therefore apply exactly as
 for any provider.
 
-One service hosts every slot (D208). A game is data: a definition and a profile in `SwiftBets.Originals.Games`,
+One service hosts every slot. A game is data: a definition and a profile in `SwiftBets.Originals.Games`,
 and a config folder in `web/games/`. The engine, the round handling and the client kit are shared.
 
 | Game | | PAR sheet |
@@ -26,6 +28,8 @@ Both cap a round (a paid spin and its feature) at 5,000× stake.
 | `tools/SwiftBets.Originals.Maths` | RTP, PAR sheets and simulations, per game. |
 | `web/packages/slot-kit` | The shared client: reels, HUD, speed levels, tap to stop, balance, autoplay, rules, history, sound, locks, art loaders. |
 | `web/games/<id>` | One page per game: its art, colours and rules copy. |
+
+Twenty-two games are live: nine slots (line, ways, hold-and-win and cascade engines) and thirteen instant and table games (Crash, Dice, Limbo, Mines, Towers, Keno, Peg Drop, Sunburst Wheel, Coin Flip, Lucky Scratch, Gem Hand, Baccarat, Higher or Lower). Instant games are provably fair: each result comes from HMAC-SHA256 over a committed server seed, the player's seed and a nonce, and the page can verify it. Each game's return rate is set in configuration.
 
 ## Adding a slot
 
@@ -77,3 +81,7 @@ feature resumes across sessions, without the studio learning who the player is.
 PixiJS 8 (WebGL), opened by the casino's launch link `/originals/play?session=…&game=…`. The server decides every
 outcome; the client spins the real strips and lands on the server's stops. `npm run dev` in `web/` serves every game
 at `/originals/games/<id>/index.html?session=…` against the preview's API.
+
+## Part of SwiftBets
+
+SwiftBets is a sportsbook and casino platform built as independent .NET services. It runs live at [swiftbets.remonenaidoo.com](https://swiftbets.remonenaidoo.com). These repositories show a selection of it: [Settlement](https://github.com/remonenaidoo/swiftbets-settlement-showcase) · [Wallet](https://github.com/remonenaidoo/swiftbets-wallet-showcase) · [Steward](https://github.com/remonenaidoo/swiftbets-steward-showcase) · [Building blocks](https://github.com/remonenaidoo/swiftbets-building-blocks-showcase) · [Contracts](https://github.com/remonenaidoo/swiftbets-contracts-showcase).
