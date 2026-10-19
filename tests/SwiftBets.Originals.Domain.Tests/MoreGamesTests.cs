@@ -102,4 +102,24 @@ public sealed class MoreGamesTests
         HigherLower.Allowed([], 1, HigherLower.Higher).ShouldBeFalse(); // anything is "higher or same" than an Ace
         HigherLower.Allowed([], 1, HigherLower.Lower).ShouldBeTrue();
     }
+
+    [Fact]
+    public void A_long_run_of_guesses_never_wraps_the_multiplier()
+    {
+        // 31 wins on 10 of 13 ranks: 9,600 × 13^31 is past Int128, the true multiplier about 3,270×.
+        var counts = Enumerable.Repeat(10, 31).ToArray();
+        var exact = System.Numerics.BigInteger.Pow(13, 31) * 9_600 / System.Numerics.BigInteger.Pow(10, 31);
+
+        HigherLower.MultiplierBp(counts).ShouldBe((long)exact);
+        HigherLower.Allowed(Enumerable.Repeat(10, 60).ToArray(), 7, HigherLower.Higher).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Missing_or_mistyped_choices_are_refused_not_thrown()
+    {
+        var missing = default(JsonElement);
+        new LuckyScratch().Valid(missing).ShouldBeFalse();
+        new GemHand().Valid(missing).ShouldBeFalse();
+        new CoinFlip().Valid(Json(new { coins = 1, need = 1, side = 1 })).ShouldBeFalse();
+    }
 }

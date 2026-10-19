@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace SwiftBets.Originals.Domain.Instant;
 
 /// <summary>
@@ -25,20 +27,21 @@ public static class HigherLower
     public static int[] Deal(IReadOnlyList<double> floats) => [.. floats.Take(Cards).Select(f => (int)(f * Cards))];
 
     /// <summary>The multiplier after winning guesses with these winning counts.</summary>
-    public static long MultiplierBp(IReadOnlyList<int> counts) => counts.Count == 0 ? Mult.One : (long)Int128.Min(Raw(counts), Mult.CapBp);
+    public static long MultiplierBp(IReadOnlyList<int> counts) => counts.Count == 0 ? Mult.One : Math.Min(Raw(counts), Mult.CapBp);
 
     public static bool Allowed(IReadOnlyList<int> counts, int rank, int guess) =>
         guess is Higher or Lower && Count(rank, guess) is var c && c < 13 && Raw([.. counts, c]) <= Mult.CapBp;
 
-    private static Int128 Raw(IReadOnlyList<int> counts)
+    /// <summary>The multiplier before the cap, exact (13^k outgrows any fixed width long before a run ends); anything past the cap reads as cap + 1.</summary>
+    private static long Raw(IReadOnlyList<int> counts)
     {
-        Int128 num = 9600, den = 1;
+        BigInteger num = 9600, den = 1;
         foreach (var c in counts)
         {
             num *= 13;
             den *= c;
         }
 
-        return num / den;
+        return (long)BigInteger.Min(num / den, Mult.CapBp + 1);
     }
 }

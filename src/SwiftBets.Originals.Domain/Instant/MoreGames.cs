@@ -79,7 +79,7 @@ public sealed class CoinFlip : OneShotGame
 
     public override bool Valid(JsonElement c) =>
         Int(c, "coins") is var n && n is >= 1 and <= 10 && Int(c, "need") is var k && k >= 1 && k <= n
-        && c.TryGetProperty("side", out var s) && s.GetString() is "heads" or "tails";
+        && c.TryGetProperty("side", out var s) && s.ValueKind == JsonValueKind.String && s.GetString() is "heads" or "tails";
 
     public override int FloatsNeeded(JsonElement c) => Int(c, "coins");
 
@@ -115,7 +115,7 @@ public sealed class LuckyScratch : OneShotGame
 
     public override string Name => "Lucky Scratch";
 
-    public override bool Valid(JsonElement c) => true;
+    public override bool Valid(JsonElement c) => c.ValueKind == JsonValueKind.Object;
 
     public override int FloatsNeeded(JsonElement c) => Floats;
 
@@ -184,7 +184,7 @@ public sealed class GemHand : OneShotGame
 
     public override decimal Rtp => 95.96m;
 
-    public override bool Valid(JsonElement c) => true;
+    public override bool Valid(JsonElement c) => c.ValueKind == JsonValueKind.Object;
 
     public override int FloatsNeeded(JsonElement c) => 5;
 

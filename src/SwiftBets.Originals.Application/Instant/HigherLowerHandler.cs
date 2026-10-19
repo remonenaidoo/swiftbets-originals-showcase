@@ -102,7 +102,16 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
             var seq = spins.Count;
             if (guess == HigherLower.Skip)
             {
-                return (new SpinRecord(roundId, seq, [guess], "{}", 0, null, null, false), RoundStatus.Open, 0L);
+                if (at + 1 < HigherLower.Cards - 1)
+                {
+                    return (new SpinRecord(roundId, seq, [guess], "{}", 0, null, null, false), RoundStatus.Open, 0L);
+                }
+
+                // Skipped onto the last card: no guess is left, so the round ends here, paying what it reached (if anything).
+                var paid = counts.Count == 0 ? 0 : Mult.Pay(round.Stake, HigherLower.MultiplierBp(counts));
+                return paid == 0
+                    ? (new SpinRecord(roundId, seq, [guess], "{}", 0, null, null, false), RoundStatus.Settled, 0L)
+                    : (new SpinRecord(roundId, seq, [guess], "{}", paid, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, paid);
             }
 
             if (!HigherLower.Allowed(counts, rank, guess))
@@ -195,7 +204,7 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
         var turned = start.Deck.Take(guesses.Count + 1).ToArray();
         var open = round.Status == RoundStatus.Open;
         var rank = HigherLower.Rank(turned[^1]);
-        long Next(int g) => open && HigherLower.Allowed(counts, rank, g) ? HigherLower.MultiplierBp([.. counts, HigherLower.Count(rank, g)]) : 0;
+        long Next(int g) => open && guesses.Count < HigherLower.Cards - 1 && HigherLower.Allowed(counts, rank, g) ? HigherLower.MultiplierBp([.. counts, HigherLower.Count(rank, g)]) : 0;
         var status = open ? "open" : lost ? "busted" : round.Status is RoundStatus.Settled or RoundStatus.WinPending ? "cashed" : round.Status;
         return new HigherLowerView(round.RoundId, round.Stake, turned, guesses, HigherLower.MultiplierBp(counts), Next(HigherLower.Higher), Next(HigherLower.Lower),
             spins.Sum(s => s.Win), status, start.Nonce, start.ClientSeed, start.ServerSeedHash, balance);

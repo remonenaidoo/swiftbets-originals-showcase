@@ -71,4 +71,18 @@ public sealed class HigherLowerTests : IDisposable
         again.Error.ShouldBe(SpinError.RoundOver);
         wallet.Balance.ShouldBe(100_000 - 1000);
     }
+
+    [Fact]
+    public async Task Skipping_to_the_last_card_ends_the_round_so_a_new_one_can_start()
+    {
+        var start = (await Handler().StartAsync(new HigherLowerStart("s", 1000, "k1"), ct)).Value!;
+        HigherLowerView last = start;
+        for (var i = 0; i < HigherLower.Cards - 1 && last.Status == "open"; i++)
+        {
+            last = (await Handler().GuessAsync("s", start.RoundId, HigherLower.Skip, ct)).Value!;
+        }
+
+        last.Status.ShouldNotBe("open");
+        (await Handler().StartAsync(new HigherLowerStart("s", 1000, "k2"), ct)).Error.ShouldBeNull();
+    }
 }
