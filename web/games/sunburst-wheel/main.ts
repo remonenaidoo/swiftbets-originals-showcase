@@ -59,8 +59,8 @@ const boot = async () => {
   const draw = () => {
     const W = app.screen.width, H = app.screen.height;
     shade.clear().rect(0, 0, W, H).fill({ color: 0x07030f, alpha: 0.35 });
-    R = Math.min(W * 0.42, (H - 70) * 0.46);
-    CX = W / 2; CY = 30 + R + 8;
+    R = Math.min(W * 0.42, (H - 140) * 0.44);
+    CX = W / 2; CY = 48 + R + 8;
     wheel.position.set(CX, CY);
     const t = table(), th = (Math.PI * 2) / t.length;
     disc.clear();

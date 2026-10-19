@@ -228,7 +228,8 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
       scene.showAmount(rand(money(lineUnits, st)));
       await Promise.all([scene.showCells(d.lines.flatMap((l) => l.cells), sp().pulse), addWin(money(lineUnits, st))]);
     }
-    if (!d.respins.length) { await sleep(coins.length ? 500 : 0); scene.setLabels([]); return; }
+    // Coins that start nothing keep their values up until the next spin starts.
+    if (!d.respins.length) return;
     sound.feature();
     scene.coins(60);
     await overlay('HOLD & WIN', '', `${coins.length} coins hold · 3 respins · every new coin resets them`, 'START', auto ? 2500 : undefined);
@@ -284,6 +285,7 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
     setWin(0);
     sound.spin();
     scene.clearWins();
+    scene.setLabels([]);
     scene.reels.spin(sp());
     refreshControls();
     const since = performance.now();

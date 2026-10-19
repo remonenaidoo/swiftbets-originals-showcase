@@ -73,6 +73,8 @@ const boot = async () => {
 
   const show = () => {
     const open = round?.status === 'open';
+    // The shell locks every control during a round; the guess buttons are set after, by what this card allows.
+    shell.lock(!!open || busy);
     hi.disabled = !open || busy || !round!.higherBp;
     lo.disabled = !open || busy || !round!.lowerBp;
     skip.disabled = !open || busy;
@@ -92,7 +94,6 @@ const boot = async () => {
       a.innerHTML = 'BET';
       a.disabled = busy;
     }
-    shell.lock(!!open || busy);
   };
 
   const finish = (v: HlView) => {

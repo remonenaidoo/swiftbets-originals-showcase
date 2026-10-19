@@ -78,6 +78,7 @@ const boot = async () => {
       foils.push(f); icons.push(icon);
     }
     banner.position.set(W / 2, Math.min(H - 26, Y0 + cell * 3 + 40));
+    banner.style.fontSize = Math.round(Math.min(30, W * 0.07));
   };
   app.renderer.on('resize', layout);
   layout();
@@ -95,7 +96,7 @@ const boot = async () => {
     const v = card;
     if (v.detail.prize) {
       for (let i = 0; i < 9; i++) if (v.detail.cells[i] === v.detail.prize) void tweens.to(0, 1, 600, (k) => icons[i].scale.set((cell * 0.74 / icons[i].texture.width) * (1 + Math.sin(k * Math.PI) * 0.18)), ease.outCubic);
-      banner.text = `Three of a kind · ${times(v.multiplierBp)} · ${rand(v.win)}`;
+      banner.text = `Match! ${times(v.multiplierBp)} · ${rand(v.win)}`;
       banner.style.fill = 0xffe58a;
       sound.win(v.multiplierBp >= 500000 ? 3 : 1);
       if (v.multiplierBp >= 100000) shell.bigWin(v.win, v.multiplierBp);
