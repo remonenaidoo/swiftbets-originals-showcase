@@ -4,7 +4,7 @@ import { bootInstant, call, describe, key, times, floats, cardFace, cardBack, RA
 
 type Bet = 'player' | 'banker' | 'tie';
 interface BacView { roundId: string; multiplierBp: number; win: number; detail: { bet: Bet; player: number[]; banker: number[]; winner: Bet; playerTotal: number; bankerTotal: number }; balance: number | null }
-interface BacInfo { rules: { pays: Record<Bet, number>; rtp: Record<Bet, number> } }
+interface BacInfo { rules: { pays: Record<Bet, number> } }
 
 const value = (card: number) => { const r = (card % 13) + 1; return r >= 10 ? 0 : r; };
 const LABEL: Record<Bet, string> = { player: 'Player', banker: 'Banker', tie: 'Tie' };
@@ -23,9 +23,9 @@ const boot = async () => {
   shell.rules(`
     <h2>Baccarat</h2>
     <p>Bet on the Player hand, the Banker hand, or a tie. Each hand gets two cards; the one closest to 9 wins. Cards count at face value, Aces 1, tens and pictures 0, and only the last digit of a total counts (7 + 8 = 5).</p>
-    <div class="facts"><div><b>${rules.rtp.banker.toFixed(2)}%</b><small>Banker RTP</small></div><div><b>${rules.rtp.player.toFixed(2)}%</b><small>Player RTP</small></div><div><b>${rules.rtp.tie.toFixed(2)}%</b><small>Tie RTP</small></div></div>
+    <div class="facts"><div><b>${times(rules.pays.player)}</b><small>Player</small></div><div><b>${times(rules.pays.banker)}</b><small>Banker</small></div><div><b>${times(rules.pays.tie)}</b><small>Tie</small></div></div>
     <h3>Pays</h3>
-    <table class="table"><tr><th>Bet</th><th>Pays</th><th>RTP</th></tr>${(['player', 'banker', 'tie'] as Bet[]).map((b) => `<tr><td>${LABEL[b]}</td><td>${b === 'player' ? '1 to 1' : b === 'banker' ? '0.95 to 1' : '8 to 1'}</td><td>${rules.rtp[b].toFixed(2)}%</td></tr>`).join('')}</table>
+    <table class="table"><tr><th>Bet</th><th>A win returns</th></tr>${(['player', 'banker', 'tie'] as Bet[]).map((b) => `<tr><td>${LABEL[b]}</td><td>${times(rules.pays[b])} your stake</td></tr>`).join('')}</table>
     <p>On a tie, Player and Banker bets are returned.</p>
     <h3>Third cards</h3>
     <p>If either hand has 8 or 9 with its first two cards (a natural), both stand. Otherwise the Player draws a third card on 0–5 and stands on 6–7. If the Player stood, the Banker draws on 0–5. If the Player drew, the Banker draws on 0–2; on 3 unless the Player's third card was 8; on 4 if it was 2–7; on 5 if it was 4–7; on 6 if it was 6 or 7; and stands on 7.</p>

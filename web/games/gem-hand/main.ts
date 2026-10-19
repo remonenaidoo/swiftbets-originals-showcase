@@ -29,7 +29,7 @@ const boot = async () => {
   shell.rules(`
     <h2>Gem Hand</h2>
     <p>Five gems fall, each one of seven colours. Matching colours make a hand, paid like poker: the more that match, the more it pays.</p>
-    <div class="facts"><div><b>${state.info.rtp.toFixed(2)}%</b><small>Return to player</small></div><div><b>${times(pays.five)}</b><small>Five of a kind</small></div><div><b>7</b><small>Colours</small></div></div>
+    <div class="facts"><div><b>${times(pays.five)}</b><small>Five of a kind</small></div><div><b>7</b><small>Colours</small></div></div>
     <h3>Pays</h3>
     <table class="table">${HANDS.map(([k, name]) => `<tr><td>${name}</td><td>${times(pays[k])}</td></tr>`).join('')}<tr><td>Five different</td><td>—</td></tr></table>
     <p>Each gem is one of 7 colours with equal chance, so each of the 16,807 hands is equally likely.</p>

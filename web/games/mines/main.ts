@@ -6,7 +6,7 @@ interface MinesView {
   roundId: string; stake: number; mines: number; revealed: number[]; multiplierBp: number; nextBp: number; win: number;
   status: 'open' | 'busted' | 'cashed' | string; mineTiles: number[] | null; nonce: number; clientSeed: string; serverSeedHash: string; balance: number | null;
 }
-interface MinesInfo { gameId: string; name: string; rtp: number; maxWinStakes: number; stakes: number[]; tiles: number; table: number[][] }
+interface MinesInfo { gameId: string; name: string; rateBp: number; maxWinStakes: number; stakes: number[]; tiles: number; table: number[][] }
 interface MinesState { balance: number | null; open: MinesView | null; recent: RoundSummary[]; seeds: Seeds; info: MinesInfo }
 
 const MINE_CHOICES = [1, 3, 5, 10, 24];
@@ -19,7 +19,7 @@ let busy = false;
 
 const boot = async () => {
   state = await call<MinesState>(query('instant/mines/state'));
-  const shell = mountShell({ title: 'Mines', accent: '#36e2a0', accent2: '#12a874', background: '#050b14', stakes: state.info.stakes, rtp: state.info.rtp });
+  const shell = mountShell({ title: 'Mines', accent: '#36e2a0', accent2: '#12a874', background: '#050b14', stakes: state.info.stakes });
   shell.setBalance(state.balance);
 
   // The game's own controls: how many mines, and a random pick.
@@ -54,9 +54,9 @@ const boot = async () => {
   const rules = () => `
     <h2>Mines</h2>
     <p>25 tiles hide gems and mines. Choose how many mines (1–24) and your stake, then reveal tiles one at a time. Every gem raises the multiplier; cash out whenever you like. Reveal a mine and the round is lost.</p>
-    <div class="facts"><div><b>${state.info.rtp.toFixed(2)}%</b><small>Return to player</small></div><div><b>${state.info.maxWinStakes.toLocaleString('en-ZA')}×</b><small>Max win</small></div><div><b>1–24</b><small>Mines</small></div></div>
+    <div class="facts"><div><b>${state.info.maxWinStakes.toLocaleString('en-ZA')}×</b><small>Max win</small></div><div><b>1–24</b><small>Mines</small></div></div>
     <h3>Multipliers with ${mines} mine${mines > 1 ? 's' : ''}</h3>
-    <p class="note">After k gems the multiplier is 0.96 × C(25, k) ÷ C(25 − mines, k): the chance of surviving k picks, inverted, times the 96% return. Every way of playing returns 96%.</p>
+    <p class="note">After k gems the multiplier is R × C(25, k) ÷ C(25 − mines, k): the chance of surviving k picks, inverted, times the game's return rate R. Every way of playing returns the same.</p>
     <table class="table"><tr><th>Gems</th><th>Multiplier</th><th>Pays at ${rand(shell.stake)}</th></tr>${state.info.table[mines - 1].map((bp, i) =>
       `<tr><td>${i + 1}</td><td>${times(bp)}</td><td>${rand(Math.floor(shell.stake * bp / 10000))}</td></tr>`).join('')}</table>
     <p>The round cashes out by itself when every gem is revealed, or before a pick would pass the ${state.info.maxWinStakes.toLocaleString('en-ZA')}× maximum.</p>

@@ -29,10 +29,10 @@ export async function minesLayout(serverSeed: string, clientSeed: string, nonce:
   return tiles.slice(0, mines).sort((a, b) => a - b);
 }
 
-/** Crash point of a shared round (Crash.cs), in basis points. */
-export async function crashPoint(seed: string, seq: number): Promise<number> {
+/** Crash point of a shared round (Crash.cs) at the game's rate (basis points), in basis points. */
+export async function crashPoint(seed: string, seq: number, rateBp = 9600): Promise<number> {
   const [u] = await floats(seed, 'crash', seq, 1);
-  const hundredths = Math.floor(96 / (1 - u));
+  const hundredths = Math.floor(rateBp / 100 / (1 - u));
   return Math.min(Math.max(hundredths, 100), 500000) * 100;
 }
 

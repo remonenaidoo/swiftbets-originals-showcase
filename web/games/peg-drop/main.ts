@@ -28,10 +28,10 @@ const boot = async () => {
   const rules = () => shell.rules(`
     <h2>Peg Drop</h2>
     <p>Drop a ball through the pegs. At every row it bounces left or right with equal chance, and it pays the multiplier of the bucket it lands in. More rows and higher risk spread the pays further: bigger edges, smaller middle.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>${(Math.max(...tables['16-high']) / 10000).toLocaleString('en-ZA')}×</b><small>Top bucket</small></div><div><b>8–16</b><small>Rows</small></div></div>
+    <div class="facts"><div><b>${(Math.max(...tables['16-high']) / 10000).toLocaleString('en-ZA')}×</b><small>Top bucket</small></div><div><b>8–16</b><small>Rows</small></div></div>
     <h3>Pays: ${rows} rows, ${risk} risk</h3>
     <p class="note">${tables[`${rows}-${risk}`].map((b) => times(b, b >= 100000 ? 0 : 2)).join(' · ')}</p>
-    <p>Every table returns just under 96% (each one proved exactly in the maths document).</p>
+    <p>Every table returns the same (each one proved exactly in the maths document).</p>
     <h3>Fairness</h3>
     <p>Each bounce is one float of HMAC-SHA256(server seed, "client seed:nonce:cursor"): right when it is at least 0.5. Change seeds to check any drop (enter its rows: <input id="verify-rows" type="number" value="16" min="8" max="16" step="4" style="width:56px">). In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

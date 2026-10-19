@@ -10,8 +10,10 @@ public sealed record SpinRequest(string GameId, string SessionToken, long Stake,
 /// stake and pays the win under transaction ids derived from the round, so a retry is applied once. A refused bet
 /// moves nothing; a bet with no answer is rolled back; a win with no answer stays owed for the retry job.
 /// </summary>
-public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines games, TimeProvider time)
+public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines games, TimeProvider time, IGameRates? rates = null)
 {
+    private long Rate(string gameId) => (rates ?? FixedRates.Design).For(gameId);
+
     public async Task<Result<SpinView>> SpinAsync(SpinRequest request, CancellationToken cancellationToken)
     {
         if (games.Find(request.GameId) is not var (slot, engine))
@@ -40,7 +42,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
             }
 
             var first = (await store.SpinsAsync(repeat.RoundId, cancellationToken))[0];
-            return Play.View(repeat, first, game, balance);
+            return Play.View(repeat, first, game, balance, Rate(game.GameId));
         }
 
         if (await store.FindOpenFeatureAsync(playerRef!, game.GameId, cancellationToken) is not null)
@@ -50,7 +52,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
 
         var outcome = engine.PlaySpin(free: false);
         var (paidUnits, capped) = Cap.Apply(0, outcome.TotalUnits, game.CapUnits);
-        var win = Play.Money(paidUnits, request.Stake, game.LineCount);
+        var win = Play.Money(paidUnits, request.Stake, game.LineCount, Rate(game.GameId));
         var roundId = Guid.NewGuid();
         var round = new RoundRecord(roundId, playerRef!, request.SessionToken, game.GameId, request.Stake, request.IdempotencyKey, RoundStatus.Pending, 0, 0, time.GetUtcNow());
         var spin = new SpinRecord(roundId, 0, outcome.Stops, Play.OutcomeJson(game, outcome), win, Play.BetTx(roundId), win > 0 ? Play.WinTx(roundId, 0) : null, false);
@@ -95,7 +97,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
         var status = freeSpins > 0 ? RoundStatus.Feature : winPaid ? RoundStatus.Settled : RoundStatus.WinPending;
         await store.UpdateAsync(roundId, status, freeSpins, paidUnits, cancellationToken);
         round = round with { Status = status, FreeSpinsLeft = freeSpins, PaidUnits = paidUnits };
-        return Play.View(round, spin with { WinPaid = winPaid }, game, balance);
+        return Play.View(round, spin with { WinPaid = winPaid }, game, balance, Rate(game.GameId));
     }
 
     /// <summary>Replies that say the casino did not take the stake.</summary>

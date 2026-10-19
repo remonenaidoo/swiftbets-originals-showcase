@@ -72,7 +72,8 @@ public sealed class MoreGamesTests
     {
         // Player 4 + 5 = 9 (a natural), Banker King + 7 = 7: no draws, Player wins.
         double[] floats = [Card(3), Card(12), Card(4), Card(6), Card(0), Card(0)];
-        var result = new Baccarat().Resolve(floats, Json(new { bet = "player" }));
+        // At 100% every bet plays the standard game (its own RTP is lower), so the Player win is even money.
+        var result = new Baccarat().Resolve(floats, Json(new { bet = "player" }), 10_000);
 
         result.MultiplierBp.ShouldBe(20_000);
     }
@@ -121,5 +122,28 @@ public sealed class MoreGamesTests
         new LuckyScratch().Valid(missing).ShouldBeFalse();
         new GemHand().Valid(missing).ShouldBeFalse();
         new CoinFlip().Valid(Json(new { coins = 1, need = 1, side = 1 })).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void At_an_80_percent_rate_formula_games_pay_80_over_the_chance()
+    {
+        Dice.MultiplierBp(5000, false, 8_000).ShouldBe(16_000);      // 50% chance: 1.60×
+        CoinFlip.MultiplierBp(1, 1, 8_000).ShouldBe(16_000);
+        Mines.MultiplierBp(1, 1, 8_000).ShouldBe(8_000L * 25 / 24);
+        Crash.PointBp(0.5, 8_000).ShouldBe(16_000);                  // P(point ≥ 1.6×) = 0.8 / 1.6
+    }
+
+    [Fact]
+    public void At_an_80_percent_rate_each_baccarat_bet_returns_80_percent_and_a_tie_still_returns_the_stake()
+    {
+        foreach (var bet in new[] { "player", "banker", "tie" })
+        {
+            var pushes = bet == "tie" ? 0 : Baccarat.Wins["tie"];
+            var rtp = ((Baccarat.Wins[bet] * Baccarat.WinBp(bet, 8_000)) + (pushes * Mult.One)) / (double)(Baccarat.Deals * Mult.One);
+            rtp.ShouldBeInRange(0.7999, 0.8);
+        }
+
+        double[] tie = [Card(0), Card(2), Card(6), Card(4), Card(0), Card(0)];
+        new Baccarat().Resolve(tie, Json(new { bet = "player" }), 8_000).MultiplierBp.ShouldBe(Mult.One);
     }
 }

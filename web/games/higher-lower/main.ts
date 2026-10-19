@@ -25,9 +25,9 @@ const boot = async () => {
   shell.rules(`
     <h2>Higher or Lower</h2>
     <p>A card is turned. Guess whether the next one is higher or the same, or lower or the same, or skip it. Every right guess raises your multiplier; cash out whenever you like. A wrong guess loses the round.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>5,000×</b><small>Max win</small></div><div><b>A low · K high</b><small>Ranks</small></div></div>
+    <div class="facts"><div><b>5,000×</b><small>Max win</small></div><div><b>A low · K high</b><small>Ranks</small></div></div>
     <h3>How it pays</h3>
-    <p>A guess that wins with c of the 13 ranks multiplies by 13 ÷ c: the riskier the guess, the more it adds. The house edge is taken once, on your first guess (×0.96), so wherever you cash out, the game returns 96%. A guess that cannot lose is not offered, nor one whose win would pass 5,000×.</p>
+    <p>A guess that wins with c of the 13 ranks multiplies by 13 ÷ c: the riskier the guess, the more it adds. The house edge is taken once, on your first guess, so wherever you cash out the game returns the same. A guess that cannot lose is not offered, nor one whose win would pass 5,000×.</p>
     <h3>Fairness</h3>
     <p>The deck is drawn from your seeds before you play: card k is float k × 52, floored (rank = card mod 13 + 1). Only cards already turned are ever sent to your device. An unfinished round is kept: reopen the game to carry on. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

@@ -59,7 +59,7 @@ public sealed record SymbolInfo(string Name, string Kind, int Weight, string Pay
 public sealed record GameInfo(
     string GameId,
     string Name,
-    decimal Rtp,
+    long RateBp,
     int MaxWinStakes,
     long[] Stakes,
     int Lines,

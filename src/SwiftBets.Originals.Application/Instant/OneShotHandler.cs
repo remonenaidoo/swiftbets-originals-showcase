@@ -11,7 +11,7 @@ public sealed record OneShotView(Guid RoundId, string GameId, long Stake, long M
 /// Dice, Limbo, Peg Drop and Keno: one draw from the player's seeds, stored with its result before money moves,
 /// then the stake, then the win, exactly as a slot spin.
 /// </summary>
-public sealed class OneShotHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time)
+public sealed class OneShotHandler(IRoundStore store, IWallet wallet, ISeedStore seeds, TimeProvider time, IGameRates? rates = null)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -46,7 +46,7 @@ public sealed class OneShotHandler(IRoundStore store, IWallet wallet, ISeedStore
         }
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
-        var result = game.Resolve(Fair.Floats(draw.ServerSeed, draw.ClientSeed, draw.Nonce, game.FloatsNeeded(choices)), choices);
+        var result = game.Resolve(Fair.Floats(draw.ServerSeed, draw.ClientSeed, draw.Nonce, game.FloatsNeeded(choices)), choices, (rates ?? FixedRates.Design).For(gameId));
         var win = Mult.Pay(stake, result.MultiplierBp);
         var roundId = Guid.NewGuid();
         var round = new RoundRecord(roundId, playerRef!, sessionToken, gameId, stake, idempotencyKey, RoundStatus.Pending, 0, 0, time.GetUtcNow());

@@ -30,7 +30,7 @@ interface Respin { added: Coin[]; left: number }
 interface WaysDetail { spins: WaysSpin[]; units: number; capped: boolean; freeSpins: number }
 interface HoldDetail { stops: number[]; lines: HoldLine[]; coins: Coin[]; respins: Respin[]; featureUnits: number; grand: boolean; units: number; capped: boolean }
 interface PlayView<D> { roundId: string; multiplierBp: number; win: number; detail: D; balance: number | null }
-interface State { balance: number | null; recent: RoundSummary[]; seeds: Seeds; info: { stakes: number[]; rtp: number; maxWinStakes: number; name: string; rules: Record<string, any> } }
+interface State { balance: number | null; recent: RoundSummary[]; seeds: Seeds; info: { stakes: number[]; rateBp: number; maxWinStakes: number; name: string; rules: Record<string, any> } }
 
 const JACKPOTS: Record<number, string> = { 15: 'MINI', 40: 'MINOR', 150: 'MAJOR' };
 
@@ -62,14 +62,15 @@ export async function startRoundSlot(cfg: RoundSlotConfig) {
   scene.reels.setStrips(baseStrips, randomStops(baseStrips));
   scene.reels.scatter = (s) => s === 'Pearl';
   scene.layout();
-  $('rtp').textContent = `RTP ${state.info.rtp.toFixed(2)}%`;
 
   let balance = state.balance, stakeIndex = Math.max(0, state.info.stakes.indexOf(Number((() => { try { return localStorage.getItem(`stake:${cfg.gameId}`); } catch { return null; } })())));
   let busy = false, speedLevel = savedSpeed(), auto: { left: number; loss: number; start: number } | null = null;
   const stake = () => state.info.stakes[stakeIndex];
   const sp = () => SPEEDS[speedLevel];
   const sleep = (ms: number) => scene.tweens.wait(ms);
-  const money = (units: number, st: number) => Math.floor(units * st / unitsPerStake);
+  // Rounds play back in design units; the game pays them at its rate (as the server does).
+  const rate = (info.rateBp as number) / 9600;
+  const money = (units: number, st: number) => Math.floor((units * st * rate) / unitsPerStake);
 
   const setBalance = (v: number | null) => { if (v !== null) balance = v; $('balance').textContent = balance === null ? '…' : rand(balance); };
   const setWin = (v: number) => { $('win').textContent = rand(v); };

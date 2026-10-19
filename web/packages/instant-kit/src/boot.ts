@@ -4,7 +4,7 @@ import { call, describe, query, type RoundSummary, type Seeds } from './api';
 import { floats } from './fair';
 import { mountShell, seedsHtml, type Shell, type ShellConfig } from './shell';
 
-export interface InstantState<I = Record<string, unknown>, O = unknown> { balance: number | null; open: O | null; recent: RoundSummary[]; seeds: Seeds; info: I & { stakes: number[]; rtp: number; maxWinStakes: number; name: string } }
+export interface InstantState<I = Record<string, unknown>, O = unknown> { balance: number | null; open: O | null; recent: RoundSummary[]; seeds: Seeds; info: I & { stakes: number[]; rateBp: number; maxWinStakes: number; name: string } }
 
 export interface BootOptions {
   gameId: string;
@@ -27,7 +27,7 @@ export interface BootOptions {
 export async function bootInstant<I = Record<string, unknown>, O = unknown>(o: BootOptions) {
   const path = `instant/${o.gameId}/state`;
   const state = await call<InstantState<I, O>>(query(path));
-  const shell: Shell = mountShell({ title: o.title, accent: o.accent, accent2: o.accent2, background: o.background, stakes: state.info.stakes, rtp: state.info.rtp, ...o.shell });
+  const shell: Shell = mountShell({ title: o.title, accent: o.accent, accent2: o.accent2, background: o.background, stakes: state.info.stakes, ...o.shell });
   shell.setBalance(state.balance);
   shell.history(state.recent);
 

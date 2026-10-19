@@ -17,17 +17,23 @@ public abstract class OneShotGame
 
     public virtual long[] Stakes => Mines.Stakes;
 
-    /// <summary>The RTP the game states, in percent (its maths document's figure).</summary>
-    public virtual decimal Rtp => 96.00m;
 
     public abstract bool Valid(JsonElement c);
 
     public abstract int FloatsNeeded(JsonElement c);
 
-    public abstract OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c);
+    /// <summary>The round's result at the game's rate (basis points; <see cref="Mult.Base"/> is the 96% the maths was designed at).</summary>
+    public abstract OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp);
 
-    /// <summary>What the rules sheet shows (tables, ranges).</summary>
-    public abstract object Info { get; }
+    public OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c) => Resolve(floats, c, Mult.Base);
+
+    /// <summary>What the rules sheet shows (tables, ranges), with every pay at the game's rate.</summary>
+    public abstract object InfoAt(long rateBp);
+
+    public object Info => InfoAt(Mult.Base);
+
+    /// <summary>A table of pays designed at <see cref="Mult.Base"/>, at the game's rate.</summary>
+    protected static long[] Rated(IEnumerable<long> table, long rateBp) => [.. table.Select(bp => Mult.Rated(bp, rateBp))];
 
     protected static int Int(JsonElement e, string name, int fallback = int.MinValue) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.TryGetInt32(out var i) ? i : fallback;
@@ -49,7 +55,7 @@ public static class OneShotGames
 
 /// <summary>
 /// Dice: a roll of 0.00–99.99 (10,000 equally likely outcomes); the player bets over or under a target. With c
-/// winning outcomes out of 10,000 the pay is 0.96 × 10,000 / c, floored to a basis point. Win chance 2%–98%.
+/// winning outcomes out of 10,000 the pay is r × 10,000 / c at the game's rate r, floored to a basis point. Win chance 2%–98%.
 /// </summary>
 public sealed class Dice : OneShotGame
 {
@@ -64,7 +70,7 @@ public sealed class Dice : OneShotGame
     /// <summary>Winning outcomes: over wins on a roll above the target, under on a roll below it.</summary>
     public static int Count(int target, bool over) => over ? 9_999 - target : target;
 
-    public static long MultiplierBp(int target, bool over) => 96_000_000L / Count(target, over);
+    public static long MultiplierBp(int target, bool over, long rateBp = Mult.Base) => rateBp * Mult.One / Count(target, over);
 
     public override bool Valid(JsonElement c) =>
         Int(c, "target") is var t && t is >= 0 and <= 9_999 && c.TryGetProperty("over", out var o) && o.ValueKind is JsonValueKind.True or JsonValueKind.False
@@ -72,19 +78,19 @@ public sealed class Dice : OneShotGame
 
     public override int FloatsNeeded(JsonElement c) => 1;
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var target = Int(c, "target");
         var over = c.GetProperty("over").GetBoolean();
         var roll = Roll(floats[0]);
         var win = over ? roll > target : roll < target;
-        return new(win ? MultiplierBp(target, over) : 0, new { roll, target, over, win });
+        return new(win ? MultiplierBp(target, over, rateBp) : 0, new { roll, target, over, win });
     }
 
-    public override object Info => new { minChance = 200, maxChance = 9_800, rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { minChance = 200, maxChance = 9_800, rateBp };
 }
 
-/// <summary>Limbo: pick a target from 1.01× to 5,000×; the round's result has P(result ≥ x) = 0.96 / x (Crash's draw); a result at or above the target pays the target.</summary>
+/// <summary>Limbo: pick a target from 1.01× to 5,000×; the round's result has P(result ≥ x) = r / x at the game's rate r (Crash's draw); a result at or above the target pays the target.</summary>
 public sealed class Limbo : OneShotGame
 {
     public const string GameId = "limbo";
@@ -97,14 +103,14 @@ public sealed class Limbo : OneShotGame
 
     public override int FloatsNeeded(JsonElement c) => 1;
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var target = Long(c, "target");
-        var result = Crash.PointBp(floats[0]);
+        var result = Crash.PointBp(floats[0], rateBp);
         return new(result >= target ? target : 0, new { result, target, win = result >= target });
     }
 
-    public override object Info => new { minTarget = Crash.MinAutoBp, maxTarget = Mult.CapBp, rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { minTarget = Crash.MinAutoBp, maxTarget = Mult.CapBp, rateBp };
 }
 
 /// <summary>Peg Drop: a ball falls through 8, 12 or 16 rows of pegs, bouncing left or right with equal chance; it lands in bucket k (the number of right bounces) and pays that bucket of the chosen risk's table.</summary>
@@ -123,16 +129,16 @@ public sealed class PegDrop : OneShotGame
 
     public override int FloatsNeeded(JsonElement c) => Int(c, "rows");
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var rows = Int(c, "rows");
         var risk = c.GetProperty("risk").GetString()!;
         var path = floats.Take(rows).Select(f => f < 0.5 ? 0 : 1).ToArray();
         var bucket = path.Sum();
-        return new(InstantTables.PegDrop[(rows, risk)][bucket], new { rows, risk, path, bucket });
+        return new(Mult.Rated(InstantTables.PegDrop[(rows, risk)][bucket], rateBp), new { rows, risk, path, bucket });
     }
 
-    public override object Info => new { rows = Rows, risks = Risks, tables = InstantTables.PegDrop.ToDictionary(t => $"{t.Key.Rows}-{t.Key.Risk}", t => t.Value), rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { rows = Rows, risks = Risks, tables = InstantTables.PegDrop.ToDictionary(t => $"{t.Key.Rows}-{t.Key.Risk}", t => Rated(t.Value, rateBp)) };
 }
 
 /// <summary>Keno: 40 numbers; the player picks 1–10; 10 are drawn (a Fisher–Yates shuffle by the round's floats); pays by picks and hits.</summary>
@@ -170,13 +176,13 @@ public sealed class Keno : OneShotGame
         return [.. balls.Take(Drawn)];
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var picks = Picks(c);
         var drawn = Draw(floats);
         var hits = picks.Count(drawn.Contains);
-        return new(InstantTables.Keno[picks.Length][hits], new { picks, drawn, hits });
+        return new(Mult.Rated(InstantTables.Keno[picks.Length][hits], rateBp), new { picks, drawn, hits });
     }
 
-    public override object Info => new { numbers = Numbers, drawn = Drawn, tables = InstantTables.Keno, rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { numbers = Numbers, drawn = Drawn, tables = InstantTables.Keno.Select(t => Rated(t, rateBp)).ToArray() };
 }

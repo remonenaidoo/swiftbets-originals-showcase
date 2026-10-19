@@ -20,6 +20,8 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Ad
 builder.Services.AddValidatedOptions<OriginalsOptions>(builder.Configuration, OriginalsOptions.SectionName);
 builder.Services.AddOriginalsInfrastructure(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.Configure<RtpOptions>(builder.Configuration.GetSection("Originals:Rtp"));
+builder.Services.AddSingleton<IGameRates, GameRates>();
 builder.Services.AddSingleton(new SlotEngines(OriginalsGames.Catalog, RandomNumberGenerator.GetInt32));
 builder.Services.AddSingleton<SpinHandler>();
 builder.Services.AddSingleton<FeatureHandler>();
@@ -34,7 +36,7 @@ builder.Services.AddSingleton<SwiftBets.Originals.Application.Ports.ICrashBroadc
 builder.Services.AddSingleton(sp => new SwiftBets.Originals.Application.Instant.CrashRoom(
     sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IRoundStore>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashStore>(),
     sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IWallet>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashBroadcast>(),
-    TimeProvider.System, SwiftBets.Originals.Domain.Instant.Fair.NewSeed));
+    TimeProvider.System, SwiftBets.Originals.Domain.Instant.Fair.NewSeed, sp.GetRequiredService<IGameRates>()));
 
 var app = builder.Build();
 app.UseSwiftBetsObservability();

@@ -135,15 +135,16 @@ public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Po
         return (spins, paid, paid >= CapUnits);
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var (spins, units, capped) = PlayRound(floats);
-        return new(units * (Mult.One / Units), new { spins, units, capped, freeSpins = spins.Count - 1 });
+        // The playback is in design units; the page scales them by rateBp ÷ Mult.Base, as the pay is here.
+        return new(Mult.Rated(units * (Mult.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
     }
 
-    public override object Info => new
+    public override object InfoAt(long rateBp) => new
     {
         units = Units, symbols = WaysTables.Symbols, wilds = WaysTables.WildMultiplier, pays = WaysTables.Pays, scatterStakes = WaysTables.ScatterStakes,
-        freeSpins = WaysTables.FreeSpins, baseReels = WaysTables.Base, freeReels = WaysTables.Free, rtp = 96.00m,
+        freeSpins = WaysTables.FreeSpins, baseReels = WaysTables.Base, freeReels = WaysTables.Free, rateBp,
     };
 }

@@ -4,15 +4,17 @@ import { bootInstant, call, describe, key, times, floats } from '@originals/inst
 
 interface FlipView { roundId: string; multiplierBp: number; win: number; detail: { coins: number; need: number; side: string; flips: string[]; landed: number; win: boolean }; balance: number | null }
 
-/** At least `need` of `coins` on one side: the number of the 2^coins outcomes, and the pay (0.96 ÷ P, floored to 0.0001×). */
+/** At least `need` of `coins` on one side: the number of the 2^coins outcomes, and the pay (the game's rate ÷ P, floored to 0.0001×). */
+let rateBp = 9600;
 const ways = (coins: number, need: number) => { let w = 0, c = 1; for (let k = 0; k <= coins; k++) { if (k >= need) w += c; c = (c * (coins - k)) / (k + 1); } return w; };
-const payBp = (coins: number, need: number) => Math.floor((9600 * 2 ** coins) / ways(coins, need));
+const payBp = (coins: number, need: number) => Math.floor((rateBp * 2 ** coins) / ways(coins, need));
 
 const boot = async () => {
-  const { shell, app, tex, refresh } = await bootInstant({
+  const { shell, app, tex, refresh, state } = await bootInstant({
     gameId: 'coin-flip', title: 'Coin Flip', accent: '#ffd25e', accent2: '#1fb5a6', background: '#04161a', art: ['heads.webp', 'tails.webp'],
     verify: async (s, c, n) => { const f = await floats(s, c, n, coins); return `the coins landed ${f.map((x) => (x < 0.5 ? 'heads' : 'tails')).join(', ')} (for ${coins} coins).`; },
   });
+  rateBp = state.info.rateBp;
   let coins = 1, need = 1, side: 'heads' | 'tails' = 'heads', busy = false;
   let faces: string[] = [];
 
@@ -41,9 +43,9 @@ const boot = async () => {
   shell.rules(`
     <h2>Coin Flip</h2>
     <p>Pick heads or tails, how many coins to toss (1 to 10), and how many of them must land on your side. The harder the call, the more it pays.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>983.04×</b><small>Ten of ten</small></div><div><b>1.92×</b><small>One coin</small></div></div>
+    <div class="facts"><div><b>${times(payBp(10, 10))}</b><small>Ten of ten</small></div><div><b>${times(payBp(1, 1))}</b><small>One coin</small></div></div>
     <h3>How it pays</h3>
-    <p>With a chance P of at least that many coins landing your side, the pay is 0.96 ÷ P times your stake (floored to 0.0001×). One coin pays 1.92×; 5 of 5 pays 30.72×.</p>
+    <p>The less likely your call, the more it pays: the multiplier is the game's return rate divided by the chance of at least that many coins landing your side (floored to 0.0001×), shown as you set it.</p>
     <h3>Fairness</h3>
     <p>Each coin is one float of HMAC-SHA256(server seed, "client seed:nonce:0"): below 0.5 is heads. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

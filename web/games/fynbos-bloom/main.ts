@@ -21,14 +21,16 @@ const boot = async () => {
     verify: async () => 'replay the round from its floats: each reel stops at floor(float × 100); the full rules are in the maths document.',
   });
   const units = state.info.rules.units;
+  // Rounds play back in design units; the game pays them at its rate.
+  const rate = state.info.rateBp / 9600;
   let busy = false;
 
   shell.rules(`
     <h2>Fynbos Bloom</h2>
     <p>6 reels, 5 rows. A flower pays anywhere on the board when 8 or more of it show. Winning flowers vanish and the flowers above fall into their place, with new ones dropping in from above; this goes on while anything pays.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>5,000×</b><small>Max win</small></div><div><b>8+</b><small>To win</small></div></div>
+    <div class="facts"><div><b>${Math.floor((5000 * state.info.rateBp) / 9600).toLocaleString('en-ZA')}×</b><small>Max win</small></div><div><b>8+</b><small>To win</small></div></div>
     <h3>Pays at ${rand(shell.stake)} stake (8–9 · 10–11 · 12+)</h3>
-    <table class="table">${Object.entries(state.info.rules.pays).map(([s, p]) => `<tr><td>${LABELS[s] ?? s}</td>${p.map((u) => `<td>${rand(Math.floor(u * shell.stake / units))}</td>`).join('')}</tr>`).join('')}</table>
+    <table class="table">${Object.entries(state.info.rules.pays).map(([s, p]) => `<tr><td>${LABELS[s] ?? s}</td>${p.map((u) => `<td>${rand(Math.floor(u * shell.stake * rate / units))}</td>`).join('')}</tr>`).join('')}</table>
     <h3>Suns and free spins</h3>
     <p>4, 5 or 6 Suns pay ${state.info.rules.sunStakes.join(', ')}× the stake and award 10 free spins (3 or more in free spins add 5, up to 60). In free spins, golden blooms land carrying ×2 to ×50; they stay through the tumbles, and when nothing more pays the spin's win is multiplied by their total.</p>
     <h3>How wins pay</h3>
@@ -152,7 +154,7 @@ const boot = async () => {
     await dropIn(spin.board);
     let spinWon = 0;
     for (const step of spin.steps) {
-      const stepWon = step.wins.reduce((a, w) => a + Math.floor(w.units * st / units), 0);
+      const stepWon = step.wins.reduce((a, w) => a + Math.floor(w.units * st * rate / units), 0);
       spinWon += stepWon;
       await tumble(step, spinWon);
     }
@@ -163,7 +165,7 @@ const boot = async () => {
       sound.big();
       await tweens.wait(900);
     }
-    const paid = Math.floor(spin.paid * st / units);
+    const paid = Math.floor(spin.paid * st * rate / units);
     if (paid > 0) {
       amount.text = rand(paid);
       amount.visible = true;
@@ -197,7 +199,7 @@ const boot = async () => {
           banner.text = `FREE SPIN ${i + 1} of ${free.length}  ·  won ${rand(running.won)}`;
           await playSpin(spin, st, running);
         }
-        banner.text = `FREE SPINS won ${rand(running.won - Math.floor(first.paid * st / units))}`;
+        banner.text = `FREE SPINS won ${rand(running.won - Math.floor(first.paid * st * rate / units))}`;
       }
       shell.setWin(v.win);
       shell.setBalance(v.balance);

@@ -35,10 +35,10 @@ const boot = async () => {
   const rules = () => shell.rules(`
     <h2>Towers</h2>
     <p>Climb the baobab one row at a time. Each row hides golden fruit and a cobra; pick a tile to climb. Every safe row raises the multiplier; cash out whenever you like. Find a cobra and the round is lost.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>8</b><small>Rows</small></div><div><b>4</b><small>Levels</small></div></div>
+    <div class="facts"><div><b>8</b><small>Rows</small></div><div><b>4</b><small>Levels</small></div></div>
     <h3>${level[0].toUpperCase() + level.slice(1)}: ${info.levels[level].tiles} tiles, ${info.levels[level].traps} cobra${info.levels[level].traps > 1 ? 's' : ''} a row</h3>
     <table class="table"><tr><th>Row</th><th>Multiplier</th><th>Pays at ${rand(shell.stake)}</th></tr>${info.levels[level].table.map((bp, i) => `<tr><td>${i + 1}</td><td>${times(bp)}</td><td>${rand(Math.floor(shell.stake * bp / 10000))}</td></tr>`).join('')}</table>
-    <p>The multiplier after k rows is 0.96 × (tiles ÷ safe tiles)^k: every way of playing returns 96%. The round cashes out by itself at the top, or before a row would pass 5,000×.</p>
+    <p>The multiplier after k rows is R × (tiles ÷ safe tiles)^k, with R the game's return rate: every way of playing returns the same. The round cashes out by itself at the top, or before a row would pass 5,000×.</p>
     <h3>Fairness</h3>
     <p>The cobras are placed before you climb, from your seeds. Verify a round's level: <select id="verify-level">${LEVELS.map((l) => `<option>${l}</option>`).join('')}</select>. An unfinished climb is kept: reopen the game to carry on. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

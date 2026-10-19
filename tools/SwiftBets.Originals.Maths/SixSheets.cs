@@ -94,7 +94,7 @@ public static class SixSheets
             gem.AppendLine(CultureInfo.InvariantCulture, $"| {hand} | {counts.GetValueOrDefault(hand):N0} | {X(bp)} | {share:P4} |");
         }
 
-        gem.AppendLine().AppendLine(CultureInfo.InvariantCulture, $"**RTP {gRtp:P4}** (stated {new GemHand().Rtp:F2}%).");
+        gem.AppendLine().AppendLine(CultureInfo.InvariantCulture, $"**RTP {gRtp:P4}** at the design rate.");
         File.WriteAllText($"{dir}/gem-hand.md", gem.ToString());
         ok &= gRtp <= 0.96 + 1e-12;
 
@@ -114,11 +114,12 @@ public static class SixSheets
         {
             var pw = won[bet] / total;
             var push = bet == "tie" ? 0 : won["tie"] / total;
-            var rtp = pw * Baccarat.WinBp[bet] / Mult.One + push;
-            bac.AppendLine(CultureInfo.InvariantCulture, $"| {bet} | {X(Baccarat.WinBp[bet])} | {pw:P4} | {push:P4} | {rtp:P4} |");
+            var rtp = pw * Baccarat.StandardBp[bet] / Mult.One + push;
+            bac.AppendLine(CultureInfo.InvariantCulture, $"| {bet} | {X(Baccarat.StandardBp[bet])} | {pw:P4} | {push:P4} | {rtp:P4} |");
+            ok &= (long)won[bet] == Baccarat.Wins[bet];
         }
 
-        bac.AppendLine().AppendLine("Baccarat keeps the standard pays (Player 1:1, Banker 0.95:1, Tie 8:1), so each bet's RTP is the game's own, stated per bet in the rules.");
+        bac.AppendLine().AppendLine("These are the standard pays. At a configured rate r below a bet's RTP above, that bet's win pays (r × 4,826,809 − ties returned) ÷ wins instead, so the bet returns r; the win counts here are the ones the game uses.");
         File.WriteAllText($"{dir}/baccarat.md", bac.ToString());
 
         // Higher or Lower: a strategy's RTP is P(its guesses all win) × the multiplier; the multiplier is the inverse of that chance × 0.96, floored.

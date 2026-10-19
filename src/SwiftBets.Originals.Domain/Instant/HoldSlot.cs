@@ -153,15 +153,15 @@ public sealed class HoldSlot(string id = HoldSlot.GameId, string name = "Highvel
         return (stops, lines, coins, respins, featurePaid, grand, lineUnits + featurePaid, units + feature >= CapUnits);
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var r = PlayRound(floats);
-        return new(r.Units * (Mult.One / Units), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
+        return new(Mult.Rated(r.Units * (Mult.One / Units), rateBp), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
     }
 
-    public override object Info => new
+    public override object InfoAt(long rateBp) => new
     {
         units = Units, symbols = HoldTables.Symbols, pays = HoldTables.Pays, values = HoldTables.Values.Select(v => new { v.Stakes, v.Weight }), grand = HoldTables.Grand,
-        trigger = HoldTables.Trigger, respinChanceBp = HoldTables.RespinChanceBp, reels = HoldTables.Reels, lines = HoldTables.Lines, rtp = 96.00m,
+        trigger = HoldTables.Trigger, respinChanceBp = HoldTables.RespinChanceBp, reels = HoldTables.Reels, lines = HoldTables.Lines, rateBp,
     };
 }

@@ -25,7 +25,7 @@ public sealed record BetPublic(Guid Table, string Tag, string Player, long Stake
 /// starting the flight. Losing bets settle a grace period after the crash, so a cash-out received before the crash
 /// but still being stored is never beaten by the settlement.
 /// </summary>
-public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wallet, ICrashBroadcast broadcast, TimeProvider time, Func<string> newSeed) : IDisposable
+public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wallet, ICrashBroadcast broadcast, TimeProvider time, Func<string> newSeed, IGameRates? rates = null) : IDisposable
 {
     public static readonly TimeSpan SettleGrace = TimeSpan.FromSeconds(1);
 
@@ -58,7 +58,7 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
     {
         var seq = await crashes.LastSeqAsync(cancellationToken) + 1;
         var seed = newSeed();
-        var round = new CrashRound(Guid.NewGuid(), seq, seed, Fair.Hash(seed), Crash.PointBp(Fair.Floats(seed, Crash.ClientSeed, seq, 1)[0]), CrashPhase.Betting, time.GetUtcNow() + Crash.Betting, null);
+        var round = new CrashRound(Guid.NewGuid(), seq, seed, Fair.Hash(seed), Crash.PointBp(Fair.Floats(seed, Crash.ClientSeed, seq, 1)[0], (rates ?? FixedRates.Design).For(Crash.GameId)), CrashPhase.Betting, time.GetUtcNow() + Crash.Betting, null);
         await crashes.InsertAsync(round, cancellationToken);
         current = round;
         settled = false;

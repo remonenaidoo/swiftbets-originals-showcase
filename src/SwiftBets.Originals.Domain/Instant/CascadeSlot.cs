@@ -181,15 +181,15 @@ public sealed class CascadeSlot(string id = CascadeSlot.GameId, string name = "K
 
     private static GemCell[][] Copy(GemCell[][] b) => [.. b.Select(col => col.ToArray())];
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var (spins, units, capped) = PlayRound(Production, floats);
-        return new(units * (Mult.One / Units), new { spins, units, capped, freeSpins = spins.Count - 1 });
+        return new(Mult.Rated(units * (Mult.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
     }
 
-    public override object Info => new
+    public override object InfoAt(long rateBp) => new
     {
         units = Units, reels = Reels, rows = Rows, pays = Production.Pays, sunStakes = Production.SunStakes,
-        meteors = Production.Meteors.Select(m => new { m.Value, m.Weight }), baseStrips = Production.BaseStrips, freeStrips = Production.FreeStrips, rtp = 96.00m,
+        meteors = Production.Meteors.Select(m => new { m.Value, m.Weight }), baseStrips = Production.BaseStrips, freeStrips = Production.FreeStrips, rateBp,
     };
 }

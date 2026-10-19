@@ -30,7 +30,7 @@ const boot = async () => {
   shell.rules(`
     <h2>Lucky Scratch</h2>
     <p>Buy a card of nine cells and scratch it. Three of the same prize wins that prize; a card shows at most one set of three.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>${times(prizes[5].payBp)}</b><small>Top prize</small></div><div><b>${((prizes.reduce((a, p) => a + p.chance, 0) / state.info.rules.oddsScale) * 100).toFixed(1)}%</b><small>Cards that win</small></div></div>
+    <div class="facts"><div><b>${times(prizes[5].payBp)}</b><small>Top prize</small></div><div><b>${((prizes.reduce((a, p) => a + p.chance, 0) / state.info.rules.oddsScale) * 100).toFixed(1)}%</b><small>Cards that win</small></div></div>
     <h3>Prizes and odds</h3>
     <table class="table"><tr><th>Prize</th><th>Pays</th><th>Chance</th></tr>${prizes.map((p, i) => `<tr><td>${i + 1}</td><td>${times(p.payBp)}</td><td>1 in ${Math.round(state.info.rules.oddsScale / p.chance).toLocaleString()}</td></tr>`).join('')}</table>
     <h3>Fairness</h3>

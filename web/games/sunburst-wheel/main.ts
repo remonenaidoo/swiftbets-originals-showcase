@@ -36,10 +36,10 @@ const boot = async () => {
   const rules = () => shell.rules(`
     <h2>Sunburst Wheel</h2>
     <p>Choose a risk and how many segments the wheel has, then spin. The segment under the pointer pays its multiplier. Higher risk puts more on fewer segments.</p>
-    <div class="facts"><div><b>96.00%</b><small>Return to player</small></div><div><b>${times(Math.max(...Object.values(wheels).flat()))}</b><small>Top segment</small></div><div><b>9</b><small>Wheels</small></div></div>
+    <div class="facts"><div><b>${times(Math.max(...Object.values(wheels).flat()))}</b><small>Top segment</small></div><div><b>9</b><small>Wheels</small></div></div>
     <h3>This wheel: ${segments} segments, ${risk} risk</h3>
     <p>${table().map(times).join(' · ')}</p>
-    <p>Every segment is equally likely, so every wheel returns exactly 96%: the average of its segments is 0.96×.</p>
+    <p>Every segment is equally likely, and every wheel returns the same.</p>
     <h3>Fairness</h3>
     <p>The segment is the first float of HMAC-SHA256(server seed, "client seed:nonce:0") × segments, floored. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);

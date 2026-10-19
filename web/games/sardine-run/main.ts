@@ -21,13 +21,13 @@ void startRoundSlot({
   colours: { background: 0x031a24, backgroundTop: 0x0a3a4e, frame: 0x5ee6ff, accent: 0xfff3c4, featureTint: 0x0b4e6e },
   css: { '--gold': '#7ce8ff', '--gold-2': '#2a9cc0', '--teal': '#ffd98a', '--panel': 'rgba(3, 24, 34, 0.88)', '--line': 'rgba(124, 232, 255, 0.35)' },
   rules: (info, stake, img) => {
-    const unit = stake / info.units;
+    const unit = (stake / info.units) * (info.rateBp / 9600);
     const pays = Object.entries(info.pays as Record<string, number[]>).map(([s, p]) =>
       `<div class="pay"><div class="pics">${img(s)}</div><div class="grid">${[5, 4, 3].map((n) => `<div><small>${n}</small><b>${rand(p[n - 3] * unit)}</b></div>`).join('')}</div></div>`).join('');
     return `
       <h2>Sardine Run</h2>
       <p>5 reels, 3 rows, 243 ways to win by SwiftBets Originals. A symbol pays when it shows on adjacent reels from reel 1, anywhere on each reel: every combination of its positions is a way.</p>
-      <div class="facts"><div><b>${info.rtp.toFixed(2)}%</b><small>Return to player</small></div><div><b>5,000×</b><small>Max win</small></div><div><b>243</b><small>Ways</small></div></div>
+      <div class="facts"><div><b>${Math.floor((5000 * info.rateBp) / 9600).toLocaleString('en-ZA')}×</b><small>Max win</small></div><div><b>243</b><small>Ways</small></div></div>
       <h3>Pays per way at ${rand(stake)} stake</h3>
       <p>${Object.values(NAMES).join(' · ')}, highest to lowest.</p>
       <div class="pays">${pays}</div>

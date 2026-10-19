@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>Sunburst Wheel's wheels, segment by segment clockwise from the top, in basis points; each averages exactly 0.96×.</summary>
+/// <summary>Sunburst Wheel's wheels, segment by segment clockwise from the top, in basis points at the design rate; each averages exactly 0.96×.</summary>
 public static class WheelTables
 {
     public static readonly IReadOnlyDictionary<(int Segments, string Risk), long[]> Wheels = new Dictionary<(int, string), long[]>
@@ -35,20 +35,20 @@ public sealed class SunburstWheel : OneShotGame
 
     public override int FloatsNeeded(JsonElement c) => 1;
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var segments = Int(c, "segments");
         var risk = c.GetProperty("risk").GetString()!;
         var segment = (int)(floats[0] * segments);
-        return new(WheelTables.Wheels[(segments, risk)][segment], new { segments, risk, segment });
+        return new(Mult.Rated(WheelTables.Wheels[(segments, risk)][segment], rateBp), new { segments, risk, segment });
     }
 
-    public override object Info => new { segments = Segments, risks = Risks, wheels = WheelTables.Wheels.ToDictionary(t => $"{t.Key.Segments}-{t.Key.Risk}", t => t.Value), rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { segments = Segments, risks = Risks, wheels = WheelTables.Wheels.ToDictionary(t => $"{t.Key.Segments}-{t.Key.Risk}", t => Rated(t.Value, rateBp)) };
 }
 
 /// <summary>
 /// Coin Flip: toss 1–10 coins; the player picks a side and the least number of coins that must land on it. With
-/// P the chance of at least that many, the pay is 0.96 ÷ P, floored to a basis point. One float per coin.
+/// P the chance of at least that many, the pay is r ÷ P at the game's rate r, floored to a basis point. One float per coin.
 /// </summary>
 public sealed class CoinFlip : OneShotGame
 {
@@ -75,7 +75,7 @@ public sealed class CoinFlip : OneShotGame
         return ways;
     }
 
-    public static long MultiplierBp(int coins, int need) => (9_600L << coins) / Ways(coins, need);
+    public static long MultiplierBp(int coins, int need, long rateBp = Mult.Base) => (rateBp << coins) / Ways(coins, need);
 
     public override bool Valid(JsonElement c) =>
         Int(c, "coins") is var n && n is >= 1 and <= 10 && Int(c, "need") is var k && k >= 1 && k <= n
@@ -83,7 +83,7 @@ public sealed class CoinFlip : OneShotGame
 
     public override int FloatsNeeded(JsonElement c) => Int(c, "coins");
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var coins = Int(c, "coins");
         var need = Int(c, "need");
@@ -91,16 +91,16 @@ public sealed class CoinFlip : OneShotGame
         var flips = floats.Take(coins).Select(f => f < 0.5 ? "heads" : "tails").ToArray();
         var landed = flips.Count(f => f == side);
         var win = landed >= need;
-        return new(win ? MultiplierBp(coins, need) : 0, new { coins, need, side, flips, landed, win });
+        return new(win ? MultiplierBp(coins, need, rateBp) : 0, new { coins, need, side, flips, landed, win });
     }
 
-    public override object Info => new { maxCoins = 10, rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { maxCoins = 10, rateBp };
 }
 
 /// <summary>
 /// Lucky Scratch: a card of 9 cells holding six prize symbols. The first float picks the prize (or none) from fixed
 /// odds; the card is then laid out from the others so that the prize, if any, shows exactly three times and no other
-/// symbol shows more than twice. Returns exactly 96%.
+/// symbol shows more than twice. At the design rate it returns exactly 96%; prizes scale with the game's rate.
 /// </summary>
 public sealed class LuckyScratch : OneShotGame
 {
@@ -156,14 +156,14 @@ public sealed class LuckyScratch : OneShotGame
         }
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var prize = Prize(floats[0]);
         var cells = Card(prize, floats);
-        return new(prize == 0 ? 0 : Prizes[prize - 1].PayBp, new { prize, cells });
+        return new(prize == 0 ? 0 : Mult.Rated(Prizes[prize - 1].PayBp, rateBp), new { prize, cells });
     }
 
-    public override object Info => new { prizes = Prizes.Select(p => new { payBp = p.PayBp, chance = p.Chance }), oddsScale = OddsScale, rtp = 96.00m };
+    public override object InfoAt(long rateBp) => new { prizes = Prizes.Select(p => new { payBp = Mult.Rated(p.PayBp, rateBp), chance = p.Chance }), oddsScale = OddsScale };
 }
 
 /// <summary>Gem Hand: five gems, each one of 7 colours with equal chance, paid like a poker hand.</summary>
@@ -172,7 +172,7 @@ public sealed class GemHand : OneShotGame
     public const string GameId = "gem-hand";
     public const int Colours = 7;
 
-    /// <summary>Pays by hand in basis points (exact RTP 95.96% over the 16,807 equally likely hands).</summary>
+    /// <summary>Pays by hand in basis points at the design rate (exact RTP 95.96% over the 16,807 equally likely hands).</summary>
     public static readonly IReadOnlyDictionary<string, long> Pays = new Dictionary<string, long>
     {
         ["five"] = 240_000, ["four"] = 50_000, ["full-house"] = 40_000, ["three"] = 25_000, ["two-pair"] = 20_000, ["pair"] = 2_000, ["none"] = 0,
@@ -181,8 +181,6 @@ public sealed class GemHand : OneShotGame
     public override string Id => GameId;
 
     public override string Name => "Gem Hand";
-
-    public override decimal Rtp => 95.96m;
 
     public override bool Valid(JsonElement c) => c.ValueKind == JsonValueKind.Object;
 
@@ -203,34 +201,44 @@ public sealed class GemHand : OneShotGame
         };
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var gems = floats.Take(5).Select(f => (int)(f * Colours)).ToArray();
         var hand = Classify(gems);
-        return new(Pays[hand], new { gems, hand });
+        return new(Mult.Rated(Pays[hand], rateBp), new { gems, hand });
     }
 
-    public override object Info => new { colours = Colours, pays = Pays, rtp = 95.96m };
+    public override object InfoAt(long rateBp) => new { colours = Colours, pays = Pays.ToDictionary(p => p.Key, p => Mult.Rated(p.Value, rateBp)) };
 }
 
 /// <summary>
 /// Baccarat (punto banco) with the standard drawing rules, from an endless shoe: each card is one of 52 with equal
-/// chance (six floats, dealt Player, Banker, Player, Banker, then each side's third card). Player pays 1:1, Banker
-/// 0.95:1, Tie 8:1; a tie returns Player and Banker bets.
+/// chance (six floats, dealt Player, Banker, Player, Banker, then each side's third card). A tie returns Player and
+/// Banker bets. At the game's rate r each bet's win pays what makes that bet return r, never more than the standard
+/// pay (Player 1:1, Banker 0.95:1, Tie 8:1), so a rate at or above a bet's natural RTP plays the standard game.
 /// </summary>
 public sealed class Baccarat : OneShotGame
 {
     public const string GameId = "baccarat";
-    public static readonly IReadOnlyDictionary<string, long> WinBp = new Dictionary<string, long> { ["player"] = 20_000, ["banker"] = 19_500, ["tie"] = 90_000 };
+    /// <summary>The standard pays, the most a win ever returns.</summary>
+    public static readonly IReadOnlyDictionary<string, long> StandardBp = new Dictionary<string, long> { ["player"] = 20_000, ["banker"] = 19_500, ["tie"] = 90_000 };
+
+    /// <summary>Of the 13^6 equally likely rank deals, how many each side wins (counted through <see cref="Deal"/>; the maths tool re-counts them).</summary>
+    public const long Deals = 4_826_809;
+    public static readonly IReadOnlyDictionary<string, long> Wins = new Dictionary<string, long> { ["player"] = 2_153_464, ["banker"] = 2_212_744, ["tie"] = 460_601 };
+
+    /// <summary>A winning bet's pay at rate r: (r × deals − ties returned) ÷ wins, floored, at most the standard pay.</summary>
+    public static long WinBp(string bet, long rateBp)
+    {
+        var pushes = bet == "tie" ? 0 : Wins["tie"];
+        return Math.Min(StandardBp[bet], ((rateBp * Deals) - (pushes * Mult.One)) / Wins[bet]);
+    }
 
     public override string Id => GameId;
 
     public override string Name => "Baccarat";
 
-    /// <summary>The best bet's (Banker); each bet's own is in the rules.</summary>
-    public override decimal Rtp => 98.94m;
-
-    public override bool Valid(JsonElement c) => c.ValueKind == JsonValueKind.Object && c.TryGetProperty("bet", out var b) && b.ValueKind == JsonValueKind.String && WinBp.ContainsKey(b.GetString()!);
+    public override bool Valid(JsonElement c) => c.ValueKind == JsonValueKind.Object && c.TryGetProperty("bet", out var b) && b.ValueKind == JsonValueKind.String && StandardBp.ContainsKey(b.GetString()!);
 
     public override int FloatsNeeded(JsonElement c) => 6;
 
@@ -273,13 +281,13 @@ public sealed class Baccarat : OneShotGame
         return ([.. player], [.. banker], p > b ? "player" : b > p ? "banker" : "tie");
     }
 
-    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c)
+    public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var bet = c.GetProperty("bet").GetString()!;
         var (player, banker, winner) = Deal(floats);
-        var bp = winner == bet ? WinBp[bet] : winner == "tie" ? Mult.One : 0;
+        var bp = winner == bet ? WinBp(bet, rateBp) : winner == "tie" ? Mult.One : 0;
         return new(bp, new { bet, player, banker, winner, playerTotal = player.Sum(Value) % 10, bankerTotal = banker.Sum(Value) % 10 });
     }
 
-    public override object Info => new { pays = WinBp, rtp = new { player = 98.77m, banker = 98.94m, tie = 85.88m } };
+    public override object InfoAt(long rateBp) => new { pays = StandardBp.ToDictionary(b => b.Key, b => WinBp(b.Key, rateBp)) };
 }

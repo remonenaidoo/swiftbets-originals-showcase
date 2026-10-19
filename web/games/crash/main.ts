@@ -5,7 +5,7 @@ import { call, crashPoint, describe, key, mountShell, query, sha256, times, type
 
 interface CrashPublic { id: string; seq: number; seedHash: string; phase: 'betting' | 'flying' | 'crashed' | 'void'; bettingUntil: string; serverNow: string; rate: number; pointBp: number | null; seed: string | null }
 interface CrashBetView { roundId: string; table: string; stake: number; autoBp: number | null; status: 'open' | 'cashed' | 'lost' | 'refunded'; cashedAtBp: number | null; win: number; balance: number | null }
-interface CrashInfo { gameId: string; name: string; rtp: number; maxWinStakes: number; stakes: number[]; minAutoBp: number; rate: number; bettingSeconds: number }
+interface CrashInfo { gameId: string; name: string; rateBp: number; maxWinStakes: number; stakes: number[]; minAutoBp: number; rate: number; bettingSeconds: number }
 interface BetPublic { table: string; tag: string; player: string; stake: number; cashedBp: number | null; win: number | null }
 interface CrashState { balance: number | null; round: CrashPublic | null; bets: CrashBetView[]; board: BetPublic[]; history: number[]; recent: RoundSummary[]; info: CrashInfo }
 
@@ -194,7 +194,7 @@ const boot = async () => {
   round = state.round;
   board = state.board;
   if (round) sync(round);
-  const shell = mountShell({ title: 'Crash', accent: '#ff6fd8', accent2: '#b23ea0', background: '#03040c', stakes: state.info.stakes, rtp: state.info.rtp, layout: 'stacked', ownActions: true });
+  const shell = mountShell({ title: 'Crash', accent: '#ff6fd8', accent2: '#b23ea0', background: '#03040c', stakes: state.info.stakes, layout: 'stacked', ownActions: true });
   shell.setBalance(state.balance);
   shell.history(state.recent);
 
@@ -219,13 +219,13 @@ const boot = async () => {
   shell.rules(`
     <h2>Crash</h2>
     <p>One round for everyone. Bet while the countdown runs; then the rocket takes off and the multiplier climbs until it crashes. Cash out before the crash to win your stake times the multiplier at that moment. You can hold two bets in a round, each with its own stake and auto cash-out.</p>
-    <div class="facts"><div><b>${state.info.rtp.toFixed(2)}%</b><small>Return to player</small></div><div><b>${state.info.maxWinStakes.toLocaleString('en-ZA')}×</b><small>Max multiplier</small></div><div><b>${state.info.bettingSeconds} s</b><small>To bet</small></div></div>
+    <div class="facts"><div><b>${state.info.maxWinStakes.toLocaleString('en-ZA')}×</b><small>Max multiplier</small></div><div><b>${state.info.bettingSeconds} s</b><small>To bet</small></div></div>
     <h3>How the crash point is set</h3>
-    <p>Each round's crash point is fixed before betting opens: the chance it reaches at least x is 0.96 ÷ x, so every auto cash-out target returns 96%. About 1 round in 20 crashes at 1.00×, before anyone can cash out. The multiplier doubles about every 11.6 seconds.</p>
+    <p>Each round's crash point is fixed before betting opens. Some rounds crash at 1.00×, before anyone can cash out. The multiplier doubles about every 11.6 seconds.</p>
     <h3>Cashing out</h3>
     <p>A cash-out counts at the moment the server receives it, at the multiplier shown then (to 0.01×). If it arrives at or after the crash, the bet is lost. An auto cash-out is paid at exactly its target when the round reaches it. Auto bet places the same bet at the start of every round until you switch it off or a bet is refused.</p>
     <h3>Fairness</h3>
-    <p>Before betting, every player sees the round's seed hash. After the crash the seed is shown: SHA-256 of the seed matches the hash, and the crash point is floor(96 ÷ (1 − u)) ÷ 100, with u the first HMAC-SHA256 float of (seed, "crash:round number:0"). The fairness panel shows the check for the last round.</p>
+    <p>Before betting, every player sees the round's seed hash. After the crash the seed is shown: SHA-256 of the seed matches the hash, and the crash point is floor(R ÷ (1 − u)) ÷ 100, with R the game's return rate and u the first HMAC-SHA256 float of (seed, "crash:round number:0"). The fairness panel shows the check for the last round.</p>
     <p>If the game stops mid-round, every open bet of that round is refunded. In case of a malfunction, all pays and plays are void.</p>
     <p class="foot">18+ · Play responsibly · SwiftBets demo balance</p>`);
   const fairness = () => shell.fairness(`
@@ -549,7 +549,7 @@ const boot = async () => {
     round = r;
     sync(r);
     // Check the round: the seed's hash is the one shown before betting, and the seed gives this crash point.
-    if (r.seed && r.pointBp) verified[r.id] = (await sha256(r.seed)) === r.seedHash && (await crashPoint(r.seed, r.seq)) === r.pointBp;
+    if (r.seed && r.pointBp) verified[r.id] = (await sha256(r.seed)) === r.seedHash && (await crashPoint(r.seed, r.seq, state.info.rateBp)) === r.pointBp;
     fairness();
     renderAll();
     setTimeout(refresh, 1400);
