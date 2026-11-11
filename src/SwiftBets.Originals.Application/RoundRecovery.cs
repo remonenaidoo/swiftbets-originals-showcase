@@ -2,14 +2,7 @@ using SwiftBets.Originals.Application.Ports;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>
-/// Puts money right after failures, run every 30 seconds:
-/// <list type="bullet">
-/// <item>a round left <c>pending</c> by a crash is settled if its win was already paid (so the bet was taken), and otherwise voided and rolled back;</item>
-/// <item>a voided round whose rollback the casino has not confirmed is rolled back again (the casino applies it once);</item>
-/// <item>owed wins are paid under their original transaction id, and a round waiting only on them is settled.</item>
-/// </list>
-/// </summary>
+/// <summary>Puts money right after failures: settles or rolls back rounds a crash left pending, retries unconfirmed rollbacks, pays owed wins.</summary>
 public sealed class RoundRecovery(IRoundStore store, IWallet wallet, TimeProvider time)
 {
     public static readonly TimeSpan PendingGrace = TimeSpan.FromMinutes(2);
@@ -18,24 +11,7 @@ public sealed class RoundRecovery(IRoundStore store, IWallet wallet, TimeProvide
     {
         foreach (var round in await store.NeedingRollbackAsync(time.GetUtcNow() - PendingGrace, cancellationToken))
         {
-            var spins = await store.SpinsAsync(round.RoundId, cancellationToken);
-            if (round.Status == RoundStatus.Pending && spins.Count > 0 && spins[0].WinPaid)
-            {
-                await store.UpdateAsync(round.RoundId, RoundStatus.Settled, 0, round.PaidUnits, cancellationToken);
-                continue;
-            }
-
-            // A round still pending is voided only if it is still pending now; one already voided is retried as is.
-            if (round.Status == RoundStatus.Pending && !await store.VoidIfAsync(round.RoundId, RoundStatus.Pending, cancellationToken))
-            {
-                continue;
-            }
-
-            var reply = await wallet.RollbackAsync(round.SessionToken, round.GameId, Play.RollbackTx(round.RoundId), round.RoundId.ToString(), Play.BetTx(round.RoundId), cancellationToken);
-            if (reply.Status == WalletStatus.Ok)
-            {
-                await store.SetRollbackPendingAsync(round.RoundId, false, cancellationToken);
-            }
+            await RollBackAsync(round, cancellationToken);
         }
 
         foreach (var (round, spin) in await store.UnpaidWinsAsync(100, cancellationToken))
@@ -48,6 +24,31 @@ public sealed class RoundRecovery(IRoundStore store, IWallet wallet, TimeProvide
 
             await store.MarkWinPaidAsync(round.RoundId, spin.Seq, cancellationToken);
             await store.SettleIfPaidAsync(round.RoundId, cancellationToken);
+        }
+    }
+
+    private async Task RollBackAsync(RoundRecord round, CancellationToken cancellationToken)
+    {
+        if (round.Status == RoundStatus.Pending)
+        {
+            // A paid first win proves the bet was taken: the round only missed its final update.
+            var spins = await store.SpinsAsync(round.RoundId, cancellationToken);
+            if (spins.Count > 0 && spins[0].WinPaid)
+            {
+                await store.UpdateAsync(round.RoundId, RoundStatus.Settled, 0, round.PaidUnits, cancellationToken);
+                return;
+            }
+
+            if (!await store.VoidIfAsync(round.RoundId, RoundStatus.Pending, cancellationToken))
+            {
+                return;
+            }
+        }
+
+        var reply = await wallet.RollbackAsync(round.SessionToken, round.GameId, TransactionIds.Rollback(round.RoundId), round.RoundId.ToString(), TransactionIds.Bet(round.RoundId), cancellationToken);
+        if (reply.Status == WalletStatus.Ok)
+        {
+            await store.SetRollbackPendingAsync(round.RoundId, false, cancellationToken);
         }
     }
 }

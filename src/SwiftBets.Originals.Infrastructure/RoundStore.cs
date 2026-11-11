@@ -4,7 +4,6 @@ using SwiftBets.Originals.Application.Ports;
 
 namespace SwiftBets.Originals.Infrastructure;
 
-/// <summary>Rounds and spins in Postgres (<c>sb_originals</c>, schema <c>originals</c>).</summary>
 public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
 {
     private const string RoundColumns = "round_id, player_ref, session_token, game_id, stake, idempotency_key, status, free_spins_left, paid_units, created_at";
@@ -90,7 +89,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return [.. rows.Select(r => r.ToRecord())];
     }
 
-    public async Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PlayedSpin>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         var spins = (await c.QueryAsync<SpinRow>(new CommandDefinition(
@@ -100,19 +99,19 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
             WHERE s.win > 0 AND NOT s.win_paid AND r.status NOT IN ('pending', 'refused', 'voided')
             ORDER BY r.created_at LIMIT @limit
             """, new { limit }, cancellationToken: cancellationToken))).ToList();
-        var result = new List<(RoundRecord, SpinRecord)>();
+        var result = new List<PlayedSpin>();
         foreach (var spin in spins)
         {
             if (await GetAsync(spin.round_id, cancellationToken) is { } round)
             {
-                result.Add((round, spin.ToRecord()));
+                result.Add(new PlayedSpin(round, spin.ToRecord()));
             }
         }
 
         return result;
     }
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
+    public async Task<PlayedSpin?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, FreeSpinStep> play, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await using var tx = await c.BeginTransactionAsync(cancellationToken);
@@ -133,7 +132,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
             "UPDATE originals.rounds SET free_spins_left = @left, paid_units = @paidUnits, status = @status WHERE round_id = @roundId",
             new { roundId, left, paidUnits, status }, tx, cancellationToken: cancellationToken));
         await tx.CommitAsync(cancellationToken);
-        return (round with { FreeSpinsLeft = left, PaidUnits = paidUnits, Status = status }, spin);
+        return new PlayedSpin(round with { FreeSpinsLeft = left, PaidUnits = paidUnits, Status = status }, spin);
     }
 
     public async Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken)
@@ -145,7 +144,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         return row?.ToRecord();
     }
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken)
+    public async Task<PlayedSpin?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, RoundStep?> step, CancellationToken cancellationToken)
     {
         await using var c = await db.OpenConnectionAsync(cancellationToken);
         await using var tx = await c.BeginTransactionAsync(cancellationToken);
@@ -159,7 +158,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
         var round = row.ToRecord();
         var spins = (await c.QueryAsync<SpinRow>(new CommandDefinition(
             $"SELECT {SpinColumns} FROM originals.spins WHERE round_id = @roundId ORDER BY seq", new { roundId }, tx, cancellationToken: cancellationToken))).Select(r => r.ToRecord()).ToList();
-        if (step(round, spins) is not var (spin, status, paid))
+        if (step(round, spins) is not (var spin, var status, var paid))
         {
             return null;
         }
@@ -172,7 +171,7 @@ public sealed class RoundStore(NpgsqlDataSource db) : IRoundStore
             WHERE round_id = @roundId
             """, new { roundId, status, paid }, tx, cancellationToken: cancellationToken));
         await tx.CommitAsync(cancellationToken);
-        return (round with { Status = status, PaidUnits = paid }, spin);
+        return new PlayedSpin(round with { Status = status, PaidUnits = paid }, spin);
     }
 
     public async Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken)

@@ -14,7 +14,7 @@ public sealed class OneShotTests : IDisposable
 
     public void Dispose() => store.Dispose();
 
-    private OneShotHandler Handler() => new(store, wallet, seeds, TimeProvider.System);
+    private OneShotHandler Handler() => new(store, wallet, seeds, TimeProvider.System, FixedRates.Design);
 
     private static JsonElement Json(object o) => JsonSerializer.SerializeToElement(o);
 

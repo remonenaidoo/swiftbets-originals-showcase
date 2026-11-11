@@ -12,7 +12,7 @@ public sealed class HigherLowerTests : IDisposable
 
     public void Dispose() => store.Dispose();
 
-    private HigherLowerHandler Handler() => new(store, wallet, seeds, TimeProvider.System);
+    private HigherLowerHandler Handler() => new(store, wallet, seeds, TimeProvider.System, FixedRates.Design);
 
     /// <summary>The fake seeds' first round (nonce 0): the deck in order.</summary>
     private static int[] Ranks() => [.. HigherLower.Deal(Fair.Floats("server-seed", "client", 0, HigherLower.Cards)).Select(HigherLower.Rank)];

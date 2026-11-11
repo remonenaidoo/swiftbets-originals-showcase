@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using SwiftBets.Originals.Application;
 using SwiftBets.Originals.Application.Ports;
 
 namespace SwiftBets.Originals.Infrastructure;
@@ -18,7 +19,7 @@ public static class InfrastructureRegistration
         services.AddSingleton<ICrashStore, CrashStore>();
         services.AddHostedService<CrashLoop>();
         services.AddHttpClient<IWallet, WalletClient>(http => http.Timeout = TimeSpan.FromSeconds(5));
-        services.AddSingleton<SwiftBets.Originals.Application.RoundRecovery>();
+        services.AddSingleton<RoundRecovery>();
         services.AddHostedService<RecoveryJob>();
         return services;
     }

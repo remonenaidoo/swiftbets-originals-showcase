@@ -9,7 +9,7 @@ public static class RoundStatus
     public const string Feature = "feature";
     public const string Settled = "settled";
 
-    /// <summary>An instant round that has taken its stake and is still being played (Mines picks, a Crash bet in flight).</summary>
+    /// <summary>An instant round that has taken its stake and is still being played.</summary>
     public const string Open = "open";
 }
 
@@ -25,8 +25,15 @@ public sealed record RoundRecord(
     long PaidUnits,
     DateTimeOffset CreatedAt);
 
-/// <summary>One spin of a round. <paramref name="OutcomeJson"/> holds lines and scatters so the spin can be replayed.</summary>
 public sealed record SpinRecord(Guid RoundId, int Seq, int[] Stops, string OutcomeJson, long Win, string? BetTx, string? WinTx, bool WinPaid);
+
+/// <summary>A spin as stored, with its round as it stands after the spin.</summary>
+public sealed record PlayedSpin(RoundRecord Round, SpinRecord Spin);
+
+/// <summary>What one locked step of an open round stores: its spin and the round's new status and paid amount.</summary>
+public sealed record RoundStep(SpinRecord Spin, string Status, long Paid);
+
+public sealed record FreeSpinStep(SpinRecord Spin, int SpinsLeft, long PaidUnits);
 
 public interface IRoundStore
 {
@@ -50,40 +57,26 @@ public interface IRoundStore
 
     Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, string gameId, int count, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Plays one free spin atomically: locks the round, checks it still has spins, lets <paramref name="play"/> draw
-    /// the spin after the round's last spin (passed in, read under the lock, so a feature's locked cells are never
-    /// stale), stores it and the round's new spins-left and paid units, and commits. Null when the round is not this
-    /// player's, not this game's, or has no free spin left. Two concurrent calls therefore each consume a spin.
-    /// </summary>
-    Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken);
+    /// <summary>Under the round's row lock, plays one free spin after the last; null when the round has none left for this player and game.</summary>
+    Task<PlayedSpin?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, FreeSpinStep> play, CancellationToken cancellationToken);
 
     /// <summary>The player's unfinished instant round of this game (open, or still taking its stake), if any.</summary>
     Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// One step of an open round, atomically: locks the round, and only when it is this player's, this game's and
-    /// still <c>open</c>, hands it and its spins so far to <paramref name="step"/>, then stores the step's spin and
-    /// the round's new status and paid amount, and commits. Null when the round is not open for this player or the
-    /// step refuses (returns null), so a pick after the round ended, or two picks at once, never both count.
-    /// </summary>
-    Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken);
+    /// <summary>Under the round's row lock, applies one step to an open round; null when it is not open for this player and game, or the step declines.</summary>
+    Task<PlayedSpin?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, RoundStep?> step, CancellationToken cancellationToken);
 
-    /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> when nothing is owed any more (one atomic statement).</summary>
+    /// <summary>Moves a <c>win_pending</c> round to <c>settled</c> once nothing is owed.</summary>
     Task SettleIfPaidAsync(Guid roundId, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Voids the round only if it is still <paramref name="fromStatus"/>, marking its rollback as owed, in one
-    /// statement; false when it has moved on (cashed out, settled). A round is never voided after it was paid.
-    /// </summary>
+    /// <summary>Voids the round and marks its rollback owed only if it is still <paramref name="fromStatus"/>, so a paid round is never voided.</summary>
     Task<bool> VoidIfAsync(Guid roundId, string fromStatus, CancellationToken cancellationToken);
 
-    /// <summary>Records whether a voided round's rollback still needs the casino's confirmation.</summary>
     Task SetRollbackPendingAsync(Guid roundId, bool pending, CancellationToken cancellationToken);
 
-    /// <summary>Rounds whose stake may have been taken and must be rolled back: stuck <c>pending</c> (a crash), or voided with an unconfirmed rollback.</summary>
+    /// <summary>Rounds stuck <c>pending</c> since before <paramref name="pendingBefore"/>, or voided with an unconfirmed rollback.</summary>
     Task<IReadOnlyList<RoundRecord>> NeedingRollbackAsync(DateTimeOffset pendingBefore, CancellationToken cancellationToken);
 
-    /// <summary>Spins whose win is owed and not yet confirmed by the casino, oldest first.</summary>
-    Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken);
+    /// <summary>Spins whose win the casino has not confirmed, oldest first.</summary>
+    Task<IReadOnlyList<PlayedSpin>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken);
 }

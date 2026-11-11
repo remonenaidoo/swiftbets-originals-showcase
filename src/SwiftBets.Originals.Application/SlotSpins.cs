@@ -1,28 +1,19 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using SwiftBets.Originals.Application.Ports;
+using SwiftBets.Originals.Domain.Instant;
 using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>What the spin and feature handlers share: money conversion, stored outcomes, the player reference, wallet codes.</summary>
-internal static class Play
+internal static class SlotSpins
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Line-bet units to minor units: every offered stake is a multiple of the line count.</summary>
-    /// <summary>A line slot's units as money at the game's rate: units × line bet × rate ÷ the design rate, floored to the cent.</summary>
-    public static long Money(long units, long stake, int lines, long rateBp) => (long)((Int128)units * (stake / lines) * rateBp / Domain.Instant.Multipliers.Base);
+    /// <summary>Line-bet units as money at the game's rate, floored to the cent; every offered stake divides by the line count.</summary>
+    public static long Money(long units, long stake, int lines, long rateBp) => (long)((Int128)units * (stake / lines) * rateBp / Multipliers.Base);
 
-    public static string BetTx(Guid round) => $"{round}:bet";
-
-    public static string WinTx(Guid round, int seq) => $"{round}:win:{seq}";
-
-    public static string RollbackTx(Guid round) => $"{round}:rollback";
-
-    /// <summary>The stored outcome: symbols by name, so a spin replays whatever the symbol table's order becomes.</summary>
-    public static string OutcomeJson(GameDefinition game, SpinOutcome outcome) => JsonSerializer.Serialize(new Outcome(
+    /// <summary>Symbols are stored by name, so a stored spin survives a reordered symbol table.</summary>
+    public static string OutcomeJson(GameDefinition game, SpinOutcome outcome) => JsonSerializer.Serialize(new StoredOutcome(
         [.. outcome.Lines.Select(l => new LineView(l.Line, game.Name(l.Symbol), l.Count, l.Reels, l.Units))],
         outcome.Scatters,
         outcome.ScatterUnits,
@@ -30,36 +21,8 @@ internal static class Play
         outcome.TriggersFeature,
         outcome.Locked.Count == 0 ? null : [.. outcome.Locked.Select(c => new LockView(c.Reel, c.Row, game.Name(c.Symbol)))]), Json);
 
-    /// <summary>Reads a stored outcome. Rounds stored before split symbols have no <c>reels</c>: their count is their reels.</summary>
-    public static Outcome Read(string outcomeJson)
-    {
-        var o = JsonSerializer.Deserialize<Outcome>(outcomeJson, Json)!;
-        return o with { Lines = [.. (o.Lines ?? []).Select(l => l.Reels == 0 ? l with { Reels = l.Count } : l)] };
-    }
-
     public static IReadOnlyList<LockedCell> LocksOf(GameDefinition game, string outcomeJson) =>
         [.. (Read(outcomeJson).Locked ?? []).Select(l => new LockedCell(l.Reel, l.Row, game.Id(l.Symbol)))];
-
-    /// <summary>Who is playing, from the casino. Without the casino's reference the round is bound to this session only.</summary>
-    public static async Task<(string? PlayerRef, long? Balance, GameError? Error)> IdentifyAsync(IWallet wallet, string sessionToken, CancellationToken cancellationToken)
-    {
-        var reply = await wallet.BalanceAsync(sessionToken, cancellationToken);
-        return reply.Status switch
-        {
-            WalletStatus.Ok => (reply.PlayerRef ?? $"session:{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sessionToken)))}", reply.Balance, null),
-            WalletStatus.SessionInvalid => (null, null, GameError.SessionInvalid),
-            _ => (null, null, GameError.WalletUnavailable),
-        };
-    }
-
-    public static GameError Refusal(string status) => status switch
-    {
-        WalletStatus.InsufficientFunds => GameError.InsufficientFunds,
-        WalletStatus.LimitExceeded => GameError.LimitExceeded,
-        WalletStatus.AccountRestricted => GameError.AccountRestricted,
-        WalletStatus.SessionInvalid => GameError.SessionInvalid,
-        _ => GameError.WalletUnavailable,
-    };
 
     public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance, long rateBp)
     {
@@ -79,6 +42,13 @@ internal static class Play
             outcome.Locked ?? []);
     }
 
-    /// <summary>A stored spin outcome.</summary>
-    public sealed record Outcome(IReadOnlyList<LineView> Lines, int Scatters, long ScatterUnits, long TotalUnits, bool Trigger, IReadOnlyList<LockView>? Locked);
+    private static StoredOutcome Read(string outcomeJson)
+    {
+        var o = JsonSerializer.Deserialize<StoredOutcome>(outcomeJson, Json)!;
+
+        // Spins stored before split symbols have no reels: their count is their reels.
+        return o with { Lines = [.. (o.Lines ?? []).Select(l => l.Reels == 0 ? l with { Reels = l.Count } : l)] };
+    }
+
+    private sealed record StoredOutcome(IReadOnlyList<LineView> Lines, int Scatters, long ScatterUnits, long TotalUnits, bool Trigger, IReadOnlyList<LockView>? Locked);
 }

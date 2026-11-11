@@ -3,11 +3,6 @@ using SwiftBets.Originals.Domain.Instant;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>
-/// Each game's RTP, set by the operator: <c>Originals:Rtp:Default</c> (percent) and per game
-/// <c>Originals:Rtp:Games:{gameId}</c>. Read on every round, so a change applies from the next round; a round already
-/// in play keeps the rate it started with.
-/// </summary>
 public sealed class RtpOptions
 {
     public decimal Default { get; set; } = 80m;

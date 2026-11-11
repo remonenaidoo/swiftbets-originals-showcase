@@ -1,43 +1,10 @@
 namespace SwiftBets.Originals.Application;
 
-/// <summary>A refusal the API returns as an error envelope with <paramref name="Http"/> and <paramref name="Code"/>.</summary>
-public sealed record GameError(int Http, string Code)
-{
-    public static readonly GameError InvalidStake = new(400, "invalid_stake");
-    public static readonly GameError SessionInvalid = new(401, "session_invalid");
-    public static readonly GameError InsufficientFunds = new(402, "insufficient_funds");
-    public static readonly GameError LimitExceeded = new(403, "limit_exceeded");
-    public static readonly GameError AccountRestricted = new(403, "account_restricted");
-    public static readonly GameError GameNotFound = new(404, "game_not_found");
-    public static readonly GameError RoundNotFound = new(404, "round_not_found");
-    public static readonly GameError FeatureInProgress = new(409, "feature_in_progress");
-    public static readonly GameError KeyInUse = new(409, "key_in_use");
-    public static readonly GameError NoFeature = new(409, "no_feature");
-    public static readonly GameError InvalidSeed = new(400, "invalid_seed");
-    public static readonly GameError BettingClosed = new(409, "betting_closed");
-    public static readonly GameError NotFlying = new(409, "not_flying");
-    public static readonly GameError RoundInProgress = new(409, "round_in_progress");
-    public static readonly GameError RoundOver = new(409, "round_over");
-    public static readonly GameError TileTaken = new(409, "tile_taken");
-    public static readonly GameError NothingToCashOut = new(409, "nothing_to_cash_out");
-    public static readonly GameError GuessNotAllowed = new(409, "guess_not_allowed");
-    public static readonly GameError WalletUnavailable = new(503, "wallet_unavailable");
-}
-
-public sealed record Result<T>(T? Value, GameError? Error)
-{
-    public static implicit operator Result<T>(T value) => new(value, null);
-
-    public static implicit operator Result<T>(GameError error) => new(default, error);
-}
-
-/// <summary>A paying line as the client shows it: the symbol by name, its total count, and how many reels the run covers.</summary>
+/// <summary>A paying line: its total count can exceed its reels when split symbols are on it.</summary>
 public sealed record LineView(int Line, string Symbol, int Count, int Reels, long Units);
 
-/// <summary>A cell locked for the rest of the feature.</summary>
 public sealed record LockView(int Reel, int Row, string Symbol);
 
-/// <summary>What the client animates: the server's stops, pays and locked cells, never its own.</summary>
 public sealed record SpinView(
     Guid RoundId,
     int Seq,

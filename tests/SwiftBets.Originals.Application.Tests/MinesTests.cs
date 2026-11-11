@@ -12,7 +12,7 @@ public sealed class MinesTests : IDisposable
 
     public void Dispose() => store.Dispose();
 
-    private MinesHandler Handler() => new(store, wallet, seeds, TimeProvider.System);
+    private MinesHandler Handler() => new(store, wallet, seeds, TimeProvider.System, FixedRates.Design);
 
     /// <summary>The fake seeds' first round (nonce 0) with 3 mines: where the mines and the safe tiles are.</summary>
     private static int[] MineTiles() => Mines.Layout(Fair.Floats("server-seed", "client", 0, Mines.Tiles), 3);

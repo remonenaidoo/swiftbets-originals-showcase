@@ -1,10 +1,14 @@
-using System.Text.Json.Serialization;
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 using SwiftBets.BuildingBlocks.Core;
 using SwiftBets.BuildingBlocks.Observability;
 using SwiftBets.BuildingBlocks.Web;
 using SwiftBets.Originals.Api.Endpoints;
+using SwiftBets.Originals.Api.Hubs;
 using SwiftBets.Originals.Application;
+using SwiftBets.Originals.Application.Instant;
+using SwiftBets.Originals.Application.Ports;
+using SwiftBets.Originals.Domain.Instant;
 using SwiftBets.Originals.Games;
 using SwiftBets.Originals.Infrastructure;
 
@@ -26,17 +30,14 @@ builder.Services.AddSingleton(new SlotEngines(OriginalsGames.Catalog, RandomNumb
 builder.Services.AddSingleton<SpinHandler>();
 builder.Services.AddSingleton<FeatureHandler>();
 builder.Services.AddSingleton<StateQuery>();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.MinesHandler>();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.InstantQueries>();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.TowersHandler>();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.HigherLowerHandler>();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Instant.OneShotHandler>();
+builder.Services.AddSingleton<MinesHandler>();
+builder.Services.AddSingleton<InstantQueries>();
+builder.Services.AddSingleton<TowersHandler>();
+builder.Services.AddSingleton<HigherLowerHandler>();
+builder.Services.AddSingleton<OneShotHandler>();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<SwiftBets.Originals.Application.Ports.ICrashBroadcast, SwiftBets.Originals.Api.Hubs.SignalRCrashBroadcast>();
-builder.Services.AddSingleton(sp => new SwiftBets.Originals.Application.Instant.CrashRoom(
-    sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IRoundStore>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashStore>(),
-    sp.GetRequiredService<SwiftBets.Originals.Application.Ports.IWallet>(), sp.GetRequiredService<SwiftBets.Originals.Application.Ports.ICrashBroadcast>(),
-    TimeProvider.System, SwiftBets.Originals.Domain.Instant.Fair.NewSeed, sp.GetRequiredService<IGameRates>()));
+builder.Services.AddSingleton<ICrashBroadcast, SignalRCrashBroadcast>();
+builder.Services.AddSingleton(sp => ActivatorUtilities.CreateInstance<CrashRoom>(sp, (Func<string>)Fair.NewSeed));
 
 var app = builder.Build();
 app.UseSwiftBetsObservability();
@@ -45,7 +46,7 @@ app.MapSwiftBetsOperationalEndpoints();
 app.UseStaticFiles();
 app.MapSlotEndpoints();
 app.MapInstantEndpoints();
-app.MapHub<SwiftBets.Originals.Api.Hubs.CrashHub>(SwiftBets.Originals.Api.Hubs.CrashHub.Path).AllowAnonymous();
+app.MapHub<CrashHub>(CrashHub.Path).AllowAnonymous();
 app.Run();
 return 0;
 

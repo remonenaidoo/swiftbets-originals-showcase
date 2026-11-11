@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using SwiftBets.Originals.Application.Instant;
 using SwiftBets.Originals.Application.Ports;
@@ -21,7 +22,7 @@ public sealed class CrashTests : IDisposable
     private CrashRoom Room()
     {
         var seed = Enumerable.Range(0, 1000).Select(i => $"seed-{i}").First(s => Crash.PointBp(Fair.Floats(s, Crash.ClientSeed, 1, 1)[0]) >= 20_000);
-        return new CrashRoom(store, crashes, wallet, new FakeBroadcast(), time, () => seed);
+        return new CrashRoom(store, crashes, wallet, new FakeBroadcast(), time, () => seed, FixedRates.Design, NullLogger<CrashRoom>.Instance);
     }
 
     private async Task<(CrashRoom Room, Guid Bet)> Flying()
