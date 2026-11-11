@@ -1,42 +1,43 @@
 using SwiftBets.Originals.Application.Ports;
+using SwiftBets.Originals.Domain.Instant;
 using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>What a game loads with: the balance, an unfinished feature of this game to resume, its last 50 rounds, and the rules.</summary>
-public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates? rates = null)
+public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates rates)
 {
     public async Task<Result<StateView>> GetAsync(string gameId, string sessionToken, CancellationToken cancellationToken)
     {
-        if (games.Find(gameId) is not var (slot, _))
+        if (games.Find(gameId) is not { } slot)
         {
             return GameError.GameNotFound;
         }
 
-        var game = slot.Definition;
-        var rate = (rates ?? FixedRates.Design).For(game.GameId);
-        var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
-        if (error is not null)
+        var game = slot.Game.Definition;
+        var rate = rates.For(game.GameId);
+        var identity = await wallet.IdentifyAsync(sessionToken, cancellationToken);
+        if (identity.Failed)
         {
-            return error;
+            return identity.Error;
         }
 
-        SpinView? open = null;
-        if (await store.FindOpenFeatureAsync(playerRef!, game.GameId, cancellationToken) is { } round)
+        var player = identity.Value;
+        SpinView? openFeature = null;
+        if (await store.FindOpenFeatureAsync(player.Ref, game.GameId, cancellationToken) is { } round)
         {
             var spins = await store.SpinsAsync(round.RoundId, cancellationToken);
-            open = Play.View(round, spins[^1], game, balance, rate);
+            openFeature = SlotSpins.View(round, spins[^1], game, player.Balance, rate);
         }
 
-        var recent = await store.RecentAsync(playerRef!, game.GameId, 50, cancellationToken);
+        var recent = await store.RecentAsync(player.Ref, game.GameId, 50, cancellationToken);
         return new StateView(
-            balance,
-            open,
-            [.. recent.Select(r => new RoundSummary(r.RoundId, r.Stake, Play.Money(r.PaidUnits, r.Stake, game.LineCount, rate), r.Status, r.CreatedAt))],
-            Info(slot, rate));
+            player.Balance,
+            openFeature,
+            [.. recent.Select(r => new RoundSummary(r.RoundId, r.Stake, SlotSpins.Money(r.PaidUnits, r.Stake, game.LineCount, rate), r.Status, r.CreatedAt))],
+            Info(slot.Game, rate));
     }
 
-    public static GameInfo Info(SlotGame slot, long rateBp = Domain.Instant.Multipliers.Base)
+    public static GameInfo Info(SlotGame slot, long rateBp = Multipliers.Base)
     {
         var game = slot.Definition;
         return new GameInfo(

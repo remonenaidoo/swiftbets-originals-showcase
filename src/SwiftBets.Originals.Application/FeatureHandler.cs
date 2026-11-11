@@ -3,50 +3,49 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Application;
 
-/// <summary>
-/// One free spin of an open feature: no stake; its win (× the game's multiplier, under the round's cap) is paid as it
-/// lands. A retriggering game adds spins for 3+ Scatters; a locking game carries its locked cells from the last spin.
-/// The feature ends when the spins run out or the cap is reached (remaining spins are forfeited).
-/// The spin is drawn and the round updated inside one locked transaction, so concurrent requests each consume a
-/// spin and the cap is always checked against the true total; the win is paid after the commit.
-/// </summary>
-public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates? rates = null)
+/// <summary>One free spin of an open feature, drawn under the round's lock so the cap is checked against the true total; paid after the commit.</summary>
+public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngines games, IGameRates rates)
 {
     public async Task<Result<SpinView>> NextAsync(string gameId, string sessionToken, Guid roundId, CancellationToken cancellationToken)
     {
-        if (games.Find(gameId) is not var (slot, engine))
+        if (games.Find(gameId) is not { } slot)
         {
             return GameError.GameNotFound;
         }
 
-        var game = slot.Definition;
-        var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
-        if (error is not null)
+        var game = slot.Game.Definition;
+        var identity = await wallet.IdentifyAsync(sessionToken, cancellationToken);
+        if (identity.Failed)
         {
-            return error;
+            return identity.Error;
         }
 
+        var player = identity.Value;
+        var rate = rates.For(game.GameId);
         SpinOutcome? outcome = null;
         var capped = false;
-        var claim = await store.ClaimFreeSpinAsync(roundId, playerRef!, game.GameId, (round, last) =>
+        var claimed = await store.ClaimFreeSpinAsync(roundId, player.Ref, game.GameId, (round, last) =>
         {
             var seq = last.Seq + 1;
-            outcome = engine.PlaySpin(free: true, last.Seq == 0 ? [] : Play.LocksOf(game, last.OutcomeJson));
+            outcome = slot.Engine.PlaySpin(free: true, last.Seq == 0 ? [] : SlotSpins.LocksOf(game, last.OutcomeJson));
             var (paidUnits, reached) = Cap.Apply(round.PaidUnits, outcome.TotalUnits, game.CapUnits);
             capped = reached;
-            var win = Play.Money(paidUnits, round.Stake, game.LineCount, (rates ?? FixedRates.Design).For(game.GameId));
-            var left = reached ? 0 : engine.SpinsLeftAfter(round.FreeSpinsLeft, outcome);
-            var spin = new SpinRecord(roundId, seq, outcome.Stops, Play.OutcomeJson(game, outcome), win, null, win > 0 ? Play.WinTx(roundId, seq) : null, false);
-            return (spin, left, round.PaidUnits + paidUnits);
+            var win = SlotSpins.Money(paidUnits, round.Stake, game.LineCount, rate);
+
+            // Reaching the cap forfeits the remaining spins.
+            var left = reached ? 0 : slot.Engine.SpinsLeftAfter(round.FreeSpinsLeft, outcome);
+            var spin = new SpinRecord(roundId, seq, outcome.Stops, SlotSpins.OutcomeJson(game, outcome), win, null, win > 0 ? TransactionIds.Win(roundId, seq) : null, false);
+            return new FreeSpinStep(spin, left, round.PaidUnits + paidUnits);
         }, cancellationToken);
 
-        if (claim is not { } claimed)
+        if (claimed is null)
         {
             var round = await store.GetAsync(roundId, cancellationToken);
-            return round is null || round.PlayerRef != playerRef || round.GameId != game.GameId ? GameError.RoundNotFound : GameError.NoFeature;
+            return round is null || round.PlayerRef != player.Ref || round.GameId != game.GameId ? GameError.RoundNotFound : GameError.NoFeature;
         }
 
         var (updated, played) = claimed;
+        var balance = player.Balance;
         var winPaid = true;
         if (played.Win > 0)
         {
@@ -64,7 +63,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngine
             await store.SettleIfPaidAsync(roundId, cancellationToken);
         }
 
-        return Play.View(updated, played with { WinPaid = winPaid }, game, balance, (rates ?? FixedRates.Design).For(game.GameId)) with
+        return SlotSpins.View(updated, played with { WinPaid = winPaid }, game, balance, rate) with
         {
             FeatureTriggered = outcome!.TriggersFeature && game.Feature.Retrigger && !capped,
             CapReached = capped,

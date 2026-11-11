@@ -5,10 +5,7 @@ using SwiftBets.Originals.Application.Instant;
 
 namespace SwiftBets.Originals.Infrastructure;
 
-/// <summary>
-/// Runs the shared Crash round. Only the instance holding a Postgres advisory lock runs it, so a second instance
-/// never runs a second round; the lock is held by one connection for the loop's life and released if it dies.
-/// </summary>
+/// <summary>Runs the Crash loop only on the instance holding a Postgres advisory lock, so there is never a second round.</summary>
 public sealed partial class CrashLoop(NpgsqlDataSource db, CrashRoom room, ILogger<CrashLoop> logger) : BackgroundService
 {
     private const long LockKey = 0x5B_C2A5_0001;

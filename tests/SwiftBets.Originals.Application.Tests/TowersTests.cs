@@ -12,7 +12,7 @@ public sealed class TowersTests : IDisposable
 
     public void Dispose() => store.Dispose();
 
-    private TowersHandler Handler() => new(store, wallet, seeds, TimeProvider.System);
+    private TowersHandler Handler() => new(store, wallet, seeds, TimeProvider.System, FixedRates.Design);
 
     /// <summary>The fake seeds' first round (nonce 0) on easy: the bad tile of each row.</summary>
     private static int[][] Bad() => Towers.Layout(Fair.Floats("server-seed", "client", 0, Towers.FloatsNeeded), "easy");

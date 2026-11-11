@@ -5,11 +5,7 @@ using SwiftBets.Originals.Application.Ports;
 
 namespace SwiftBets.Originals.Infrastructure;
 
-/// <summary>
-/// Calls the casino's seamless-wallet API as provider <c>swift-originals</c>: one signed JSON POST per action.
-/// No answer (timeout or connection failure) is <see cref="WalletStatus.Unreachable"/>; the caller decides whether
-/// that means roll back (a bet) or retry later (a win).
-/// </summary>
+/// <summary>One signed JSON POST per wallet action; no answer is <see cref="WalletStatus.Unreachable"/> and the caller decides what that means.</summary>
 public sealed class WalletClient(HttpClient http, IOptions<OriginalsOptions> options) : IWallet
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);

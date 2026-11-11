@@ -54,7 +54,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public List<SpinRecord> Spins { get; } = [];
     public HashSet<Guid> RollbackPending { get; } = [];
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, (SpinRecord Spin, int Left, long PaidUnits)> play, CancellationToken cancellationToken)
+    public async Task<PlayedSpin?> ClaimFreeSpinAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, SpinRecord, FreeSpinStep> play, CancellationToken cancellationToken)
     {
         await gate.WaitAsync(cancellationToken);
         try
@@ -68,7 +68,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
             Spins.Add(spin);
             round = round with { FreeSpinsLeft = left, PaidUnits = paid, Status = left > 0 ? RoundStatus.Feature : RoundStatus.WinPending };
             Rounds[roundId] = round;
-            return (round, spin);
+            return new PlayedSpin(round, spin);
         }
         finally
         {
@@ -79,7 +79,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public Task<RoundRecord?> FindOpenAsync(string playerRef, string gameId, CancellationToken cancellationToken) =>
         Task.FromResult(Rounds.Values.FirstOrDefault(r => r.PlayerRef == playerRef && r.GameId == gameId && r.Status is RoundStatus.Open or RoundStatus.Pending));
 
-    public async Task<(RoundRecord Round, SpinRecord Spin)?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, CancellationToken cancellationToken)
+    public async Task<PlayedSpin?> StepAsync(Guid roundId, string playerRef, string gameId, Func<RoundRecord, IReadOnlyList<SpinRecord>, RoundStep?> step, CancellationToken cancellationToken)
     {
         await gate.WaitAsync(cancellationToken);
         try
@@ -89,7 +89,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
                 return null;
             }
 
-            if (step(round, [.. Spins.Where(s => s.RoundId == roundId).OrderBy(s => s.Seq)]) is not var (spin, status, paid))
+            if (step(round, [.. Spins.Where(s => s.RoundId == roundId).OrderBy(s => s.Seq)]) is not (var spin, var status, var paid))
             {
                 return null;
             }
@@ -97,7 +97,7 @@ public sealed class FakeStore : IRoundStore, IDisposable
             Spins.Add(spin);
             round = round with { Status = status, PaidUnits = paid };
             Rounds[roundId] = round;
-            return (round, spin);
+            return new PlayedSpin(round, spin);
         }
         finally
         {
@@ -181,8 +181,8 @@ public sealed class FakeStore : IRoundStore, IDisposable
     public Task<IReadOnlyList<RoundRecord>> RecentAsync(string playerRef, string gameId, int count, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<RoundRecord>>([.. Rounds.Values.Where(r => r.PlayerRef == playerRef && r.GameId == gameId).Take(count)]);
 
-    public Task<IReadOnlyList<(RoundRecord Round, SpinRecord Spin)>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<(RoundRecord, SpinRecord)>>([.. Spins.Where(s => s.Win > 0 && !s.WinPaid).Select(s => (Rounds[s.RoundId], s))]);
+    public Task<IReadOnlyList<PlayedSpin>> UnpaidWinsAsync(int limit, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<PlayedSpin>>([.. Spins.Where(s => s.Win > 0 && !s.WinPaid).Select(s => new PlayedSpin(Rounds[s.RoundId], s))]);
 }
 
 /// <summary>Shared Crash rounds and their bets in memory, over a FakeStore for the bets' own rounds.</summary>

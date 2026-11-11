@@ -8,15 +8,14 @@ public sealed class SpinHandlerTests
     private readonly FakeWallet wallet = new();
     private readonly FakeStore store = new();
 
-    private SpinHandler Handler() => new(store, wallet, TestGames.Engines(), TimeProvider.System);
+    private SpinHandler Handler() => new(store, wallet, TestGames.Engines(), TimeProvider.System, FixedRates.Design);
 
     [Fact]
     public async Task Invalid_stake_is_refused_before_the_wallet()
     {
         var result = await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 150, "k1"), CancellationToken.None);
 
-        result.Error!.Code.ShouldBe("invalid_stake");
-        result.Error.Http.ShouldBe(400);
+        result.Error.ShouldBe(GameError.InvalidStake);
         wallet.Calls.ShouldBeEmpty();
     }
 
@@ -37,7 +36,7 @@ public sealed class SpinHandlerTests
 
         var result = await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
 
-        result.Error!.Http.ShouldBe(402);
+        result.Error.ShouldBe(GameError.InsufficientFunds);
         store.Rounds.Values.Single().Status.ShouldBe(RoundStatus.Refused);
         wallet.Calls.ShouldNotContain(c => c.Action == "win");
     }
@@ -50,7 +49,7 @@ public sealed class SpinHandlerTests
         var result = await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
 
         var round = store.Rounds.Values.Single();
-        result.Error!.Http.ShouldBe(503);
+        result.Error.ShouldBe(GameError.WalletUnavailable);
         round.Status.ShouldBe(RoundStatus.Voided);
         wallet.Calls.ShouldContain(c => c.Action == "rollback" && c.Reference == $"{round.RoundId}:bet");
     }
@@ -62,7 +61,7 @@ public sealed class SpinHandlerTests
         await store.InsertAsync(open, new SpinRecord(open.RoundId, 0, [0, 0, 0, 0, 0], "{}", 0, null, null, true), CancellationToken.None);
 
         var result = await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
-        var state = await new StateQuery(store, wallet, TestGames.Engines()).GetAsync(GildedSavanna.GameId, "s", CancellationToken.None);
+        var state = await new StateQuery(store, wallet, TestGames.Engines(), FixedRates.Design).GetAsync(GildedSavanna.GameId, "s", CancellationToken.None);
 
         result.Error!.Code.ShouldBe("feature_in_progress");
         state.Value!.OpenFeature!.RoundId.ShouldBe(open.RoundId);
@@ -88,8 +87,8 @@ public sealed class SpinHandlerTests
         const string old = "{\"lines\":[{\"line\":0,\"symbol\":\"Lion\",\"count\":5,\"units\":500}],\"scatters\":3,\"scatterUnits\":40,\"totalUnits\":540,\"trigger\":true}";
         await store.InsertAsync(open, new SpinRecord(open.RoundId, 0, [0, 0, 0, 0, 0], old, 0, null, null, true), CancellationToken.None);
 
-        var state = (await new StateQuery(store, wallet, TestGames.Engines()).GetAsync(GildedSavanna.GameId, "s", CancellationToken.None)).Value!;
-        var next = await new FeatureHandler(store, wallet, TestGames.Engines()).NextAsync(GildedSavanna.GameId, "s", open.RoundId, CancellationToken.None);
+        var state = (await new StateQuery(store, wallet, TestGames.Engines(), FixedRates.Design).GetAsync(GildedSavanna.GameId, "s", CancellationToken.None)).Value!;
+        var next = await new FeatureHandler(store, wallet, TestGames.Engines(), FixedRates.Design).NextAsync(GildedSavanna.GameId, "s", open.RoundId, CancellationToken.None);
 
         state.OpenFeature!.Lines.ShouldHaveSingleItem().Reels.ShouldBe(5);
         next.Error.ShouldBeNull();
@@ -97,13 +96,13 @@ public sealed class SpinHandlerTests
     }
 
     [Fact]
-    public async Task Expired_session_is_401()
+    public async Task An_expired_session_is_refused()
     {
         wallet.Replies["balance"] = WalletStatus.SessionInvalid;
 
         var result = await Handler().SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
 
-        result.Error!.Http.ShouldBe(401);
+        result.Error.ShouldBe(GameError.SessionInvalid);
     }
 }
 
@@ -125,7 +124,7 @@ public sealed class FeatureAndRecoveryTests
     {
         var round = await OpenFeature(5);
         wallet.WinDelay = TimeSpan.FromMilliseconds(200);
-        var handler = new FeatureHandler(store, wallet, engines);
+        var handler = new FeatureHandler(store, wallet, engines, FixedRates.Design);
 
         await Task.WhenAll(handler.NextAsync(GildedSavanna.GameId, "s", round.RoundId, CancellationToken.None), handler.NextAsync(GildedSavanna.GameId, "s", round.RoundId, CancellationToken.None));
 
@@ -138,7 +137,7 @@ public sealed class FeatureAndRecoveryTests
     {
         var round = await OpenFeature(8, TestGames.Locking);
         // Spin 1 lands Gold2 on top of every reel (stop 0); spin 2 draws stop 1, which shows none, but the locks hold.
-        var handler = new FeatureHandler(store, wallet, TestGames.Engines(0, 0, 0, 0, 0, 1, 1, 1, 1, 1));
+        var handler = new FeatureHandler(store, wallet, TestGames.Engines(0, 0, 0, 0, 0, 1, 1, 1, 1, 1), FixedRates.Design);
 
         await handler.NextAsync(TestGames.Locking, "s", round.RoundId, CancellationToken.None);
         var second = (await handler.NextAsync(TestGames.Locking, "s", round.RoundId, CancellationToken.None)).Value!;
@@ -152,8 +151,8 @@ public sealed class FeatureAndRecoveryTests
     {
         await OpenFeature(5, TestGames.Locking);
 
-        var savanna = await new SpinHandler(store, wallet, engines, TimeProvider.System).SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
-        var locking = await new SpinHandler(store, wallet, engines, TimeProvider.System).SpinAsync(new SpinRequest(TestGames.Locking, "s", 100, "k2"), CancellationToken.None);
+        var savanna = await new SpinHandler(store, wallet, engines, TimeProvider.System, FixedRates.Design).SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
+        var locking = await new SpinHandler(store, wallet, engines, TimeProvider.System, FixedRates.Design).SpinAsync(new SpinRequest(TestGames.Locking, "s", 100, "k2"), CancellationToken.None);
 
         savanna.Error.ShouldBeNull();
         locking.Error!.Code.ShouldBe("feature_in_progress");
@@ -164,7 +163,7 @@ public sealed class FeatureAndRecoveryTests
     {
         wallet.Replies["bet"] = "wallet_unavailable";
 
-        await new SpinHandler(store, wallet, engines, TimeProvider.System).SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
+        await new SpinHandler(store, wallet, engines, TimeProvider.System, FixedRates.Design).SpinAsync(new SpinRequest(GildedSavanna.GameId, "s", 100, "k1"), CancellationToken.None);
 
         var r = store.Rounds.Values.Single();
         r.Status.ShouldBe(RoundStatus.Voided);

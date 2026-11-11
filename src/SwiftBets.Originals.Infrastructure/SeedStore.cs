@@ -1,11 +1,11 @@
 using Dapper;
 using Npgsql;
+using SwiftBets.Originals.Application.Instant;
 using SwiftBets.Originals.Application.Ports;
 using SwiftBets.Originals.Domain.Instant;
 
 namespace SwiftBets.Originals.Infrastructure;
 
-/// <summary>Provably-fair seeds per player in <c>originals.player_seeds</c>.</summary>
 public sealed class SeedStore(NpgsqlDataSource db) : ISeedStore
 {
     private const string Columns = "server_seed, server_seed_hash, client_seed, nonce, previous_server_seed, previous_client_seed, previous_nonce, next_server_seed_hash";
@@ -41,7 +41,7 @@ public sealed class SeedStore(NpgsqlDataSource db) : ISeedStore
             WHERE player_ref = @playerRef AND last_taken_at < now() - interval '30 seconds'
               AND NOT EXISTS (SELECT 1 FROM originals.rounds WHERE player_ref = @playerRef AND status IN ('pending', 'open') AND game_id = ANY(@instant))
             RETURNING {Columns}
-            """, new { playerRef, next, nextHash = Fair.Hash(next), clientSeed, instant = SwiftBets.Originals.Application.Instant.InstantGames.Ids }, cancellationToken: cancellationToken)))?.ToRecord();
+            """, new { playerRef, next, nextHash = Fair.Hash(next), clientSeed, instant = InstantGames.Ids }, cancellationToken: cancellationToken)))?.ToRecord();
     }
 
     /// <summary>Creates the player's seeds on first use, and commits a next seed for any player who has none yet.</summary>
