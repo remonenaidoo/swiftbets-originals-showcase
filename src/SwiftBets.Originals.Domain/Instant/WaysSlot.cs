@@ -5,10 +5,9 @@ namespace SwiftBets.Originals.Domain.Instant;
 /// <summary>One way win: a symbol over the first <paramref name="Reels"/> reels, <paramref name="Ways"/> ways (multipliers included), the cells it used.</summary>
 public sealed record WayWin(string Symbol, int Reels, long Ways, long Units, int[][] Cells);
 
-/// <summary>One spin of a round, as the client plays it back.</summary>
 public sealed record WaysSpin(bool Free, int[] Stops, IReadOnlyList<WayWin> Wins, int Scatters, long ScatterUnits, long Units)
 {
-    /// <summary>What this spin actually paid: its units, or what was left under the round's cap (the playback shows this).</summary>
+    /// <summary>What this spin paid after the round's cap.</summary>
     public long Paid { get; init; } = Units;
 }
 
@@ -22,14 +21,7 @@ public static partial class WaysTables
     public static string[][] Free => FreeNames;
 }
 
-/// <summary>
-/// Cape Point Ways: 5 reels × 3 rows, 243 ways. A symbol pays when it shows on adjacent reels from reel 1 (Wilds,
-/// on reels 2–4, stand in): the number of ways is the product, over those reels, of the cells it fills there. In free
-/// spins Wilds can be ×2 or ×3, and a reel then counts the sum of its matching cells' multipliers, which multiplies
-/// every way through them. 3, 4 or 5 Pearls pay 2, 10 or 50 stakes and award 8, 12 or 16 free spins (no retrigger).
-/// A stake is 20 units; one request plays the whole round, capped at 5,000× stake.
-/// </summary>
-/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+/// <summary>Cape Point Ways: 243 ways, ×2/×3 Wilds and Pearl-triggered free spins; one engine, several themes.</summary>
 public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Point Ways") : OneShotGame
 {
     public const string GameId = "cape-point-ways";
@@ -46,7 +38,6 @@ public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Po
 
     public override int FloatsNeeded(JsonElement c) => 5 + (16 * 5);
 
-    /// <summary>The window of a spin: rows 0–2 of each reel from its stop.</summary>
     public static string[,] Window(string[][] strips, int[] stops)
     {
         var w = new string[5, 3];
@@ -61,7 +52,6 @@ public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Po
         return w;
     }
 
-    /// <summary>Pays one window: ways for every symbol, then Pearls anywhere.</summary>
     public static WaysSpin Evaluate(string[,] w, int[] stops, bool free)
     {
         var wins = new List<WayWin>();
@@ -116,7 +106,7 @@ public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Po
     public static int[] Stops(string[][] strips, IReadOnlyList<double> floats, int at) =>
         [.. Enumerable.Range(0, 5).Select(r => (int)(floats[at + r] * strips[r].Length))];
 
-    /// <summary>The whole round: the base spin and its free spins, paid up to the cap (spins after the cap are not played).</summary>
+    /// <summary>Spins after the cap is reached are not played.</summary>
     public static (IReadOnlyList<WaysSpin> Spins, long Units, bool Capped) PlayRound(IReadOnlyList<double> floats)
     {
         var first = Evaluate(Window(WaysTables.Base, Stops(WaysTables.Base, floats, 0)), Stops(WaysTables.Base, floats, 0), false);

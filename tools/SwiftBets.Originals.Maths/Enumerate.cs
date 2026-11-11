@@ -16,11 +16,7 @@ public sealed record ReelStats(
     public double Mean(BigInteger units) => (double)units / (double)Cycle;
 }
 
-/// <summary>
-/// Full-cycle enumeration: every stop combination is evaluated once by the production evaluator, and wins are
-/// summed as exact integers (line-bet units), so the RTP is an exact rational. Parallel over reel 1's stops,
-/// one accumulator per worker, merged at the end.
-/// </summary>
+/// <summary>Every stop combination through the production evaluator, summed as exact integers, so the RTP is an exact rational.</summary>
 public static class Enumerate
 {
     public static ReelStats Run(GameDefinition game, IReadOnlyList<IReadOnlyList<byte>> reels, int multiplier)

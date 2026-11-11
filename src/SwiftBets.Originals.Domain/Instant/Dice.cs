@@ -2,10 +2,7 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Dice: a roll of 0.00–99.99 (10,000 equally likely outcomes); the player bets over or under a target. With c
-/// winning outcomes out of 10,000 the pay is r × 10,000 / c at the game's rate r, floored to a basis point. Win chance 2%–98%.
-/// </summary>
+/// <summary>Dice: c winning rolls of 10,000 pay r × 10,000 / c.</summary>
 public sealed class Dice : OneShotGame
 {
     public const string GameId = "dice";

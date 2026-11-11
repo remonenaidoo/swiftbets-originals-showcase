@@ -5,12 +5,7 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Maths;
 
-/// <summary>
-/// Plays rounds through the production <see cref="RoundEngine"/> with the production RNG and checks the computed
-/// RTP lies inside the simulation's 99% confidence interval. Rounds are played without the cap and the cap is
-/// applied to each round's total afterwards: the same as capping spin by spin (once the cap is reached nothing more
-/// is paid), and it gives the uncapped RTP to compare and the cap's cost in one run.
-/// </summary>
+/// <summary>Checks the computed RTP lies inside a 99% interval of rounds played through the production engine, capped per round.</summary>
 public static class Simulate
 {
     public static int Run(GameDefinition game, Rtp computed, long rounds, string resultPath)

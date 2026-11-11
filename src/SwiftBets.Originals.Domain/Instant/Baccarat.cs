@@ -2,12 +2,7 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Baccarat (punto banco) with the standard drawing rules, from an endless shoe: each card is one of 52 with equal
-/// chance (six floats, dealt Player, Banker, Player, Banker, then each side's third card). A tie returns Player and
-/// Banker bets. At the game's rate r each bet's win pays what makes that bet return r, never more than the standard
-/// pay (Player 1:1, Banker 0.95:1, Tie 8:1), so a rate at or above a bet's natural RTP plays the standard game.
-/// </summary>
+/// <summary>Punto banco from an endless shoe; each bet's win pays what makes it return rate r, never more than the standard pay.</summary>
 public sealed class Baccarat : OneShotGame
 {
     public const string GameId = "baccarat";
@@ -47,7 +42,6 @@ public sealed class Baccarat : OneShotGame
         _ => false,
     };
 
-    /// <summary>The cards each side ends with (0–51) and the winner.</summary>
     public static (int[] Player, int[] Banker, string Winner) Deal(IReadOnlyList<double> floats)
     {
         var cards = floats.Take(6).Select(f => (int)(f * 52)).ToArray();

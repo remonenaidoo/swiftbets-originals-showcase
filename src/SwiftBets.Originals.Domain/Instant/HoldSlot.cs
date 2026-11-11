@@ -2,13 +2,11 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>A coin on the board: its cell (reel, row) and value in stakes.</summary>
 public sealed record Coin(int[] Cell, int Stakes);
 
-/// <summary>A paying line: its index, symbol, how many in a row, pay in line bets, the cells.</summary>
 public sealed record HoldLine(int Line, string Symbol, int Count, long Units, int[][] Cells);
 
-/// <summary>One respin: the coins it added and the respins left after it (3 again whenever a coin landed).</summary>
+/// <summary>Respins reset to 3 whenever a coin lands.</summary>
 public sealed record Respin(IReadOnlyList<Coin> Added, int Left);
 
 public static partial class HoldTables
@@ -39,14 +37,7 @@ public static partial class HoldTables
     }
 }
 
-/// <summary>
-/// Highveld Hold: 5 reels × 3 rows, 20 lines, Wilds on reels 2–4. Coins (in stacks) carry a value of 1–25 stakes or
-/// a Mini (15), Minor (40) or Major (150). Six or more coins start the hold: coins stay, and 3 respins follow in
-/// which every empty cell lands a coin with a fixed chance; any new coin resets the respins to 3. A full board adds
-/// the Grand (1,000 stakes). The feature pays the sum of its coins. A stake is 20 line bets; one request plays the
-/// whole round, capped at 5,000× stake.
-/// </summary>
-/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+/// <summary>Highveld Hold: a 20-line slot where six coins start a hold-and-respin feature; one engine, several themes.</summary>
 public sealed class HoldSlot(string id = HoldSlot.GameId, string name = "Highveld Hold") : OneShotGame
 {
     public const string GameId = "highveld-hold";
@@ -88,7 +79,7 @@ public sealed class HoldSlot(string id = HoldSlot.GameId, string name = "Highvel
         return wins;
     }
 
-    /// <summary>The respins from a board of coins: each respin, each empty cell (reel by reel, top to bottom) lands a coin when its float is under the chance, its value from the next float.</summary>
+    /// <summary>Each respin, each empty cell (reel by reel, top to bottom) lands a coin when its float is under the chance.</summary>
     public static (List<Respin> Respins, Dictionary<(int, int), int> Board) Hold(Dictionary<(int, int), int> board, IReadOnlyList<double> floats, ref int at)
     {
         var respins = new List<Respin>();

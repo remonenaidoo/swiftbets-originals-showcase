@@ -7,11 +7,7 @@ namespace SwiftBets.Originals.Maths;
 /// <summary>A feature valued by simulation: mean win per feature (line-bet units, uncapped) with its 99% confidence half-width.</summary>
 public sealed record FeatureValue(long Features, double MeanUnits, double HalfWidthUnits, double MeanSpins, double SigmaUnits);
 
-/// <summary>
-/// For features that carry state from spin to spin (locked symbols), which full enumeration cannot value: plays
-/// whole features through the production <see cref="RoundEngine"/> with the production RNG, without the cap (the
-/// cap's cost is measured by the round simulation), and reports the mean with a 99% confidence interval.
-/// </summary>
+/// <summary>Values stateful (locking) features by simulation through the production engine, uncapped, with a 99% interval.</summary>
 public static class FeatureSim
 {
     public static FeatureValue Run(GameDefinition game, long features, bool quiet = false)

@@ -2,19 +2,15 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>A cell of the cascade board: its symbol and, for a meteor, its multiplier.</summary>
 public sealed record GemCell(string Symbol, int Multiplier = 0);
 
-/// <summary>One pay-anywhere win in a tumble step: a symbol, how many, its pay in units, the cells (reel, row) removed.</summary>
 public sealed record GemWin(string Symbol, int Count, long Units, int[][] Cells);
 
-/// <summary>One tumble step: what paid and the board after the winners fell away and the reels dropped.</summary>
 public sealed record GemStep(IReadOnlyList<GemWin> Wins, GemCell[][] Board);
 
-/// <summary>One spin: the board it landed, its tumble steps, the Suns at the end, the meteors' total and its pay.</summary>
 public sealed record GemSpin(bool Free, int[] Stops, GemCell[][] Board, IReadOnlyList<GemStep> Steps, int Suns, int Multiplier, long Units)
 {
-    /// <summary>What this spin actually paid: its units, or what was left under the round's cap (the playback shows this).</summary>
+    /// <summary>What this spin paid after the round's cap.</summary>
     public long Paid { get; init; } = Units;
 }
 
@@ -26,15 +22,12 @@ public sealed record CascadeConfig(
     int[] SunStakes,
     (int Value, int Weight)[] Meteors)
 {
-    /// <summary>Each reel's base strip: the counts in a fixed shuffle per reel (pay-anywhere needs symbols to clump).</summary>
+    /// <summary>The counts in a fixed shuffle per reel: pay-anywhere needs symbols to clump.</summary>
     public string[][] BaseStrips { get; } = [.. Enumerable.Range(0, CascadeSlot.Reels).Select(r => Shuffle(BaseCounts, 1 + r))];
 
     public string[][] FreeStrips { get; } = [.. Enumerable.Range(0, CascadeSlot.Reels).Select(r => Shuffle(FreeCounts, 101 + r))];
 
-    /// <summary>
-    /// A strip from symbol counts in a fixed pseudo-random order (a Fisher–Yates shuffle driven by a 64-bit LCG from
-    /// <paramref name="seed"/>), so it is the same on every machine and in the maths document.
-    /// </summary>
+    /// <summary>Fisher–Yates driven by a seeded 64-bit LCG, so the strip is the same on every machine and in the maths document.</summary>
     public static string[] Shuffle(IReadOnlyDictionary<string, int> counts, int seed)
     {
         var strip = counts.OrderBy(kv => kv.Key, StringComparer.Ordinal).SelectMany(kv => Enumerable.Repeat(kv.Key, kv.Value)).ToArray();
@@ -50,15 +43,7 @@ public sealed record CascadeConfig(
     }
 }
 
-/// <summary>
-/// Kalahari Gem Fall: 6 reels × 5 rows; a symbol pays anywhere when 8 or more show (more pays more). Winners vanish
-/// and each reel drops: survivors fall and new symbols come from that reel's strip above the board, so the drop is
-/// fixed by the stop. Tumbles go on while anything pays. 4+ Suns pay and award 10 free spins (3+ in free spins add 5,
-/// up to 60 in all). In free spins meteors land carrying ×2 to ×50; they stay through the tumbles, and when nothing
-/// more pays the spin's win is multiplied by their sum. A stake is 100 units; one request plays the whole round,
-/// capped at 5,000× stake.
-/// </summary>
-/// <remarks>One engine, several themes: a theme is a new id and name on the same maths (its page maps the symbols to its own art).</remarks>
+/// <summary>Kalahari Gem Fall: 6×5 pay-anywhere (8+) with tumbles and meteor multipliers in free spins; one engine, several themes.</summary>
 public sealed class CascadeSlot(string id = CascadeSlot.GameId, string name = "Kalahari Gem Fall") : OneShotGame
 {
     public const string GameId = "kalahari-gems";
@@ -81,7 +66,6 @@ public sealed class CascadeSlot(string id = CascadeSlot.GameId, string name = "K
 
     public override int FloatsNeeded(JsonElement c) => Floats;
 
-    /// <summary>A whole round under a config (production: <see cref="Production"/>).</summary>
     public static (IReadOnlyList<GemSpin> Spins, long Units, bool Capped) PlayRound(CascadeConfig cfg, IReadOnlyList<double> floats)
     {
         var at = 0;

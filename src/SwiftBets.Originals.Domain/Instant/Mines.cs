@@ -1,10 +1,6 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Mines: 25 tiles, the player chooses 1–24 mines and reveals tiles until they cash out or hit a mine. After k safe
-/// picks the multiplier is r × C(25, k) / C(25 − m, k) at the game's rate r: the inverse of the chance of surviving k
-/// picks, times the rate, so every way of playing returns r (less the flooring to a basis point and the 5,000× cap).
-/// </summary>
+/// <summary>Mines: after k safe picks the multiplier is r × C(25, k) / C(25 − m, k), so every way of playing returns r.</summary>
 public static class Mines
 {
     public const int Tiles = 25;
@@ -23,14 +19,10 @@ public static class Mines
         return [.. tiles.Take(mines).Order()];
     }
 
-    /// <summary>The multiplier after <paramref name="safePicks"/> safe picks, in basis points, floored. Reachable picks never pass 5,000× (see <see cref="Finished"/>).</summary>
+    /// <summary>Floored; reachable picks never pass the cap (see <see cref="Finished"/>).</summary>
     public static long MultiplierBp(int mines, int safePicks, long rateBp = Multipliers.Base) => (long)Int128.Min(Raw(mines, safePicks, rateBp), Multipliers.CapBp);
 
-    /// <summary>
-    /// True when the round must cash out: every safe tile is revealed, or the next pick would pass the 5,000× cap.
-    /// Stopping there, instead of capping that pick's multiplier, keeps every way of playing at the rate: a capped pick
-    /// would carry the full risk for a fraction of its fair pay.
-    /// </summary>
+    /// <summary>Ends the round before a pick would pass the cap rather than capping it, so no pick carries full risk for part of its pay.</summary>
     public static bool Finished(int mines, int safePicks, long rateBp = Multipliers.Base) => safePicks >= Tiles - mines || Raw(mines, safePicks + 1, rateBp) > Multipliers.CapBp;
 
     /// <summary>The fair multiplier after k safe picks; 0 past the last safe tile (there is no such pick).</summary>

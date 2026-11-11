@@ -2,16 +2,12 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Games;
 
-/// <summary>
-/// Gilded Savanna: 5 reels × 3 rows, 20 fixed lines, Protea Wild on reels 2–4, Baobab Scatter (3+ = 10 free
-/// spins at ×2, retriggerable), max win 5,000× stake. The reel counts below are the tuned design; see
-/// docs/par-sheet/gilded-savanna.md for the RTP they produce.
-/// </summary>
+/// <summary>Gilded Savanna; the RTP of these reel counts is in docs/par-sheet/gilded-savanna.md.</summary>
 public static class GildedSavanna
 {
     public const string GameId = "gilded-savanna";
 
-    /// <summary>The symbol table; its order is the order the definition hash and the strip layout were made with.</summary>
+    /// <summary>Order matters: the definition hash and the strip layout depend on it.</summary>
     public static readonly SymbolDef[] Symbols =
     [
         new("Lion"), new("Elephant"), new("Rhino"), new("Buffalo"),
@@ -40,7 +36,6 @@ public static class GildedSavanna
         ["Ten"] = [2, 8, 40],
     };
 
-    /// <summary>Symbol counts per base reel (each reel 36 stops).</summary>
     public static readonly Dictionary<string, int>[] BaseCounts =
     [
         Counts(wild: 0, lion: 3, elephant: 3, rhino: 4, buffalo: 4, ace: 4, king: 4, queen: 6, jack: 4, ten: 3, scatter: 1),
@@ -50,7 +45,6 @@ public static class GildedSavanna
         Counts(wild: 0, lion: 3, elephant: 3, rhino: 4, buffalo: 4, ace: 4, king: 4, queen: 6, jack: 4, ten: 3, scatter: 1),
     ];
 
-    /// <summary>Symbol counts per free-spin reel (each reel 36 stops).</summary>
     public static readonly Dictionary<string, int>[] FreeCounts =
     [
         Counts(wild: 0, lion: 5, elephant: 5, rhino: 5, buffalo: 4, ace: 4, king: 2, queen: 3, jack: 4, ten: 3, scatter: 1),

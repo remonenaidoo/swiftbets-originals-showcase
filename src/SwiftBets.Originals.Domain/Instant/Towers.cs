@@ -1,10 +1,6 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Towers: climb 8 rows; each row has a few tiles and one or two hide a trap. After k safe rows the multiplier is
-/// r × (tiles / safe tiles)^k at the game's rate r, floored to a basis point: the inverse of the chance of getting there, times the rate.
-/// The round cashes out by itself at the top, or before a row would pass the 5,000× cap (as Mines does).
-/// </summary>
+/// <summary>Towers: after k safe rows the multiplier is r × (tiles / safe tiles)^k; cashes out before a row would pass the cap.</summary>
 public static class Towers
 {
     public const string GameId = "towers";

@@ -1,18 +1,6 @@
 namespace SwiftBets.Originals.Domain.Slot;
 
-/// <summary>
-/// Everything that decides a slot's outcomes and pays. Nothing else may: the PAR sheet is generated from this,
-/// and its hash is recorded in the sheet so a change without a regenerated sheet fails the build.
-/// </summary>
-/// <param name="GameId">The catalogue id.</param>
-/// <param name="Symbols">The symbol table; reels and pays refer to symbols by their index in it.</param>
-/// <param name="BaseReels">Five strips for the base game; a spin draws one stop per strip.</param>
-/// <param name="FreeReels">Five strips used during free spins.</param>
-/// <param name="Lines">Paylines, each five row indexes (0 top, 2 bottom), read left to right.</param>
-/// <param name="LinePays">Pays by symbol for a total count of 3, 4, 5, … in line-bet units; a count above the last entry pays the last.</param>
-/// <param name="ScatterPays">Pays for 3, 4 and 5 Scatters anywhere, in total-stake units.</param>
-/// <param name="Feature">The free-spin rules.</param>
-/// <param name="MaxWinStakes">The most one round (a base spin and its feature) can pay, in total stakes.</param>
+/// <summary>Everything that decides outcomes and pays; its hash is recorded in the PAR sheet.</summary>
 public sealed record GameDefinition(
     string GameId,
     IReadOnlyList<SymbolDef> Symbols,
@@ -35,7 +23,6 @@ public sealed record GameDefinition(
 
     public int FreeSpinMultiplier => Feature.Multiplier;
 
-    /// <summary>The cap in line-bet units: <see cref="MaxWinStakes"/> total stakes.</summary>
     public long CapUnits => (long)MaxWinStakes * LineCount;
 
     // Lookups by symbol id for the evaluator's hot path (the enumeration calls it billions of times).
