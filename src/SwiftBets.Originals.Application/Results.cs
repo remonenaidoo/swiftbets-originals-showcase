@@ -1,34 +1,34 @@
 namespace SwiftBets.Originals.Application;
 
 /// <summary>A refusal the API returns as an error envelope with <paramref name="Http"/> and <paramref name="Code"/>.</summary>
-public sealed record SpinError(int Http, string Code)
+public sealed record GameError(int Http, string Code)
 {
-    public static readonly SpinError InvalidStake = new(400, "invalid_stake");
-    public static readonly SpinError SessionInvalid = new(401, "session_invalid");
-    public static readonly SpinError InsufficientFunds = new(402, "insufficient_funds");
-    public static readonly SpinError LimitExceeded = new(403, "limit_exceeded");
-    public static readonly SpinError AccountRestricted = new(403, "account_restricted");
-    public static readonly SpinError GameNotFound = new(404, "game_not_found");
-    public static readonly SpinError RoundNotFound = new(404, "round_not_found");
-    public static readonly SpinError FeatureInProgress = new(409, "feature_in_progress");
-    public static readonly SpinError KeyInUse = new(409, "key_in_use");
-    public static readonly SpinError NoFeature = new(409, "no_feature");
-    public static readonly SpinError InvalidSeed = new(400, "invalid_seed");
-    public static readonly SpinError BettingClosed = new(409, "betting_closed");
-    public static readonly SpinError NotFlying = new(409, "not_flying");
-    public static readonly SpinError RoundInProgress = new(409, "round_in_progress");
-    public static readonly SpinError RoundOver = new(409, "round_over");
-    public static readonly SpinError TileTaken = new(409, "tile_taken");
-    public static readonly SpinError NothingToCashOut = new(409, "nothing_to_cash_out");
-    public static readonly SpinError GuessNotAllowed = new(409, "guess_not_allowed");
-    public static readonly SpinError WalletUnavailable = new(503, "wallet_unavailable");
+    public static readonly GameError InvalidStake = new(400, "invalid_stake");
+    public static readonly GameError SessionInvalid = new(401, "session_invalid");
+    public static readonly GameError InsufficientFunds = new(402, "insufficient_funds");
+    public static readonly GameError LimitExceeded = new(403, "limit_exceeded");
+    public static readonly GameError AccountRestricted = new(403, "account_restricted");
+    public static readonly GameError GameNotFound = new(404, "game_not_found");
+    public static readonly GameError RoundNotFound = new(404, "round_not_found");
+    public static readonly GameError FeatureInProgress = new(409, "feature_in_progress");
+    public static readonly GameError KeyInUse = new(409, "key_in_use");
+    public static readonly GameError NoFeature = new(409, "no_feature");
+    public static readonly GameError InvalidSeed = new(400, "invalid_seed");
+    public static readonly GameError BettingClosed = new(409, "betting_closed");
+    public static readonly GameError NotFlying = new(409, "not_flying");
+    public static readonly GameError RoundInProgress = new(409, "round_in_progress");
+    public static readonly GameError RoundOver = new(409, "round_over");
+    public static readonly GameError TileTaken = new(409, "tile_taken");
+    public static readonly GameError NothingToCashOut = new(409, "nothing_to_cash_out");
+    public static readonly GameError GuessNotAllowed = new(409, "guess_not_allowed");
+    public static readonly GameError WalletUnavailable = new(503, "wallet_unavailable");
 }
 
-public sealed record Result<T>(T? Value, SpinError? Error)
+public sealed record Result<T>(T? Value, GameError? Error)
 {
     public static implicit operator Result<T>(T value) => new(value, null);
 
-    public static implicit operator Result<T>(SpinError error) => new(default, error);
+    public static implicit operator Result<T>(GameError error) => new(default, error);
 }
 
 /// <summary>A paying line as the client shows it: the symbol by name, its total count, and how many reels the run covers.</summary>

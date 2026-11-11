@@ -27,8 +27,8 @@ public sealed class MinesTests : IDisposable
         var cash = (await Handler().CashoutAsync("s", start.RoundId, TestContext.Current.CancellationToken)).Value!;
 
         pick.MultiplierBp.ShouldBe(Mines.MultiplierBp(3, 1));
-        pick.MultiplierBp.ShouldBeGreaterThan(Mult.One);
-        cash.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(3, 1)));
+        pick.MultiplierBp.ShouldBeGreaterThan(Multipliers.One);
+        cash.Win.ShouldBe(Multipliers.Pay(1000, Mines.MultiplierBp(3, 1)));
         cash.Status.ShouldBe("cashed");
         cash.MineTiles.ShouldBe(MineTiles());
         wallet.Balance.ShouldBe(100_000 - 1000 + cash.Win);
@@ -44,8 +44,8 @@ public sealed class MinesTests : IDisposable
         var cash = await Handler().CashoutAsync("s", start.RoundId, TestContext.Current.CancellationToken);
 
         boom.Status.ShouldBe("busted");
-        after.Error.ShouldBe(SpinError.RoundOver);
-        cash.Error.ShouldBe(SpinError.RoundOver);
+        after.Error.ShouldBe(GameError.RoundOver);
+        cash.Error.ShouldBe(GameError.RoundOver);
         wallet.Balance.ShouldBe(100_000 - 1000);
     }
 
@@ -57,7 +57,7 @@ public sealed class MinesTests : IDisposable
         var again = await Handler().PickAsync("s", start.RoundId, SafeTile(), TestContext.Current.CancellationToken);
         var view = (await Handler().PickAsync("s", start.RoundId, SafeTile(1), TestContext.Current.CancellationToken)).Value!;
 
-        again.Error.ShouldBe(SpinError.TileTaken);
+        again.Error.ShouldBe(GameError.TileTaken);
         view.MultiplierBp.ShouldBe(Mines.MultiplierBp(3, 2));
     }
 
@@ -83,12 +83,12 @@ public sealed class MinesTests : IDisposable
         var clear = await Handler().PickAsync("s", start.RoundId, safe, TestContext.Current.CancellationToken);
 
         clear.Value!.Status.ShouldBe("cashed");
-        clear.Value.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(24, 1)));
+        clear.Value.Win.ShouldBe(Multipliers.Pay(1000, Mines.MultiplierBp(24, 1)));
     }
 
     private sealed class SwitchRates : IGameRates
     {
-        public long Rate { get; set; } = Mult.Base;
+        public long Rate { get; set; } = Multipliers.Base;
 
         public long For(string gameId) => Rate;
     }
@@ -104,7 +104,7 @@ public sealed class MinesTests : IDisposable
         await handler.PickAsync("s", start.RoundId, SafeTile(), ct);
         var cash = (await handler.CashoutAsync("s", start.RoundId, ct)).Value!;
 
-        cash.Win.ShouldBe(Mult.Pay(1000, Mines.MultiplierBp(3, 1, Mult.Base)));
-        cash.Win.ShouldNotBe(Mult.Pay(1000, Mines.MultiplierBp(3, 1, 8_000)));
+        cash.Win.ShouldBe(Multipliers.Pay(1000, Mines.MultiplierBp(3, 1, Multipliers.Base)));
+        cash.Win.ShouldNotBe(Multipliers.Pay(1000, Mines.MultiplierBp(3, 1, 8_000)));
     }
 }

@@ -39,15 +39,15 @@ public static class Towers
         return rows;
     }
 
-    public static long MultiplierBp(string level, int safeRows, long rateBp = Mult.Base) => (long)Int128.Min(Raw(level, safeRows, rateBp), Mult.CapBp);
+    public static long MultiplierBp(string level, int safeRows, long rateBp = Multipliers.Base) => (long)Int128.Min(Raw(level, safeRows, rateBp), Multipliers.CapBp);
 
-    public static bool Finished(string level, int safeRows, long rateBp = Mult.Base) => safeRows >= Rows || Raw(level, safeRows + 1, rateBp) > Mult.CapBp;
+    public static bool Finished(string level, int safeRows, long rateBp = Multipliers.Base) => safeRows >= Rows || Raw(level, safeRows + 1, rateBp) > Multipliers.CapBp;
 
     private static Int128 Raw(string level, int k, long rateBp)
     {
         if (k == 0)
         {
-            return Mult.One;
+            return Multipliers.One;
         }
 
         var (tiles, traps) = Levels[level];

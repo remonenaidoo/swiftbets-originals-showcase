@@ -37,7 +37,7 @@ public sealed class OneShotTests : IDisposable
     {
         var result = await Handler().PlayAsync(Dice.GameId, "s", 1000, Json(new { target = 9990, over = true }), "k1", ct);
 
-        result.Error.ShouldBe(SpinError.InvalidStake);
+        result.Error.ShouldBe(GameError.InvalidStake);
         wallet.Calls.ShouldNotContain(c => c.Action == "bet");
     }
 

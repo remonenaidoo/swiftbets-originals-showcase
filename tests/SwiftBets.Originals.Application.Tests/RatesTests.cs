@@ -25,5 +25,5 @@ public sealed class RatesTests
 
     [Fact]
     public void A_setting_out_of_range_plays_at_the_design_rate() =>
-        new GameRates(new Monitor(new RtpOptions { Default = 800m })).For("dice").ShouldBe(Mult.Base);
+        new GameRates(new Monitor(new RtpOptions { Default = 800m })).For("dice").ShouldBe(Multipliers.Base);
 }

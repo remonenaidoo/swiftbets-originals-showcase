@@ -85,7 +85,7 @@ public sealed class MoreGamesTests
         double[] floats = [Card(0), Card(2), Card(6), Card(4), Card(0), Card(0)];
         var result = new Baccarat().Resolve(floats, Json(new { bet = "banker" }));
 
-        result.MultiplierBp.ShouldBe(Mult.One);
+        result.MultiplierBp.ShouldBe(Multipliers.One);
     }
 
     [Fact]
@@ -139,11 +139,11 @@ public sealed class MoreGamesTests
         foreach (var bet in new[] { "player", "banker", "tie" })
         {
             var pushes = bet == "tie" ? 0 : Baccarat.Wins["tie"];
-            var rtp = ((Baccarat.Wins[bet] * Baccarat.WinBp(bet, 8_000)) + (pushes * Mult.One)) / (double)(Baccarat.Deals * Mult.One);
+            var rtp = ((Baccarat.Wins[bet] * Baccarat.WinBp(bet, 8_000)) + (pushes * Multipliers.One)) / (double)(Baccarat.Deals * Multipliers.One);
             rtp.ShouldBeInRange(0.7999, 0.8);
         }
 
         double[] tie = [Card(0), Card(2), Card(6), Card(4), Card(0), Card(0)];
-        new Baccarat().Resolve(tie, Json(new { bet = "player" }), 8_000).MultiplierBp.ShouldBe(Mult.One);
+        new Baccarat().Resolve(tie, Json(new { bet = "player" }), 8_000).MultiplierBp.ShouldBe(Multipliers.One);
     }
 }

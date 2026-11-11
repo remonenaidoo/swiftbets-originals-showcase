@@ -93,9 +93,9 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
 
     public async Task<Result<CrashBetView>> BetAsync(CrashBet request, CancellationToken cancellationToken)
     {
-        if (Array.IndexOf(Crash.Stakes, request.Stake) < 0 || request.AutoBp is < Crash.MinAutoBp or > Mult.CapBp || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
+        if (Array.IndexOf(Crash.Stakes, request.Stake) < 0 || request.AutoBp is < Crash.MinAutoBp or > Multipliers.CapBp || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
-            return SpinError.InvalidStake;
+            return GameError.InvalidStake;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, request.SessionToken, cancellationToken);
@@ -106,7 +106,7 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
 
         if (await store.FindByKeyAsync(playerRef!, request.IdempotencyKey, cancellationToken) is { } repeat)
         {
-            return repeat.GameId == Crash.GameId && await crashes.BetAsync(repeat.RoundId, cancellationToken) is { } same ? await ViewAsync(same, balance, cancellationToken) : SpinError.KeyInUse;
+            return repeat.GameId == Crash.GameId && await crashes.BetAsync(repeat.RoundId, cancellationToken) is { } same ? await ViewAsync(same, balance, cancellationToken) : GameError.KeyInUse;
         }
 
         await gate.WaitAsync(cancellationToken);
@@ -114,12 +114,12 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         {
             if (current is not { Phase: CrashPhase.Betting } table || time.GetUtcNow() >= table.BettingUntil)
             {
-                return SpinError.BettingClosed;
+                return GameError.BettingClosed;
             }
 
             if ((await crashes.PlayerBetsAsync(table.Id, playerRef!, cancellationToken)).Count >= MaxBetsPerPlayer)
             {
-                return SpinError.RoundInProgress;
+                return GameError.RoundInProgress;
             }
 
             var roundId = Guid.NewGuid();
@@ -155,23 +155,23 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         var received = time.GetUtcNow();
         if (await crashes.BetAsync(roundId, cancellationToken) is not { } bet || bet.Round.SessionToken != sessionToken)
         {
-            return SpinError.RoundNotFound;
+            return GameError.RoundNotFound;
         }
 
         if (current is not { } table || table.Id != bet.Table)
         {
-            return SpinError.RoundOver;
+            return GameError.RoundOver;
         }
 
         if (table.Phase == CrashPhase.Betting)
         {
-            return SpinError.NotFlying;
+            return GameError.NotFlying;
         }
 
         var elapsed = (received - table.BettingUntil).TotalMilliseconds;
         if (elapsed >= Crash.ElapsedFor(table.PointBp))
         {
-            return SpinError.RoundOver;
+            return GameError.RoundOver;
         }
 
         // An auto target already passed is what the bet was owed; the click came after it.
@@ -184,10 +184,10 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
         var (paid, paidBalance) = await PayAtAsync(bet, bp, wait: true, cancellationToken);
         if (!paid)
         {
-            return SpinError.RoundOver;
+            return GameError.RoundOver;
         }
 
-        return new CrashBetView(roundId, table.Id, bet.Round.Stake, bet.AutoBp, "cashed", bp, Mult.Pay(bet.Round.Stake, bp), paidBalance);
+        return new CrashBetView(roundId, table.Id, bet.Round.Stake, bet.AutoBp, "cashed", bp, Multipliers.Pay(bet.Round.Stake, bp), paidBalance);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
     private async Task<(bool Paid, long? Balance)> PayAtAsync(CrashBetRecord bet, long bp, bool wait, CancellationToken cancellationToken)
     {
         var r = bet.Round;
-        var win = Mult.Pay(r.Stake, bp);
+        var win = Multipliers.Pay(r.Stake, bp);
         if (await store.StepAsync(r.RoundId, r.PlayerRef, Crash.GameId, (_, spins) =>
             (new SpinRecord(r.RoundId, spins.Count, [], JsonSerializer.Serialize(new { bp }, Json), win, null, Play.WinTx(r.RoundId, spins.Count), false), RoundStatus.WinPending, win), cancellationToken) is not var (round, spin))
         {

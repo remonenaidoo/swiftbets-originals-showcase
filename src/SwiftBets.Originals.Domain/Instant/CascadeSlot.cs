@@ -184,7 +184,7 @@ public sealed class CascadeSlot(string id = CascadeSlot.GameId, string name = "K
     public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var (spins, units, capped) = PlayRound(Production, floats);
-        return new(Mult.Rated(units * (Mult.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
+        return new(Multipliers.Rated(units * (Multipliers.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
     }
 
     public override object InfoAt(long rateBp) => new

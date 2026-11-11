@@ -25,18 +25,18 @@ public static class Mines
     }
 
     /// <summary>The multiplier after <paramref name="safePicks"/> safe picks, in basis points, floored. Reachable picks never pass 5,000× (see <see cref="Finished"/>).</summary>
-    public static long MultiplierBp(int mines, int safePicks, long rateBp = Mult.Base) => (long)Int128.Min(Raw(mines, safePicks, rateBp), Mult.CapBp);
+    public static long MultiplierBp(int mines, int safePicks, long rateBp = Multipliers.Base) => (long)Int128.Min(Raw(mines, safePicks, rateBp), Multipliers.CapBp);
 
     /// <summary>
     /// True when the round must cash out: every safe tile is revealed, or the next pick would pass the 5,000× cap.
     /// Stopping there, instead of capping that pick's multiplier, keeps every way of playing at the rate: a capped pick
     /// would carry the full risk for a fraction of its fair pay.
     /// </summary>
-    public static bool Finished(int mines, int safePicks, long rateBp = Mult.Base) => safePicks >= Tiles - mines || Raw(mines, safePicks + 1, rateBp) > Mult.CapBp;
+    public static bool Finished(int mines, int safePicks, long rateBp = Multipliers.Base) => safePicks >= Tiles - mines || Raw(mines, safePicks + 1, rateBp) > Multipliers.CapBp;
 
     /// <summary>The fair multiplier after k safe picks; 0 past the last safe tile (there is no such pick).</summary>
     private static Int128 Raw(int mines, int safePicks, long rateBp) =>
-        safePicks == 0 ? Mult.One : safePicks > Tiles - mines ? 0 : (Int128)rateBp * Choose(Tiles, safePicks) / Choose(Tiles - mines, safePicks);
+        safePicks == 0 ? Multipliers.One : safePicks > Tiles - mines ? 0 : (Int128)rateBp * Choose(Tiles, safePicks) / Choose(Tiles - mines, safePicks);
 
     private static Int128 Choose(int n, int k)
     {

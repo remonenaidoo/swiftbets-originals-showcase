@@ -30,12 +30,12 @@ public sealed class GameRates(IOptionsMonitor<RtpOptions> options) : IGameRates
     {
         var o = options.CurrentValue;
         var percent = o.Games.TryGetValue(gameId, out var game) ? game : o.Default;
-        return percent is >= Lowest and <= Highest ? (long)Math.Round(percent * 100) : Mult.Base;
+        return percent is >= Lowest and <= Highest ? (long)Math.Round(percent * 100) : Multipliers.Base;
     }
 }
 
 /// <summary>One rate for every game: the design rate unless told otherwise (tests, tools).</summary>
-public sealed class FixedRates(long rateBp = Mult.Base) : IGameRates
+public sealed class FixedRates(long rateBp = Multipliers.Base) : IGameRates
 {
     public static readonly FixedRates Design = new();
 

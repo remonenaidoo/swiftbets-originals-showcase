@@ -8,7 +8,7 @@ namespace SwiftBets.Originals.Application.Instant;
 /// </summary>
 internal static class Stake
 {
-    public static async Task<(long? Balance, SpinError? Error)> TakeAsync(IRoundStore store, IWallet wallet, RoundRecord round, CancellationToken cancellationToken)
+    public static async Task<(long? Balance, GameError? Error)> TakeAsync(IRoundStore store, IWallet wallet, RoundRecord round, CancellationToken cancellationToken)
     {
         var id = round.RoundId;
         var bet = await wallet.BetAsync(round.SessionToken, round.GameId, Play.BetTx(id), id.ToString(), round.Stake, cancellationToken);
@@ -28,7 +28,7 @@ internal static class Stake
                 await store.SetRollbackPendingAsync(id, false, cancellationToken);
             }
 
-            return (null, SpinError.WalletUnavailable);
+            return (null, GameError.WalletUnavailable);
         }
 
         return (bet.Balance, null);

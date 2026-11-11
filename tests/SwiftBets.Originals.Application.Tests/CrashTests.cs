@@ -57,7 +57,7 @@ public sealed class CrashTests : IDisposable
         time.Advance(CrashRoom.SettleGrace);
         await room.TickAsync(ct);
 
-        late.Error.ShouldBe(SpinError.RoundOver);
+        late.Error.ShouldBe(GameError.RoundOver);
         store.Rounds[bet].Status.ShouldBe(RoundStatus.Settled);
         wallet.Balance.ShouldBe(100_000 - 1000);
     }
@@ -86,7 +86,7 @@ public sealed class CrashTests : IDisposable
 
         first.Error.ShouldBeNull();
         second.Error.ShouldBeNull();
-        third.Error.ShouldBe(SpinError.RoundInProgress);
+        third.Error.ShouldBe(GameError.RoundInProgress);
         wallet.Balance.ShouldBe(100_000 - 1500);
     }
 

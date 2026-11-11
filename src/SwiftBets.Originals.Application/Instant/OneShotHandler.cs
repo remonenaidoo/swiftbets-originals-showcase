@@ -19,12 +19,12 @@ public sealed class OneShotHandler(IRoundStore store, IWallet wallet, ISeedStore
     {
         if (!OneShotGames.All.TryGetValue(gameId, out var game))
         {
-            return SpinError.GameNotFound;
+            return GameError.GameNotFound;
         }
 
         if (Array.IndexOf(game.Stakes, stake) < 0 || !game.Valid(choices) || string.IsNullOrWhiteSpace(idempotencyKey) || idempotencyKey.Length > 100)
         {
-            return SpinError.InvalidStake;
+            return GameError.InvalidStake;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
@@ -37,17 +37,17 @@ public sealed class OneShotHandler(IRoundStore store, IWallet wallet, ISeedStore
         {
             if (repeat.GameId != gameId)
             {
-                return SpinError.KeyInUse;
+                return GameError.KeyInUse;
             }
 
-            return repeat.Status == RoundStatus.Pending ? SpinError.RoundInProgress
-                : repeat.Status is RoundStatus.Refused or RoundStatus.Voided ? SpinError.WalletUnavailable
+            return repeat.Status == RoundStatus.Pending ? GameError.RoundInProgress
+                : repeat.Status is RoundStatus.Refused or RoundStatus.Voided ? GameError.WalletUnavailable
                 : View(repeat, (await store.SpinsAsync(repeat.RoundId, cancellationToken))[0], balance);
         }
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
         var result = game.Resolve(Fair.Floats(draw.ServerSeed, draw.ClientSeed, draw.Nonce, game.FloatsNeeded(choices)), choices, (rates ?? FixedRates.Design).For(gameId));
-        var win = Mult.Pay(stake, result.MultiplierBp);
+        var win = Multipliers.Pay(stake, result.MultiplierBp);
         var roundId = Guid.NewGuid();
         var round = new RoundRecord(roundId, playerRef!, sessionToken, gameId, stake, idempotencyKey, RoundStatus.Pending, 0, 0, time.GetUtcNow());
         var outcome = new Stored(result.MultiplierBp, JsonSerializer.SerializeToElement(result.Detail, Json), choices, draw.Nonce, draw.ClientSeed, draw.ServerSeedHash);

@@ -1,7 +1,7 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
 /// <summary>Instant-game multipliers in basis points (×10,000), so pays are exact integers.</summary>
-public static class Mult
+public static class Multipliers
 {
     public const long One = 10_000;
 
