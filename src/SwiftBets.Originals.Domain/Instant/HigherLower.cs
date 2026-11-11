@@ -27,10 +27,10 @@ public static class HigherLower
     public static int[] Deal(IReadOnlyList<double> floats) => [.. floats.Take(Cards).Select(f => (int)(f * Cards))];
 
     /// <summary>The multiplier after winning guesses with these winning counts.</summary>
-    public static long MultiplierBp(IReadOnlyList<int> counts, long rateBp = Mult.Base) => counts.Count == 0 ? Mult.One : Math.Min(Raw(counts, rateBp), Mult.CapBp);
+    public static long MultiplierBp(IReadOnlyList<int> counts, long rateBp = Multipliers.Base) => counts.Count == 0 ? Multipliers.One : Math.Min(Raw(counts, rateBp), Multipliers.CapBp);
 
-    public static bool Allowed(IReadOnlyList<int> counts, int rank, int guess, long rateBp = Mult.Base) =>
-        guess is Higher or Lower && Count(rank, guess) is var c && c < 13 && Raw([.. counts, c], rateBp) <= Mult.CapBp;
+    public static bool Allowed(IReadOnlyList<int> counts, int rank, int guess, long rateBp = Multipliers.Base) =>
+        guess is Higher or Lower && Count(rank, guess) is var c && c < 13 && Raw([.. counts, c], rateBp) <= Multipliers.CapBp;
 
     /// <summary>The multiplier before the cap, exact (13^k outgrows any fixed width long before a run ends); anything past the cap reads as cap + 1.</summary>
     private static long Raw(IReadOnlyList<int> counts, long rateBp)
@@ -42,6 +42,6 @@ public static class HigherLower
             den *= c;
         }
 
-        return (long)BigInteger.Min(num / den, Mult.CapBp + 1);
+        return (long)BigInteger.Min(num / den, Multipliers.CapBp + 1);
     }
 }

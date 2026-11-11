@@ -18,13 +18,13 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
     {
         if (games.Find(request.GameId) is not var (slot, engine))
         {
-            return SpinError.GameNotFound;
+            return GameError.GameNotFound;
         }
 
         var game = slot.Definition;
         if (Array.IndexOf(slot.Profile.Stakes, request.Stake) < 0 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
-            return SpinError.InvalidStake;
+            return GameError.InvalidStake;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, request.SessionToken, cancellationToken);
@@ -38,7 +38,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
             // Keys are unique per player across games: the same key in another game is a client bug, not a repeat.
             if (repeat.GameId != game.GameId)
             {
-                return SpinError.KeyInUse;
+                return GameError.KeyInUse;
             }
 
             var first = (await store.SpinsAsync(repeat.RoundId, cancellationToken))[0];
@@ -47,7 +47,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
 
         if (await store.FindOpenFeatureAsync(playerRef!, game.GameId, cancellationToken) is not null)
         {
-            return SpinError.FeatureInProgress;
+            return GameError.FeatureInProgress;
         }
 
         var outcome = engine.PlaySpin(free: false);
@@ -77,7 +77,7 @@ public sealed class SpinHandler(IRoundStore store, IWallet wallet, SlotEngines g
                 await store.SetRollbackPendingAsync(roundId, false, cancellationToken);
             }
 
-            return SpinError.WalletUnavailable;
+            return GameError.WalletUnavailable;
         }
 
         balance = bet.Balance;

@@ -32,8 +32,8 @@ public static class InstantSheets
             {
                 var bp = SwiftBets.Originals.Domain.Instant.Mines.MultiplierBp(m, k);
                 var p = Survive(m, k);
-                var rtp = p * bp / Mult.One;
-                csv.AppendLine(CultureInfo.InvariantCulture, $"{m},{k},{bp / (double)Mult.One:F4},{p:E10},{rtp:F8}");
+                var rtp = p * bp / Multipliers.One;
+                csv.AppendLine(CultureInfo.InvariantCulture, $"{m},{k},{bp / (double)Multipliers.One:F4},{p:E10},{rtp:F8}");
                 if (rtp < lo) { lo = rtp; loAt = k; }
                 hi = Math.Max(hi, rtp);
                 top = Math.Max(top, bp);
@@ -41,7 +41,7 @@ public static class InstantSheets
             }
 
             worst = Math.Min(worst, lo);
-            md.AppendLine(CultureInfo.InvariantCulture, $"| {m} | {lo:P4} ({loAt}) | {hi:P4} | {top / (double)Mult.One:N2}× |");
+            md.AppendLine(CultureInfo.InvariantCulture, $"| {m} | {lo:P4} ({loAt}) | {hi:P4} | {top / (double)Multipliers.One:N2}× |");
         }
 
         md.AppendLine().AppendLine(CultureInfo.InvariantCulture, $"No way of playing returns more than 96.0000%; the lowest is {worst:P4} (flooring to 0.0001×). Every row is in `mines.csv`.").AppendLine();
@@ -92,7 +92,7 @@ public static class InstantSheets
             for (long n = w; n < rounds; n += workers)
             {
                 var p = SwiftBets.Originals.Domain.Instant.Crash.PointBp(Fair.Floats(seed, SwiftBets.Originals.Domain.Instant.Crash.ClientSeed, n, 1)[0]);
-                if (p == Mult.One) bust++;
+                if (p == Multipliers.One) bust++;
                 for (var i = 0; i < targets.Length; i++) if (p >= targets[i]) local[i]++;
             }
 
@@ -114,7 +114,7 @@ public static class InstantSheets
         var ok = true;
         for (var i = 0; i < targets.Length; i++)
         {
-            var x = targets[i] / (double)Mult.One;
+            var x = targets[i] / (double)Multipliers.One;
             var p = hits[i] / (double)rounds;
             var rtp = p * x;
             var half = 2.576 * x * Math.Sqrt(p * (1 - p) / rounds);
@@ -141,9 +141,9 @@ public static class InstantSheets
         double dLo = 1, dHi = 0;
         for (var c = 200; c <= 9_800; c++)
         {
-            var rtp = c / 10_000.0 * (96_000_000L / c) / Mult.One;
+            var rtp = c / 10_000.0 * (96_000_000L / c) / Multipliers.One;
             dLo = Math.Min(dLo, rtp); dHi = Math.Max(dHi, rtp);
-            if (c is 200 or 500 or 1000 or 2500 or 4950 or 5000 or 7500 or 9000 or 9800) dice.AppendLine(CultureInfo.InvariantCulture, $"| {c / 100.0:F2}% | {96_000_000L / c / (double)Mult.One:F4}× | {rtp:P4} |");
+            if (c is 200 or 500 or 1000 or 2500 or 4950 or 5000 or 7500 or 9000 or 9800) dice.AppendLine(CultureInfo.InvariantCulture, $"| {c / 100.0:F2}% | {96_000_000L / c / (double)Multipliers.One:F4}× | {rtp:P4} |");
         }
 
         dice.AppendLine().AppendLine(CultureInfo.InvariantCulture, $"Over every allowed chance (2.00%–98.00% in 0.01% steps) the RTP is between {dLo:P4} and {dHi:P4}.");
@@ -158,8 +158,8 @@ public static class InstantSheets
         foreach (var ((rows, risk), table) in InstantTables.PegDrop)
         {
             double rtp = 0;
-            for (var k = 0; k <= rows; k++) rtp += Choose(rows, k) / Math.Pow(2, rows) * table[k] / Mult.One;
-            peg.AppendLine(CultureInfo.InvariantCulture, $"**{rows} rows, {risk}:** RTP {rtp:P4}; pays {string.Join(" · ", table.Select(b => (b / (double)Mult.One).ToString("0.##", CultureInfo.InvariantCulture) + "×"))}").AppendLine();
+            for (var k = 0; k <= rows; k++) rtp += Choose(rows, k) / Math.Pow(2, rows) * table[k] / Multipliers.One;
+            peg.AppendLine(CultureInfo.InvariantCulture, $"**{rows} rows, {risk}:** RTP {rtp:P4}; pays {string.Join(" · ", table.Select(b => (b / (double)Multipliers.One).ToString("0.##", CultureInfo.InvariantCulture) + "×"))}").AppendLine();
             ok &= rtp <= 0.96 + 1e-12; worst = Math.Min(worst, rtp);
         }
 
@@ -171,8 +171,8 @@ public static class InstantSheets
         for (var n = 1; n <= 10; n++)
         {
             double rtp = 0;
-            for (var h = 0; h <= n; h++) rtp += Choose(n, h) * Choose(40 - n, 10 - h) / Choose(40, 10) * InstantTables.Keno[n][h] / Mult.One;
-            keno.AppendLine(CultureInfo.InvariantCulture, $"| {n} | {string.Join(" · ", InstantTables.Keno[n].Select(b => (b / (double)Mult.One).ToString("0.##", CultureInfo.InvariantCulture)))} | {rtp:P4} |");
+            for (var h = 0; h <= n; h++) rtp += Choose(n, h) * Choose(40 - n, 10 - h) / Choose(40, 10) * InstantTables.Keno[n][h] / Multipliers.One;
+            keno.AppendLine(CultureInfo.InvariantCulture, $"| {n} | {string.Join(" · ", InstantTables.Keno[n].Select(b => (b / (double)Multipliers.One).ToString("0.##", CultureInfo.InvariantCulture)))} | {rtp:P4} |");
             ok &= rtp <= 0.96 + 1e-12; worst = Math.Min(worst, rtp);
         }
 
@@ -187,12 +187,12 @@ public static class InstantSheets
             for (var k = 1; k <= Towers.Rows; k++)
             {
                 var bp = Towers.MultiplierBp(level, k);
-                var rtp = Math.Pow((tiles - traps) / (double)tiles, k) * bp / Mult.One;
+                var rtp = Math.Pow((tiles - traps) / (double)tiles, k) * bp / Multipliers.One;
                 lo = Math.Min(lo, rtp); hi = Math.Max(hi, rtp); top = Math.Max(top, bp);
                 if (Towers.Finished(level, k)) break;
             }
 
-            towers.AppendLine(CultureInfo.InvariantCulture, $"| {level} | {tiles} / {traps} | {lo:P4} | {hi:P4} | {top / (double)Mult.One:N2}× |");
+            towers.AppendLine(CultureInfo.InvariantCulture, $"| {level} | {tiles} / {traps} | {lo:P4} | {hi:P4} | {top / (double)Multipliers.One:N2}× |");
             ok &= hi <= 0.96 + 1e-12; worst = Math.Min(worst, lo);
         }
 

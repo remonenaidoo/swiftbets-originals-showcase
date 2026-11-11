@@ -34,7 +34,7 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
 
     public static object TowersInfo(long rateBp) => new
     {
-        gameId = Towers.GameId, name = "Towers", rateBp, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = Mines.Stakes, rows = Towers.Rows,
+        gameId = Towers.GameId, name = "Towers", rateBp, maxWinStakes = (int)(Multipliers.CapBp / Multipliers.One), stakes = Mines.Stakes, rows = Towers.Rows,
         levels = Towers.Levels.ToDictionary(l => l.Key, l => new
         {
             tiles = l.Value.Tiles, traps = l.Value.Traps,
@@ -44,7 +44,7 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
 
     public static object HigherLowerInfo(long rateBp) => new
     {
-        gameId = HigherLower.GameId, name = "Higher or Lower", rateBp, maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = Mines.Stakes, cards = HigherLower.Cards,
+        gameId = HigherLower.GameId, name = "Higher or Lower", rateBp, maxWinStakes = (int)(Multipliers.CapBp / Multipliers.One), stakes = Mines.Stakes, cards = HigherLower.Cards,
     };
 
     /// <summary>The page data of a one-shot game, Towers or Higher or Lower.</summary>
@@ -61,11 +61,11 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         }
         else if (OneShotGames.All.TryGetValue(gameId, out var game))
         {
-            info = new { gameId = game.Id, name = game.Name, rateBp = Rate(gameId), maxWinStakes = (int)(Mult.CapBp / Mult.One), stakes = game.Stakes, rules = game.InfoAt(Rate(gameId)) };
+            info = new { gameId = game.Id, name = game.Name, rateBp = Rate(gameId), maxWinStakes = (int)(Multipliers.CapBp / Multipliers.One), stakes = game.Stakes, rules = game.InfoAt(Rate(gameId)) };
         }
         else
         {
-            return SpinError.GameNotFound;
+            return GameError.GameNotFound;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
@@ -84,7 +84,7 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
             info);
     }
 
-    public static CrashInfo CrashInfo(long rateBp) => new(Crash.GameId, "Crash", rateBp, (int)(Mult.CapBp / Mult.One), Crash.Stakes, Crash.MinAutoBp, Crash.Rate, (int)Crash.Betting.TotalSeconds);
+    public static CrashInfo CrashInfo(long rateBp) => new(Crash.GameId, "Crash", rateBp, (int)(Multipliers.CapBp / Multipliers.One), Crash.Stakes, Crash.MinAutoBp, Crash.Rate, (int)Crash.Betting.TotalSeconds);
 
     public async Task<Result<CrashState>> CrashAsync(string sessionToken, CancellationToken cancellationToken)
     {
@@ -105,7 +105,7 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
             CrashInfo(Rate(Crash.GameId)));
     }
 
-    public static MinesInfo MinesInfo(long rateBp) => new(Mines.GameId, "Mines", rateBp, (int)(Mult.CapBp / Mult.One), Mines.Stakes, Mines.Tiles,
+    public static MinesInfo MinesInfo(long rateBp) => new(Mines.GameId, "Mines", rateBp, (int)(Multipliers.CapBp / Multipliers.One), Mines.Stakes, Mines.Tiles,
         [.. Enumerable.Range(1, Mines.Tiles - 1).Select(m => Enumerable.Range(1, Mines.Tiles - m).TakeWhile(k => k == 1 || !Mines.Finished(m, k - 1, rateBp)).Select(k => Mines.MultiplierBp(m, k, rateBp)).ToArray())]);
 
     public async Task<Result<MinesState>> MinesAsync(string sessionToken, CancellationToken cancellationToken)
@@ -133,7 +133,7 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
     {
         if (clientSeed is not { Length: > 0 and <= 64 } || !clientSeed.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))
         {
-            return SpinError.InvalidSeed;
+            return GameError.InvalidSeed;
         }
 
         var (playerRef, _, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
@@ -146,10 +146,10 @@ public sealed class InstantQueries(IRoundStore store, IWallet wallet, ISeedStore
         {
             if (await store.FindOpenAsync(playerRef!, id, cancellationToken) is not null)
             {
-                return SpinError.RoundInProgress;
+                return GameError.RoundInProgress;
             }
         }
 
-        return await seeds.RotateAsync(playerRef!, clientSeed, cancellationToken) is { } rotated ? SeedsView.Of(rotated) : SpinError.RoundInProgress;
+        return await seeds.RotateAsync(playerRef!, clientSeed, cancellationToken) is { } rotated ? SeedsView.Of(rotated) : GameError.RoundInProgress;
     }
 }

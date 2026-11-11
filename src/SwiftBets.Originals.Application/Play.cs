@@ -13,7 +13,7 @@ internal static class Play
 
     /// <summary>Line-bet units to minor units: every offered stake is a multiple of the line count.</summary>
     /// <summary>A line slot's units as money at the game's rate: units × line bet × rate ÷ the design rate, floored to the cent.</summary>
-    public static long Money(long units, long stake, int lines, long rateBp) => (long)((Int128)units * (stake / lines) * rateBp / Domain.Instant.Mult.Base);
+    public static long Money(long units, long stake, int lines, long rateBp) => (long)((Int128)units * (stake / lines) * rateBp / Domain.Instant.Multipliers.Base);
 
     public static string BetTx(Guid round) => $"{round}:bet";
 
@@ -41,24 +41,24 @@ internal static class Play
         [.. (Read(outcomeJson).Locked ?? []).Select(l => new LockedCell(l.Reel, l.Row, game.Id(l.Symbol)))];
 
     /// <summary>Who is playing, from the casino. Without the casino's reference the round is bound to this session only.</summary>
-    public static async Task<(string? PlayerRef, long? Balance, SpinError? Error)> IdentifyAsync(IWallet wallet, string sessionToken, CancellationToken cancellationToken)
+    public static async Task<(string? PlayerRef, long? Balance, GameError? Error)> IdentifyAsync(IWallet wallet, string sessionToken, CancellationToken cancellationToken)
     {
         var reply = await wallet.BalanceAsync(sessionToken, cancellationToken);
         return reply.Status switch
         {
             WalletStatus.Ok => (reply.PlayerRef ?? $"session:{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sessionToken)))}", reply.Balance, null),
-            WalletStatus.SessionInvalid => (null, null, SpinError.SessionInvalid),
-            _ => (null, null, SpinError.WalletUnavailable),
+            WalletStatus.SessionInvalid => (null, null, GameError.SessionInvalid),
+            _ => (null, null, GameError.WalletUnavailable),
         };
     }
 
-    public static SpinError Refusal(string status) => status switch
+    public static GameError Refusal(string status) => status switch
     {
-        WalletStatus.InsufficientFunds => SpinError.InsufficientFunds,
-        WalletStatus.LimitExceeded => SpinError.LimitExceeded,
-        WalletStatus.AccountRestricted => SpinError.AccountRestricted,
-        WalletStatus.SessionInvalid => SpinError.SessionInvalid,
-        _ => SpinError.WalletUnavailable,
+        WalletStatus.InsufficientFunds => GameError.InsufficientFunds,
+        WalletStatus.LimitExceeded => GameError.LimitExceeded,
+        WalletStatus.AccountRestricted => GameError.AccountRestricted,
+        WalletStatus.SessionInvalid => GameError.SessionInvalid,
+        _ => GameError.WalletUnavailable,
     };
 
     public static SpinView View(RoundRecord round, SpinRecord spin, GameDefinition game, long? balance, long rateBp)

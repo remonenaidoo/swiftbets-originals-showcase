@@ -48,7 +48,7 @@ public sealed class HigherLowerTests : IDisposable
         await Handler().GuessAsync("s", start.RoundId, guess, ct);
         var cash = (await Handler().CashoutAsync("s", start.RoundId, ct)).Value!;
 
-        cash.Win.ShouldBe(Mult.Pay(1000, HigherLower.MultiplierBp([HigherLower.Count(Ranks()[i], guess)])));
+        cash.Win.ShouldBe(Multipliers.Pay(1000, HigherLower.MultiplierBp([HigherLower.Count(Ranks()[i], guess)])));
         wallet.Balance.ShouldBe(100_000 - 1000 + cash.Win);
     }
 
@@ -68,7 +68,7 @@ public sealed class HigherLowerTests : IDisposable
         (await Handler().GuessAsync("s", start.RoundId, losing(), ct)).Value!.Status.ShouldBe("busted");
         var again = await Handler().GuessAsync("s", start.RoundId, HigherLower.Skip, ct);
 
-        again.Error.ShouldBe(SpinError.RoundOver);
+        again.Error.ShouldBe(GameError.RoundOver);
         wallet.Balance.ShouldBe(100_000 - 1000);
     }
 

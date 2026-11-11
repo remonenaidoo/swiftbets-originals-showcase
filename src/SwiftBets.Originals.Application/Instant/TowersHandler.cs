@@ -34,7 +34,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
     {
         if (Array.IndexOf(Mines.Stakes, request.Stake) < 0 || request.Level is null || !Towers.Levels.ContainsKey(request.Level) || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
-            return SpinError.InvalidStake;
+            return GameError.InvalidStake;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, request.SessionToken, cancellationToken);
@@ -47,16 +47,16 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
         {
             if (repeat.GameId != Towers.GameId)
             {
-                return SpinError.KeyInUse;
+                return GameError.KeyInUse;
             }
 
             // The first request may still be taking the stake: answer only once it has, never with a half-made round.
-            return repeat.Status == RoundStatus.Pending ? SpinError.RoundInProgress : View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance);
+            return repeat.Status == RoundStatus.Pending ? GameError.RoundInProgress : View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance);
         }
 
         if (await store.FindOpenAsync(playerRef!, Towers.GameId, cancellationToken) is not null)
         {
-            return SpinError.RoundInProgress;
+            return GameError.RoundInProgress;
         }
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
@@ -81,7 +81,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
     {
         if (tile is < 0 or > 3)
         {
-            return SpinError.TileTaken;
+            return GameError.TileTaken;
         }
 
         return await StepAsync(sessionToken, roundId, (round, spins) =>
@@ -105,7 +105,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
             }
 
             // The top, or the cap: the round cashes out on this pick.
-            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(start.Level, row + 1, start.RateBp));
+            var win = Multipliers.Pay(round.Stake, Towers.MultiplierBp(start.Level, row + 1, start.RateBp));
             return (new SpinRecord(roundId, seq, [tile], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: true, cancellationToken);
     }
@@ -120,7 +120,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
             }
 
             var seq = spins.Count;
-            var win = Mult.Pay(round.Stake, Towers.MultiplierBp(Start(spins).Level, safe, Start(spins).RateBp));
+            var win = Multipliers.Pay(round.Stake, Towers.MultiplierBp(Start(spins).Level, safe, Start(spins).RateBp));
             return (new SpinRecord(roundId, seq, [], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
         }, tileTaken: false, cancellationToken);
 
@@ -140,9 +140,9 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
         {
             // Refused: either the round is not open (over, or not this player's), or the step itself declined.
             var current = await store.GetAsync(roundId, cancellationToken);
-            return current is null || current.PlayerRef != playerRef || current.GameId != Towers.GameId ? SpinError.RoundNotFound
-                : current.Status != RoundStatus.Open ? SpinError.RoundOver
-                : tileTaken ? SpinError.TileTaken : SpinError.NothingToCashOut;
+            return current is null || current.PlayerRef != playerRef || current.GameId != Towers.GameId ? GameError.RoundNotFound
+                : current.Status != RoundStatus.Open ? GameError.RoundOver
+                : tileTaken ? GameError.TileTaken : GameError.NothingToCashOut;
         }
 
         balance = await Stake.PayAsync(store, wallet, round, spin, balance, cancellationToken);
@@ -168,5 +168,5 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
 
     /// <summary>The first spin's stored outcome: the round's traps. Never sent while the round is open.</summary>
     /// <remarks><paramref name="RateBp"/> is the rate the round started at (rounds stored before rates had it are at the design rate).</remarks>
-    private sealed record StartOutcome(string Level, int[][] Layout, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Mult.Base);
+    private sealed record StartOutcome(string Level, int[][] Layout, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Multipliers.Base);
 }

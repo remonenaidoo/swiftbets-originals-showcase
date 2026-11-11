@@ -38,7 +38,7 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
     {
         if (Array.IndexOf(Mines.Stakes, request.Stake) < 0 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
-            return SpinError.InvalidStake;
+            return GameError.InvalidStake;
         }
 
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, request.SessionToken, cancellationToken);
@@ -51,15 +51,15 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
         {
             if (repeat.GameId != HigherLower.GameId)
             {
-                return SpinError.KeyInUse;
+                return GameError.KeyInUse;
             }
 
-            return repeat.Status == RoundStatus.Pending ? SpinError.RoundInProgress : View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance);
+            return repeat.Status == RoundStatus.Pending ? GameError.RoundInProgress : View(repeat, await store.SpinsAsync(repeat.RoundId, cancellationToken), balance);
         }
 
         if (await store.FindOpenAsync(playerRef!, HigherLower.GameId, cancellationToken) is not null)
         {
-            return SpinError.RoundInProgress;
+            return GameError.RoundInProgress;
         }
 
         var draw = await seeds.TakeNonceAsync(playerRef!, cancellationToken);
@@ -84,7 +84,7 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
     {
         if (guess is not (HigherLower.Skip or HigherLower.Higher or HigherLower.Lower))
         {
-            return SpinError.GuessNotAllowed;
+            return GameError.GuessNotAllowed;
         }
 
         return await StepAsync(sessionToken, roundId, (round, spins) =>
@@ -110,7 +110,7 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
                 }
 
                 // Skipped onto the last card: no guess is left, so the round ends here, paying what it reached (if anything).
-                var paid = counts.Count == 0 ? 0 : Mult.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
+                var paid = counts.Count == 0 ? 0 : Multipliers.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
                 return paid == 0
                     ? (new SpinRecord(roundId, seq, [guess], "{}", 0, null, null, false), RoundStatus.Settled, 0L)
                     : (new SpinRecord(roundId, seq, [guess], "{}", paid, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, paid);
@@ -134,9 +134,9 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
                 return (new SpinRecord(roundId, seq, [guess], "{}", 0, null, null, false), RoundStatus.Open, 0L);
             }
 
-            var win = Mult.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
+            var win = Multipliers.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
             return (new SpinRecord(roundId, seq, [guess], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
-        }, refused: SpinError.GuessNotAllowed, cancellationToken);
+        }, refused: GameError.GuessNotAllowed, cancellationToken);
     }
 
     public Task<Result<HigherLowerView>> CashoutAsync(string sessionToken, Guid roundId, CancellationToken cancellationToken) =>
@@ -151,15 +151,15 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
             }
 
             var seq = spins.Count;
-            var win = Mult.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
+            var win = Multipliers.Pay(round.Stake, HigherLower.MultiplierBp(counts, rate));
             return (new SpinRecord(roundId, seq, [], "{}", win, null, Play.WinTx(roundId, seq), false), RoundStatus.WinPending, win);
-        }, refused: SpinError.NothingToCashOut, cancellationToken);
+        }, refused: GameError.NothingToCashOut, cancellationToken);
 
     /// <summary>The player's open round, to resume after a reload.</summary>
     public async Task<HigherLowerView?> OpenAsync(string playerRef, long? balance, CancellationToken cancellationToken) =>
         await store.FindOpenAsync(playerRef, HigherLower.GameId, cancellationToken) is { } round ? View(round, await store.SpinsAsync(round.RoundId, cancellationToken), balance) : null;
 
-    private async Task<Result<HigherLowerView>> StepAsync(string sessionToken, Guid roundId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, SpinError refused, CancellationToken cancellationToken)
+    private async Task<Result<HigherLowerView>> StepAsync(string sessionToken, Guid roundId, Func<RoundRecord, IReadOnlyList<SpinRecord>, (SpinRecord Spin, string Status, long Paid)?> step, GameError refused, CancellationToken cancellationToken)
     {
         var (playerRef, balance, error) = await Play.IdentifyAsync(wallet, sessionToken, cancellationToken);
         if (error is not null)
@@ -170,8 +170,8 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
         if (await store.StepAsync(roundId, playerRef!, HigherLower.GameId, step, cancellationToken) is not var (round, spin))
         {
             var current = await store.GetAsync(roundId, cancellationToken);
-            return current is null || current.PlayerRef != playerRef || current.GameId != HigherLower.GameId ? SpinError.RoundNotFound
-                : current.Status != RoundStatus.Open ? SpinError.RoundOver
+            return current is null || current.PlayerRef != playerRef || current.GameId != HigherLower.GameId ? GameError.RoundNotFound
+                : current.Status != RoundStatus.Open ? GameError.RoundOver
                 : refused;
         }
 
@@ -217,5 +217,5 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
 
     /// <summary>The first spin's stored outcome: the round's deck. Only cards already turned are ever sent.</summary>
     /// <remarks><paramref name="RateBp"/> is the rate the round started at.</remarks>
-    private sealed record StartOutcome(int[] Deck, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Mult.Base);
+    private sealed record StartOutcome(int[] Deck, long Nonce, string ClientSeed, string ServerSeedHash, long RateBp = Multipliers.Base);
 }

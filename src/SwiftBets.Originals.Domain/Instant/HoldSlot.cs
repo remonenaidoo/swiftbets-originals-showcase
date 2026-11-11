@@ -156,7 +156,7 @@ public sealed class HoldSlot(string id = HoldSlot.GameId, string name = "Highvel
     public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var r = PlayRound(floats);
-        return new(Mult.Rated(r.Units * (Mult.One / Units), rateBp), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
+        return new(Multipliers.Rated(r.Units * (Multipliers.One / Units), rateBp), new { stops = r.Stops, lines = r.Lines, coins = r.Coins, respins = r.Respins, featureUnits = r.FeatureUnits, grand = r.Grand, units = r.Units, capped = r.Capped });
     }
 
     public override object InfoAt(long rateBp) => new

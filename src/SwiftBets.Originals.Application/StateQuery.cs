@@ -10,7 +10,7 @@ public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines ga
     {
         if (games.Find(gameId) is not var (slot, _))
         {
-            return SpinError.GameNotFound;
+            return GameError.GameNotFound;
         }
 
         var game = slot.Definition;
@@ -36,7 +36,7 @@ public sealed class StateQuery(IRoundStore store, IWallet wallet, SlotEngines ga
             Info(slot, rate));
     }
 
-    public static GameInfo Info(SlotGame slot, long rateBp = Domain.Instant.Mult.Base)
+    public static GameInfo Info(SlotGame slot, long rateBp = Domain.Instant.Multipliers.Base)
     {
         var game = slot.Definition;
         return new GameInfo(

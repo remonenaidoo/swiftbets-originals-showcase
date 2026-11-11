@@ -60,7 +60,7 @@ public static class SlotEndpoints
     internal static IResult Respond<T>(Result<T> result, HttpContext context) =>
         result.Error is { } e ? ToError(e).ToHttpResult(context) : Results.Ok(result.Value);
 
-    private static Error ToError(SpinError e) => e.Code switch
+    private static Error ToError(GameError e) => e.Code switch
     {
         "invalid_stake" => new Error(e.Code, "That stake is not offered.", ErrorKind.Validation),
         "session_invalid" => new Error(e.Code, "Your game session has ended. Reopen the game.", ErrorKind.Unauthorized),

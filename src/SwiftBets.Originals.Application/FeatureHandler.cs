@@ -16,7 +16,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngine
     {
         if (games.Find(gameId) is not var (slot, engine))
         {
-            return SpinError.GameNotFound;
+            return GameError.GameNotFound;
         }
 
         var game = slot.Definition;
@@ -43,7 +43,7 @@ public sealed class FeatureHandler(IRoundStore store, IWallet wallet, SlotEngine
         if (claim is not { } claimed)
         {
             var round = await store.GetAsync(roundId, cancellationToken);
-            return round is null || round.PlayerRef != playerRef || round.GameId != game.GameId ? SpinError.RoundNotFound : SpinError.NoFeature;
+            return round is null || round.PlayerRef != playerRef || round.GameId != game.GameId ? GameError.RoundNotFound : GameError.NoFeature;
         }
 
         var (updated, played) = claimed;

@@ -138,8 +138,8 @@ public sealed class WaysSlot(string id = WaysSlot.GameId, string name = "Cape Po
     public override OneShotResult Resolve(IReadOnlyList<double> floats, JsonElement c, long rateBp)
     {
         var (spins, units, capped) = PlayRound(floats);
-        // The playback is in design units; the page scales them by rateBp ÷ Mult.Base, as the pay is here.
-        return new(Mult.Rated(units * (Mult.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
+        // The playback is in design units; the page scales them by rateBp ÷ Multipliers.Base, as the pay is here.
+        return new(Multipliers.Rated(units * (Multipliers.One / Units), rateBp), new { spins, units, capped, freeSpins = spins.Count - 1 });
     }
 
     public override object InfoAt(long rateBp) => new

@@ -27,7 +27,7 @@ public sealed class TowersTests : IDisposable
         await Handler().PickAsync("s", start.RoundId, Safe(1), ct);
         var cash = (await Handler().CashoutAsync("s", start.RoundId, ct)).Value!;
 
-        cash.Win.ShouldBe(Mult.Pay(1000, Towers.MultiplierBp("easy", 2)));
+        cash.Win.ShouldBe(Multipliers.Pay(1000, Towers.MultiplierBp("easy", 2)));
         wallet.Balance.ShouldBe(100_000 - 1000 + cash.Win);
     }
 
@@ -39,7 +39,7 @@ public sealed class TowersTests : IDisposable
         var again = await Handler().PickAsync("s", start.RoundId, Safe(1), ct);
 
         fall.Status.ShouldBe("busted");
-        again.Error.ShouldBe(SpinError.RoundOver);
+        again.Error.ShouldBe(GameError.RoundOver);
         wallet.Balance.ShouldBe(100_000 - 1000);
     }
 }
