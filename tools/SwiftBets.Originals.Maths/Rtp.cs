@@ -3,12 +3,7 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Maths;
 
-/// <summary>
-/// The RTP from the enumerations: base = ΣW / (cycle × lines); P(trigger) = triggers / cycle. A stateless feature
-/// is exact in closed form: per free spin w = ΣW(×multiplier) / cycle units, r = extra spins awarded per free spin
-/// (0 without retrigger), expected spins N = n / (1 − r), value V = w × N. A feature with locked symbols takes V
-/// from <see cref="FeatureSim"/>. Feature RTP = P(trigger) × V / lines.
-/// </summary>
+/// <summary>Base RTP exact from the enumeration; a stateless feature is w × n / (1 − r) in closed form, a locking one is simulated.</summary>
 public sealed record Rtp(ReelStats Base, ReelStats Free, int Lines, int Awarded, FeatureValue? Simulated)
 {
     public bool Exact => Simulated is null;

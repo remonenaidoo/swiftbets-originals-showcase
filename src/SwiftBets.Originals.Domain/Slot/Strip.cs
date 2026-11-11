@@ -1,10 +1,6 @@
 namespace SwiftBets.Originals.Domain.Slot;
 
-/// <summary>
-/// Lays out a reel strip from symbol counts, spreading each symbol as evenly as it can (largest-deficit first,
-/// ties in symbol-table order). Deterministic: the same counts always give the same strip, so the counts are the
-/// design and the strip printed in the PAR sheet is reproducible.
-/// </summary>
+/// <summary>Spreads each symbol as evenly as it can, deterministically, so the PAR sheet's strip is reproducible.</summary>
 public static class Strip
 {
     public static IReadOnlyList<byte> Build(IReadOnlyDictionary<byte, int> counts)
@@ -38,7 +34,6 @@ public static class Strip
         return strip;
     }
 
-    /// <summary>Counts keyed by symbol name, for game definitions that read like their PAR sheets.</summary>
     public static IReadOnlyList<byte> Build(IReadOnlyList<SymbolDef> symbols, IReadOnlyDictionary<string, int> counts) =>
         Build(counts.Where(c => c.Value > 0).ToDictionary(c => (byte)IndexOf(symbols, c.Key), c => c.Value));
 

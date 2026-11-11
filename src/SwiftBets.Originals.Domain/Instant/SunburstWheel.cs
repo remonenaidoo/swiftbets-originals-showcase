@@ -19,7 +19,6 @@ public static class WheelTables
     };
 }
 
-/// <summary>Sunburst Wheel: a wheel of 10, 20 or 30 equal segments at low, medium or high risk; one float picks the segment, which pays its multiplier.</summary>
 public sealed class SunburstWheel : OneShotGame
 {
     public const string GameId = "sunburst-wheel";

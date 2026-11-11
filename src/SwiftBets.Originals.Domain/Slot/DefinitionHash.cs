@@ -4,11 +4,7 @@ using System.Text;
 
 namespace SwiftBets.Originals.Domain.Slot;
 
-/// <summary>
-/// SHA-256 of a canonical text form of a <see cref="GameDefinition"/>: any change to strips, lines or pays changes it.
-/// Lines for split symbols and feature rules appear only when a game uses them, so a game that uses neither keeps
-/// the hash it had before they existed.
-/// </summary>
+/// <summary>SHA-256 of a canonical text form; optional sections appear only when used, so older games keep their hash.</summary>
 public static class DefinitionHash
 {
     public static string Of(GameDefinition game) =>

@@ -2,10 +2,7 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Coin Flip: toss 1–10 coins; the player picks a side and the least number of coins that must land on it. With
-/// P the chance of at least that many, the pay is r ÷ P at the game's rate r, floored to a basis point. One float per coin.
-/// </summary>
+/// <summary>Coin Flip: pays r ÷ P(at least <c>need</c> of <c>coins</c> land on the chosen side).</summary>
 public sealed class CoinFlip : OneShotGame
 {
     public const string GameId = "coin-flip";

@@ -1,10 +1,6 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Crash: one shared round. The multiplier climbs as e^(0.00006 t) (t in ms, floored to 0.01×) until the round's
-/// crash point, fixed by its seed before betting opens, with P(point ≥ x) = r / x up to 5,000× for the game's rate r. A bet
-/// that cashes out at x before the crash, or whose auto cash-out x is at most the point, is paid x; so every target returns r.
-/// </summary>
+/// <summary>Crash: the multiplier climbs as e^(0.00006 t); P(point ≥ x) = r / x, so every cash-out target returns r.</summary>
 public static class Crash
 {
     public const string GameId = "crash";
@@ -24,7 +20,6 @@ public static class Crash
         return Math.Clamp((long)Math.Min(hundredths, 1e9), 100, Multipliers.CapBp / 100) * 100;
     }
 
-    /// <summary>The multiplier <paramref name="elapsedMs"/> into the flight, floored to 0.01×.</summary>
     public static long MultiplierBpAt(double elapsedMs) =>
         elapsedMs <= 0 ? Multipliers.One : Math.Min((long)Math.Floor(Math.Exp(Rate * elapsedMs) * 100) * 100, Multipliers.CapBp);
 

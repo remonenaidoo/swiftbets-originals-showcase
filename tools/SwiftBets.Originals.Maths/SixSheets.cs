@@ -4,7 +4,7 @@ using SwiftBets.Originals.Domain.Instant;
 
 namespace SwiftBets.Originals.Maths;
 
-/// <summary>Maths documents for the six instant games added on 2026-10-19: exact, from the production rules.</summary>
+/// <summary>Maths documents for the newer instant games: exact, from the production rules.</summary>
 public static class SixSheets
 {
     private static string Head(string name, string rule) =>

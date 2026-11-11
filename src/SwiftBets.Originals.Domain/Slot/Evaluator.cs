@@ -1,11 +1,6 @@
 namespace SwiftBets.Originals.Domain.Slot;
 
-/// <summary>
-/// Turns stops into a window and the window into pays. A line pays when one symbol runs over at least three reels
-/// from reel 1, Wilds standing in for anything but Scatter; the pay is for the run's total count, where split
-/// symbols and split Wilds count 2 or 3. Wilds never pay on their own, so a run that opens with Wilds takes the
-/// first other symbol. Scatters pay anywhere, in total stakes, and 3 or more trigger the feature.
-/// </summary>
+/// <summary>Line and scatter pays; split symbols count 2 or 3, and a run that opens with Wilds pays as the first other symbol.</summary>
 public static class Evaluator
 {
     public static byte[,] Window(IReadOnlyList<IReadOnlyList<byte>> reels, int[] stops)
@@ -23,10 +18,7 @@ public static class Evaluator
         return window;
     }
 
-    /// <summary>
-    /// Evaluates one spin. <paramref name="locks"/> (free spins of a locking game) overwrite their cells first; the
-    /// outcome's locks are then those plus every split symbol showing, when <paramref name="locking"/> is set.
-    /// </summary>
+    /// <summary><paramref name="locks"/> overwrite their cells first; with <paramref name="locking"/>, every split symbol showing locks.</summary>
     public static SpinOutcome Evaluate(GameDefinition game, IReadOnlyList<IReadOnlyList<byte>> reels, int[] stops, int multiplier, IReadOnlyList<LockedCell>? locks = null, bool locking = false)
     {
         var window = Window(reels, stops);
@@ -67,18 +59,13 @@ public static class Evaluator
         return scatters;
     }
 
-    /// <summary>The pay on one line, or null.</summary>
     public static LineWin? LineWinOf(GameDefinition game, byte[,] window, int[] rows)
     {
         var units = LineUnits(game, window, rows, out var symbol, out var count, out var run);
         return units == 0 ? null : new LineWin(0, symbol, count, run, units);
     }
 
-    /// <summary>
-    /// The pay on one line in line-bet units (0 for none), with the paying symbol, its total count and the number of
-    /// reels in the run. Allocation-free: the full-cycle enumeration calls it hundreds of millions of times, through
-    /// this same code.
-    /// </summary>
+    /// <summary>Allocation-free: the full-cycle enumeration calls this hundreds of millions of times.</summary>
     public static long LineUnits(GameDefinition game, byte[,] window, int[] rows, out byte symbol, out int count, out int run)
     {
         symbol = GameDefinition.None;

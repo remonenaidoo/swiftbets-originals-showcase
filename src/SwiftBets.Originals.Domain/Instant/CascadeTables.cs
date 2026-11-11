@@ -1,9 +1,6 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Kalahari Gem Fall's strips (symbol counts, shuffled per reel), pays (units; a stake is 100) and meteor values,
-/// tuned by simulation to 95.96% ± 0.12% (2e8 rounds) and fixed here; the maths document measures 1e9 rounds.
-/// </summary>
+/// <summary>Tuned by simulation to 95.96% ± 0.12% (2e8 rounds) and fixed here.</summary>
 public static class CascadeTables
 {
     public static CascadeConfig Config { get; } = new(

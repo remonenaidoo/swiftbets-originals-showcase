@@ -2,12 +2,7 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Games;
 
-/// <summary>
-/// Karoo Stargazer: Gilded Savanna's maths under the Karoo night sky. The reels, lines, pays and feature are
-/// Gilded Savanna's, symbol for symbol, so docs/par-sheet/gilded-savanna.md holds for it unchanged: 5 reels × 3 rows,
-/// 20 fixed lines, Southern Cross Wild on reels 2–4, Observatory Scatter (3+ = 10 free spins at ×2, retriggerable),
-/// max win 5,000× stake.
-/// </summary>
+/// <summary>Gilded Savanna's maths symbol for symbol under new names, so its PAR sheet holds unchanged.</summary>
 public static class KarooStargazer
 {
     public const string GameId = "karoo-stargazer";

@@ -3,11 +3,7 @@ using System.Text;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Provably fair draws. The server seed (from the OS CSPRNG) is shown hashed before play and revealed when the player
-/// rotates it, so any round can be replayed: each block of floats is HMAC-SHA256(serverSeed, "clientSeed:nonce:cursor"),
-/// read 4 bytes per float.
-/// </summary>
+/// <summary>Provably fair floats: HMAC-SHA256(serverSeed, "clientSeed:nonce:cursor"), four bytes per float.</summary>
 public static class Fair
 {
     public static string NewSeed() => Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));

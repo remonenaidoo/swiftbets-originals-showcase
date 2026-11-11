@@ -2,11 +2,7 @@ using System.Text.Json;
 
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Lucky Scratch: a card of 9 cells holding six prize symbols. The first float picks the prize (or none) from fixed
-/// odds; the card is then laid out from the others so that the prize, if any, shows exactly three times and no other
-/// symbol shows more than twice. At the design rate it returns exactly 96%; prizes scale with the game's rate.
-/// </summary>
+/// <summary>Lucky Scratch: the first float picks the prize; the card shows it exactly three times and nothing else more than twice.</summary>
 public sealed class LuckyScratch : OneShotGame
 {
     public const string GameId = "lucky-scratch";

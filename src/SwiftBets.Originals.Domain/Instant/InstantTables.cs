@@ -1,9 +1,6 @@
 namespace SwiftBets.Originals.Domain.Instant;
 
-/// <summary>
-/// Pay tables in basis points, tuned once to just under 96% each and fixed here (the maths tool proves each one exactly).
-/// Peg Drop: one row per bucket, left edge to right edge. Keno: one row per number of hits, from 0.
-/// </summary>
+/// <summary>Pay tables in basis points, each tuned to just under 96% (the maths tool proves each exactly).</summary>
 public static class InstantTables
 {
     public static readonly IReadOnlyDictionary<(int Rows, string Risk), long[]> PegDrop = new Dictionary<(int, string), long[]>

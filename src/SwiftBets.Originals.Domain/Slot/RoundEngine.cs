@@ -1,21 +1,12 @@
 namespace SwiftBets.Originals.Domain.Slot;
 
-/// <summary>A whole round: the base spin, the free spins it triggered, and what was paid under the cap.</summary>
 public sealed record RoundResult(IReadOnlyList<SpinOutcome> Spins, long PaidUnits, bool CapReached);
 
-/// <summary>
-/// Plays a game. The live service calls <see cref="PlaySpin"/> one spin at a time (its round state, including any
-/// locked cells, lives in the database); the simulation calls <see cref="PlayRound"/> or <see cref="PlayFeature"/>.
-/// All draw through the same <c>draw</c> and evaluate with the same evaluator, so the simulation tests the code
-/// that pays players.
-/// </summary>
-/// <param name="game">The game definition.</param>
-/// <param name="draw">Returns a uniform integer in [0, n); production passes <c>RandomNumberGenerator.GetInt32</c>.</param>
+/// <summary>The live service and the simulation draw and evaluate through this same code, so the simulation tests what pays players.</summary>
 public sealed class RoundEngine(GameDefinition game, Func<int, int> draw)
 {
     public GameDefinition Game => game;
 
-    /// <summary>A base spin, or a free spin with the feature's locked cells so far.</summary>
     public SpinOutcome PlaySpin(bool free, IReadOnlyList<LockedCell>? locks = null)
     {
         var reels = free ? game.FreeReels : game.BaseReels;
@@ -48,7 +39,6 @@ public sealed class RoundEngine(GameDefinition game, Func<int, int> draw)
         return new RoundResult(spins, paid, capped);
     }
 
-    /// <summary>Plays a whole feature after <paramref name="paidSoFar"/>, appending its spins; returns the round's paid units and whether the cap was reached.</summary>
     public (long Paid, bool Capped) PlayFeature(long paidSoFar, List<SpinOutcome> spins)
     {
         var paid = paidSoFar;

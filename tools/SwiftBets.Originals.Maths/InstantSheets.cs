@@ -7,11 +7,7 @@ namespace SwiftBets.Originals.Maths;
 /// <summary>Maths documents for the instant games: exact, from the production rules.</summary>
 public static class InstantSheets
 {
-    /// <summary>
-    /// Mines: for every number of mines m and safe picks k, RTP = P(k safe picks) × multiplier, with
-    /// P = C(25 − m, k) / C(25, k). A player who stops after k picks gets exactly that RTP, so the table covers every
-    /// way of playing. Also checks the layout draw: mines per tile over many seeded rounds.
-    /// </summary>
+    /// <summary>RTP = P(k safe picks) × multiplier for every m and k, plus a check of the layout draw.</summary>
     public static int Mines(string path, long layouts)
     {
         var md = new StringBuilder();
@@ -72,11 +68,7 @@ public static class InstantSheets
         return p;
     }
 
-    /// <summary>
-    /// Crash: P(point ≥ x) = 0.96 / x exactly for the continuous draw, so an auto cash-out at x returns 96%. Checked by
-    /// drawing crash points through the production path (Fair floats of a seed and the round's sequence number) and
-    /// measuring each target's RTP with a 99% interval.
-    /// </summary>
+    /// <summary>Checks P(point ≥ x) = r / x by drawing points through the production path.</summary>
     public static int Crash(string path, long rounds)
     {
         long[] targets = [10_100, 15_000, 20_000, 50_000, 100_000, 1_000_000, 10_000_000, 50_000_000];
@@ -208,12 +200,7 @@ public static class InstantSheets
         return r;
     }
 
-    /// <summary>
-    /// Cape Point Ways: reels are independent, so a spin's value is exact from each reel's window statistics: for a
-    /// symbol over k reels the expected ways are the product of each reel's expected matching weight, times the chance
-    /// the next reel has none. Pearls by convolution. The feature is exact (free spins have no state). Then the whole
-    /// round is played through the production code to check the total and measure the cap.
-    /// </summary>
+    /// <summary>Exact from per-reel window statistics (reels are independent), then checked by playing whole rounds.</summary>
     public static int Ways(string path, long rounds)
     {
         static (Dictionary<string, double> Em, Dictionary<string, double> P0, double[] Sc) Stats(string[] strip)
@@ -318,12 +305,7 @@ public static class InstantSheets
         return inside ? 0 : 1;
     }
 
-    /// <summary>
-    /// Highveld Hold, exact: line pays from each reel's symbol shares (one cell per reel per line, reels independent);
-    /// the start of the hold from the convolution of each reel's coin count; the hold itself from a small Markov chain
-    /// (coins on the board, respins left), since each empty cell lands a coin with the same chance whatever its place.
-    /// Coin values are independent of the count, so the feature is E[final coins] × mean value + P(full) × Grand.
-    /// </summary>
+    /// <summary>Exact: lines from symbol shares, the hold's start by convolution, the hold itself as a Markov chain over (coins, respins left).</summary>
     public static int Hold(string path, long rounds)
     {
         var reels = HoldTables.Reels;
@@ -437,10 +419,7 @@ public static class InstantSheets
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    /// <summary>
-    /// Kalahari Gem Fall: tumbles chain, so the RTP is measured by playing whole rounds through the production code,
-    /// split into base and free spins, with a 99% interval. <paramref name="cfg"/> lets the tuner try other values.
-    /// </summary>
+    /// <summary>Tumbles chain, so the RTP is measured by playing whole rounds, with a 99% interval.</summary>
     public static (double Base, double Free, double Total, double Half, double Hit, double Trigger, long Capped, double Max, double Sd) Cascade(CascadeConfig cfg, long rounds)
     {
         long b = 0, fr = 0, hits = 0, trips = 0, capped = 0, max = 0; double sq = 0;

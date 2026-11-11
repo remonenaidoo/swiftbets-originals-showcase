@@ -2,18 +2,12 @@ using SwiftBets.Originals.Domain.Slot;
 
 namespace SwiftBets.Originals.Games;
 
-/// <summary>
-/// Gold Reef Rush: a Witwatersrand gold-rush mine. 5 reels × 3 rows, 15 fixed lines, stake 15 coins. Split symbols:
-/// Gold Bar comes single, double and triple (a line counts to 15); Diamond, Mine Cart and Lantern single and double
-/// (to 10). Miner Wild and Double Miner (counts 2) on reels 2–4. Dynamite Scatter pays anywhere and 3+ award 8 free
-/// spins on richer strips, where every split symbol that lands locks in place for the rest of the feature; no
-/// retrigger. Max win 5,000× stake. See docs/par-sheet/gold-reef-rush.md for the RTP these strips produce.
-/// </summary>
+/// <summary>Gold Reef Rush: split symbols, all of which lock during free spins; RTP in docs/par-sheet/gold-reef-rush.md.</summary>
 public static class GoldReefRush
 {
     public const string GameId = "gold-reef-rush";
 
-    /// <summary>The symbol table; its order is the order the definition hash and the strip layout are made with.</summary>
+    /// <summary>Order matters: the definition hash and the strip layout depend on it.</summary>
     public static readonly SymbolDef[] Symbols =
     [
         new("GoldBar"), new("GoldBar2", Weight: 2, PaysAs: "GoldBar"), new("GoldBar3", Weight: 3, PaysAs: "GoldBar"),
@@ -44,7 +38,7 @@ public static class GoldReefRush
         ["Quartz"] = [2, 5, 10, 16, 24, 30],
     };
 
-    /// <summary>Symbol counts per base reel (each reel 36 stops). Reels 1 and 5 have no Wilds.</summary>
+    /// <summary>Reels 1 and 5 have no Wilds.</summary>
     public static readonly Dictionary<string, int>[] BaseCounts =
     [
         Outer(gold: 2, gold2: 1, gold3: 1, diamond: 4, diamond2: 0, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
@@ -54,7 +48,7 @@ public static class GoldReefRush
         Outer(gold: 2, gold2: 1, gold3: 1, diamond: 4, diamond2: 0, cart: 2, cart2: 2, lantern: 3, lantern2: 2, copper: 6, silver: 6, quartz: 6),
     ];
 
-    /// <summary>Symbol counts per free-spin reel (each reel 36 stops): more splits, so more locks.</summary>
+    /// <summary>More splits than the base reels, so more locks.</summary>
     public static readonly Dictionary<string, int>[] FreeCounts =
     [
         Outer(gold: 0, gold2: 2, gold3: 1, diamond: 1, diamond2: 0, cart: 4, cart2: 4, lantern: 3, lantern2: 3, copper: 6, silver: 6, quartz: 5),
