@@ -15,7 +15,6 @@ public static class Crash
     public const double Rate = 0.00006;
     public static readonly TimeSpan Betting = TimeSpan.FromSeconds(7);
     public static readonly TimeSpan Pause = TimeSpan.FromSeconds(3);
-    public static readonly long[] Stakes = Mines.Stakes;
     public const long MinAutoBp = 10_100;
 
     /// <summary>The crash point for a uniform float at rate r (basis points): floor(100r / (1 − u)) hundredths, at least 1.00×, at most 5,000×.</summary>

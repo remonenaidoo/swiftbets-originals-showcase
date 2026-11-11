@@ -35,7 +35,7 @@ public sealed class MinesHandler(IRoundStore store, IWallet wallet, ISeedStore s
 
     public async Task<Result<MinesView>> StartAsync(MinesStart request, CancellationToken cancellationToken)
     {
-        if (Array.IndexOf(Mines.Stakes, request.Stake) < 0 || request.Mines is < 1 or > Mines.Tiles - 1 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
+        if (Array.IndexOf(InstantStakes.Offered, request.Stake) < 0 || request.Mines is < 1 or > Mines.Tiles - 1 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
             return GameError.InvalidStake;
         }

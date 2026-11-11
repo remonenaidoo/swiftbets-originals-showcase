@@ -15,7 +15,7 @@ public abstract class OneShotGame
 
     public abstract string Name { get; }
 
-    public virtual long[] Stakes => Mines.Stakes;
+    public virtual long[] Stakes => InstantStakes.Offered;
 
 
     public abstract bool Valid(JsonElement c);

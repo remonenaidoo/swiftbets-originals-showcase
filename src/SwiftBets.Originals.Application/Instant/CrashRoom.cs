@@ -93,7 +93,7 @@ public sealed class CrashRoom(IRoundStore store, ICrashStore crashes, IWallet wa
 
     public async Task<Result<CrashBetView>> BetAsync(CrashBet request, CancellationToken cancellationToken)
     {
-        if (Array.IndexOf(Crash.Stakes, request.Stake) < 0 || request.AutoBp is < Crash.MinAutoBp or > Multipliers.CapBp || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
+        if (Array.IndexOf(InstantStakes.Offered, request.Stake) < 0 || request.AutoBp is < Crash.MinAutoBp or > Multipliers.CapBp || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
             return GameError.InvalidStake;
         }

@@ -32,7 +32,7 @@ public sealed class TowersHandler(IRoundStore store, IWallet wallet, ISeedStore 
 
     public async Task<Result<TowersView>> StartAsync(TowersStart request, CancellationToken cancellationToken)
     {
-        if (Array.IndexOf(Mines.Stakes, request.Stake) < 0 || request.Level is null || !Towers.Levels.ContainsKey(request.Level) || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
+        if (Array.IndexOf(InstantStakes.Offered, request.Stake) < 0 || request.Level is null || !Towers.Levels.ContainsKey(request.Level) || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
             return GameError.InvalidStake;
         }
