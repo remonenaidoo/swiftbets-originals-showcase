@@ -9,7 +9,6 @@ public static class Mines
 {
     public const int Tiles = 25;
     public const string GameId = "mines";
-    public static readonly long[] Stakes = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
 
     /// <summary>The mine tiles: a Fisher–Yates shuffle of the 25 tiles by the round's floats, its first <paramref name="mines"/>.</summary>
     public static int[] Layout(IReadOnlyList<double> floats, int mines)

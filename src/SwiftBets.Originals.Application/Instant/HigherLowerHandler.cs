@@ -36,7 +36,7 @@ public sealed class HigherLowerHandler(IRoundStore store, IWallet wallet, ISeedS
 
     public async Task<Result<HigherLowerView>> StartAsync(HigherLowerStart request, CancellationToken cancellationToken)
     {
-        if (Array.IndexOf(Mines.Stakes, request.Stake) < 0 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
+        if (Array.IndexOf(InstantStakes.Offered, request.Stake) < 0 || string.IsNullOrWhiteSpace(request.IdempotencyKey) || request.IdempotencyKey.Length > 100)
         {
             return GameError.InvalidStake;
         }
