@@ -2,10 +2,10 @@ using SwiftBets.Originals.Application.Instant;
 
 namespace SwiftBets.Originals.Api.Endpoints;
 
-/// <summary>The instant games' API under <c>/instant</c>, and the player's provably-fair seeds. The session token is the credential, as for the slots.</summary>
+/// <summary>The instant games' API under <c>/instant</c> and the player's provably-fair seeds.</summary>
 public static class InstantEndpoints
 {
-    public sealed record StartBody(string? Session, long Stake, int Mines, string? Key);
+    public sealed record MinesStartBody(string? Session, long Stake, int Mines, string? Key);
 
     public sealed record PickBody(string? Session, Guid RoundId, int Tile);
 
@@ -27,47 +27,46 @@ public static class InstantEndpoints
     {
         var instant = endpoints.MapGroup("/instant").AllowAnonymous();
         instant.MapPost("/seed", async (SeedBody body, InstantQueries queries, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await queries.RotateAsync(body.Session ?? string.Empty, body.ClientSeed ?? string.Empty, cancellationToken), context));
+            ApiResults.Respond(await queries.RotateAsync(body.Session ?? string.Empty, body.ClientSeed ?? string.Empty, cancellationToken), context));
 
         var mines = instant.MapGroup("/mines");
         mines.MapGet("/state", async (string? session, InstantQueries queries, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await queries.MinesAsync(session ?? string.Empty, cancellationToken), context));
-        mines.MapPost("/start", async (StartBody body, MinesHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.StartAsync(new MinesStart(body.Session ?? string.Empty, body.Stake, body.Mines, body.Key ?? string.Empty), cancellationToken), context));
+            ApiResults.Respond(await queries.MinesAsync(session ?? string.Empty, cancellationToken), context));
+        mines.MapPost("/start", async (MinesStartBody body, MinesHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+            ApiResults.Respond(await handler.StartAsync(new MinesStart(body.Session ?? string.Empty, body.Stake, body.Mines, body.Key ?? string.Empty), cancellationToken), context));
         mines.MapPost("/pick", async (PickBody body, MinesHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.PickAsync(body.Session ?? string.Empty, body.RoundId, body.Tile, cancellationToken), context));
+            ApiResults.Respond(await handler.PickAsync(body.Session ?? string.Empty, body.RoundId, body.Tile, cancellationToken), context));
         mines.MapPost("/cashout", async (RoundBody body, MinesHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
+            ApiResults.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
 
         var towers = instant.MapGroup("/towers");
         towers.MapPost("/start", async (TowersStartBody body, TowersHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.StartAsync(new TowersStart(body.Session ?? string.Empty, body.Stake, body.Level ?? string.Empty, body.Key ?? string.Empty), cancellationToken), context));
+            ApiResults.Respond(await handler.StartAsync(new TowersStart(body.Session ?? string.Empty, body.Stake, body.Level ?? string.Empty, body.Key ?? string.Empty), cancellationToken), context));
         towers.MapPost("/pick", async (PickBody body, TowersHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.PickAsync(body.Session ?? string.Empty, body.RoundId, body.Tile, cancellationToken), context));
+            ApiResults.Respond(await handler.PickAsync(body.Session ?? string.Empty, body.RoundId, body.Tile, cancellationToken), context));
         towers.MapPost("/cashout", async (RoundBody body, TowersHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
+            ApiResults.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
 
         var higherLower = instant.MapGroup("/higher-lower");
         higherLower.MapPost("/start", async (HigherLowerStartBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.StartAsync(new HigherLowerStart(body.Session ?? string.Empty, body.Stake, body.Key ?? string.Empty), cancellationToken), context));
+            ApiResults.Respond(await handler.StartAsync(new HigherLowerStart(body.Session ?? string.Empty, body.Stake, body.Key ?? string.Empty), cancellationToken), context));
         higherLower.MapPost("/guess", async (GuessBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.GuessAsync(body.Session ?? string.Empty, body.RoundId, body.Guess, cancellationToken), context));
+            ApiResults.Respond(await handler.GuessAsync(body.Session ?? string.Empty, body.RoundId, body.Guess, cancellationToken), context));
         higherLower.MapPost("/cashout", async (RoundBody body, HigherLowerHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
+            ApiResults.Respond(await handler.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
 
-        // The one-shot games (one draw each), and the page data of those, Towers and Higher or Lower.
         instant.MapPost("/{gameId}/play", async (string gameId, PlayBody body, OneShotHandler handler, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await handler.PlayAsync(gameId, body.Session ?? string.Empty, body.Stake, body.Choices, body.Key ?? string.Empty, cancellationToken), context));
+            ApiResults.Respond(await handler.PlayAsync(gameId, body.Session ?? string.Empty, body.Stake, body.Choices, body.Key ?? string.Empty, cancellationToken), context));
         instant.MapGet("/{gameId}/state", async (string gameId, string? session, InstantQueries queries, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await queries.StateAsync(gameId, session ?? string.Empty, cancellationToken), context));
+            ApiResults.Respond(await queries.StateAsync(gameId, session ?? string.Empty, cancellationToken), context));
 
         var crash = instant.MapGroup("/crash");
         crash.MapGet("/state", async (string? session, InstantQueries queries, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await queries.CrashAsync(session ?? string.Empty, cancellationToken), context));
+            ApiResults.Respond(await queries.CrashAsync(session ?? string.Empty, cancellationToken), context));
         crash.MapPost("/bet", async (CrashBetBody body, CrashRoom room, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await room.BetAsync(new CrashBet(body.Session ?? string.Empty, body.Stake, body.AutoBp, body.Key ?? string.Empty), cancellationToken), context));
+            ApiResults.Respond(await room.BetAsync(new CrashBet(body.Session ?? string.Empty, body.Stake, body.AutoBp, body.Key ?? string.Empty), cancellationToken), context));
         crash.MapPost("/cashout", async (RoundBody body, CrashRoom room, HttpContext context, CancellationToken cancellationToken) =>
-            SlotEndpoints.Respond(await room.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
+            ApiResults.Respond(await room.CashoutAsync(body.Session ?? string.Empty, body.RoundId, cancellationToken), context));
         return endpoints;
     }
 }
